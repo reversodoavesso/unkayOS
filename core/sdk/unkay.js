@@ -67,6 +67,10 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
             async remove(path, recursive = false) {
                 return getVfs().remove(path, { recursive });
             },
+            async syncCloud() {
+                const { minioSyncDriver } = await import('../sync/MinioSyncDriver.js');
+                return minioSyncDriver.sync();
+            },
             // File System Access API - mount host directory into /mnt/host
             async mountLocalDirectory() {
                 if (typeof window !== 'undefined' && 'showDirectoryPicker' in window) {

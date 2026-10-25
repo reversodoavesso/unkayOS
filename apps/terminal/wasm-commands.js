@@ -9,7 +9,7 @@ const getVfs = () => (typeof window !== 'undefined' && window.wasmFileSystem) ||
 
 export const wasmTerminalCommands = {
     unkay: {
-        description: "CLI de gerenciamento e diagnósticos do unkayOS 2.0 (info, tier, ai, vfs).",
+        description: "CLI de gerenciamento e diagnósticos do unkayOS 2.0 (info, tier, ai, cloud, vfs).",
         action: async (args, appendToTerminal) => {
             const sub = args[0] || 'info';
             switch (sub) {
@@ -44,6 +44,19 @@ export const wasmTerminalCommands = {
                         return `<span class="red">Erro ao consultar IA: ${e.message}</span>`;
                     }
                 }
+                case 'cloud': {
+                    const action = args[1] || 'sync';
+                    if (action === 'sync') {
+                        if (appendToTerminal) appendToTerminal('<span class="gray">Iniciando sincronização com MinIO Cloud Storage...</span>');
+                        const res = await unkay.fs.syncCloud();
+                        if (res.success) {
+                            return `<span class="green">Nuvem sincronizada com sucesso: ${res.uploaded} enviados, ${res.downloaded} baixados.</span>`;
+                        } else {
+                            return `<span class="yellow">Cloud sync: ${res.reason || res.error}</span>`;
+                        }
+                    }
+                    return '<span class="yellow">Uso: unkay cloud sync</span>';
+                }
                 case 'vfs': {
                     const action = args[1] || 'stats';
                     if (action === 'export') {
@@ -53,7 +66,7 @@ export const wasmTerminalCommands = {
                     return '<span class="yellow">Uso: unkay vfs export</span>';
                 }
                 default:
-                    return '<span class="yellow">Subcomandos válidos: info, tier, ai, vfs</span>';
+                    return '<span class="yellow">Subcomandos válidos: info, tier, ai, cloud, vfs</span>';
             }
         }
     },
