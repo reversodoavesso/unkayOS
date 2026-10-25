@@ -60,18 +60,6 @@ export class RealFileMapper {
             '/apps/store/style.css': { type: 'file', realPath: '/apps/store/style.css' },
             '/apps/store/icon.svg': { type: 'file', realPath: '/apps/store/icon.svg' },
 
-            // Euterpe
-            '/apps/euterpe/package.json': { type: 'file', realPath: '/apps/euterpe/package.json' },
-            '/apps/euterpe/main.js': { type: 'file', realPath: '/apps/euterpe/main.js' },
-            '/apps/euterpe/style.css': { type: 'file', realPath: '/apps/euterpe/style.css' },
-            '/apps/euterpe/icon.svg': { type: 'file', realPath: '/apps/euterpe/icon.svg' },
-
-            // Cine
-            '/apps/cine/package.json': { type: 'file', realPath: '/apps/cine/package.json' },
-            '/apps/cine/main.js': { type: 'file', realPath: '/apps/cine/main.js' },
-            '/apps/cine/style.css': { type: 'file', realPath: '/apps/cine/style.css' },
-            '/apps/cine/icon.svg': { type: 'file', realPath: '/apps/cine/icon.svg' },
-
             // OpenUI
             '/apps/openui/package.json': { type: 'file', realPath: '/apps/openui/package.json' },
             '/apps/openui/main.js': { type: 'file', realPath: '/apps/openui/main.js' },

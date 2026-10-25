@@ -5,12 +5,12 @@
   "jsFile": "main.js",
   "styleFile": "style.css",
   "mode": "system_window",
-  "width": "920px",
-  "height": "600px",
-  "x_position": "12vw",
-  "y_position": "6vh",
-  "minWidth": 640,
-  "minHeight": 440,
+  "width": "980px",
+  "height": "640px",
+  "x_position": "10vw",
+  "y_position": "5vh",
+  "minWidth": 720,
+  "minHeight": 480,
   "autorun": false,
   "hidden": false
 }

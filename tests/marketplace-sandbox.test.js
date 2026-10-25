@@ -88,12 +88,12 @@ describe('unkayOS 2.0 AppSandbox (Shadow DOM & Scoped SDK)', () => {
 
     it('should create shadow root and inject scoped SDK with permission enforcement', async () => {
         const mockPkg = {
-            id: 'euterpe-tool',
-            name: 'Euterpe DSP Tool',
+            id: 'sample-tool',
+            name: 'Sample Tool',
             version: '1.0.0',
             type: 'native',
             runtimeProfile: 'client-only',
-            permissions: ['storage:local', 'audio:worklet'] // No 'auth:session'
+            permissions: ['storage:local', 'network:fetch'] // No 'auth:session'
         };
 
         const sandbox = new AppSandbox(container, mockPkg, mockBaseSDK);
@@ -110,7 +110,7 @@ describe('unkayOS 2.0 AppSandbox (Shadow DOM & Scoped SDK)', () => {
         // 2. Storage is allowed because 'storage:local' was granted
         await expect(sdk.fs.writeFile('settings.json', '{"bpm": 128}')).resolves.not.toThrow();
         expect(mockBaseSDK.fs.writeFile).toHaveBeenCalledWith(
-            '/home/user/apps/euterpe-tool/data/settings.json',
+            '/home/user/apps/sample-tool/data/settings.json',
             '{"bpm": 128}'
         );
 

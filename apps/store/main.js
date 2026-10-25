@@ -62,37 +62,23 @@ export default class StoreApp extends BaseApp {
         // Fallback curated seed catalogue
         this.apps = [
             {
-                id: "euterpe-bpm",
-                name: "Euterpe BPM & Key Detector",
-                summary: "Detector local de andamento e tonalidade harmônica com Web Audio DSP",
-                description: "Ferramenta rápida e de alta precisão para analisar faixas de áudio diretamente no navegador com AudioWorklet. Compatível com a esteira de curadoria do Euterpe.",
-                authorName: "Ordem RDA / Euterpe Core",
-                category: "audio",
+                id: "openui-studio",
+                name: "OpenUI Generative Studio",
+                summary: "Gerador e IDE de interfaces Generative UI com o Design System RDA",
+                description: "Ambiente declarativo para prototipar telas e componentes com tokens oficiais do @reversodoavesso/design-system a partir de prompts em linguagem natural.",
+                authorName: "RDA Design Ops",
+                category: "ai",
                 appType: "native",
                 runtimeProfile: "client-only",
                 requiredTier: "guest",
-                icon: "🎵",
-                version: "1.0.0",
-                permissions: ["storage:local", "audio:worklet"]
-            },
-            {
-                id: "cine-notes",
-                name: "Cine Quick Reviews & Curadoria",
-                summary: "Bloco de notas rápidas e curadoria comunitária de cinema sincronizado com o Cine",
-                description: "Aplicativo oficial para redigir críticas, listas de filmes e sincronizar anotações com o Cine Social via API GraphQL do RDA BFF.",
-                authorName: "Cine Community",
-                category: "media",
-                appType: "native",
-                runtimeProfile: "client-server",
-                requiredTier: "standard",
-                icon: "🎬",
-                version: "1.2.0",
-                permissions: ["auth:session", "network:bff"]
+                icon: "✨",
+                version: "2.0.0",
+                permissions: ["storage:local", "ai:generate"]
             },
             {
                 id: "cloud-shell-pro",
                 name: "Cloud Shell Pro (Compute Sandbox)",
-                summary: "Terminal Linux interativo no Raspberry Pi com Docker sob demanda",
+                summary: "Terminal Linux interativo no host com Docker sob demanda",
                 description: "Estação de linha de comando com acesso aos utilitários reais da infraestrutura RDA (git, node, rda CLI) em container isolado.",
                 authorName: "RDA Infra Team",
                 category: "utilities",
@@ -104,17 +90,31 @@ export default class StoreApp extends BaseApp {
                 permissions: ["compute:websocket", "auth:stepup-mfa"]
             },
             {
-                id: "openui-studio",
-                name: "OpenUI Declarative Studio",
-                summary: "Gerador e playground de interfaces Generative UI com o Design System RDA",
-                description: "Ambiente declarativo para prototipar telas e componentes com tokens oficiais do @reversodoavesso/design-system a partir de prompts em linguagem natural.",
-                authorName: "RDA Design Ops",
-                category: "ai",
-                appType: "openui",
+                id: "sqlite-viewer",
+                name: "SQLite & OPFS Data Inspector",
+                summary: "Visualizador e editor SQL para bancos de dados locais no navegador",
+                description: "Inspetor de tabelas, execução de queries e visualização de arquivos de banco de dados SQLite persistidos no OPFS Wasm do unkayOS.",
+                authorName: "unkayOS Core Labs",
+                category: "developer",
+                appType: "native",
                 runtimeProfile: "client-only",
                 requiredTier: "guest",
-                icon: "✨",
+                icon: "🗄️",
                 version: "1.0.0",
+                permissions: ["storage:local", "compute:wasm"]
+            },
+            {
+                id: "task-matrix",
+                name: "Task Matrix Kanban",
+                summary: "Gerenciador ágil de tarefas e notas técnicas com persistência local",
+                description: "Quadro Kanban com organização por prioridades, etiquetas de release e sincronização em Markdown direto no VFS.",
+                authorName: "unkayOS Productivity",
+                category: "productivity",
+                appType: "native",
+                runtimeProfile: "client-only",
+                requiredTier: "guest",
+                icon: "📋",
+                version: "1.1.0",
                 permissions: ["storage:local"]
             }
         ];

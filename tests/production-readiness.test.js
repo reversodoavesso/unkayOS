@@ -31,11 +31,11 @@ describe('unkayOS 2.0 Production Readiness (Phase 7)', () => {
         expect(existsSync(kernelWorker)).toBe(true);
     });
 
-    it('should contain all 13 declared ecosystem applications in distribution', () => {
+    it('should contain all 11 declared ecosystem applications in distribution', () => {
         const appsJsonPath = resolve(distDir, 'apps/apps.json');
         const appsConfig = JSON.parse(readFileSync(appsJsonPath, 'utf8'));
 
-        expect(appsConfig.app_configs.length).toBe(13);
+        expect(appsConfig.app_configs.length).toBe(11);
 
         const requiredApps = [
             'terminal',
@@ -48,8 +48,6 @@ describe('unkayOS 2.0 Production Readiness (Phase 7)', () => {
             'file-manager',
             'text-editor',
             'store',
-            'euterpe',
-            'cine',
             'openui'
         ];
 

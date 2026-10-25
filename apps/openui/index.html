@@ -1,60 +1,223 @@
-<div class="openui-app">
-  <header class="openui-header">
-    <div class="openui-brand">
-      <span class="openui-icon">✨</span>
-      <div>
-        <h1>OpenUI Generative Studio</h1>
-        <span class="openui-subtitle">Criação Declarativa de Aplicativos & Componentes com IA</span>
-      </div>
+<div class="openui-studio-app">
+  <!-- Top Native Toolbar -->
+  <header class="openui-toolbar">
+    <div class="toolbar-brand">
+      <span class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M3 9h18"/>
+          <path d="M9 21V9"/>
+          <path d="M14 13l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8.8-1.7z" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      <span class="brand-title">OpenUI Studio</span>
+      <span class="brand-version">v2.0</span>
     </div>
-    <div class="openui-header-actions">
-      <button class="openui-btn primary" id="installGeneratedBtn" disabled>🚀 Instalar como .unkayapp</button>
+
+    <div class="toolbar-separator"></div>
+
+    <div class="toolbar-actions">
+      <button class="toolbar-btn" id="newProjectBtn" title="Novo Projeto">
+        <span class="btn-icon">📄</span> Novo
+      </button>
+      <button class="toolbar-btn" id="saveVfsBtn" title="Salvar no Sistema de Arquivos Virtual">
+        <span class="btn-icon">💾</span> Salvar VFS
+      </button>
+      <button class="toolbar-btn" id="exportPkgBtn" title="Exportar Pacote .unkayapp">
+        <span class="btn-icon">📦</span> Exportar .unkayapp
+      </button>
+      <button class="toolbar-btn primary" id="launchWindowBtn" title="Executar como Janela no unkayOS">
+        <span class="btn-icon">🚀</span> Executar Janela
+      </button>
+    </div>
+
+    <div class="toolbar-spacer"></div>
+
+    <div class="toolbar-view-toggle">
+      <button class="view-btn active" id="viewSplitBtn" title="Visualização Dividida">Dividido</button>
+      <button class="view-btn" id="viewCanvasBtn" title="Apenas Canvas Visual">Canvas</button>
+      <button class="view-btn" id="viewCodeBtn" title="Apenas Editor de Código">Código</button>
     </div>
   </header>
 
-  <div class="openui-layout">
-    <!-- Left Panel: Prompt Editor & Presets -->
-    <aside class="openui-editor-pane">
-      <div class="preset-section">
-        <label>Modelos Rápidos:</label>
-        <div class="preset-chips">
-          <button class="preset-btn" data-preset="monitor">📊 Monitor de Recursos</button>
-          <button class="preset-btn" data-preset="converter">💱 Conversor de Câmbio</button>
-          <button class="preset-btn" data-preset="pomodoro">⏱️ Cronômetro Pomodoro</button>
+  <!-- Studio Main Body -->
+  <div class="openui-body">
+    <!-- Left Navigation / Inspector Sidebar -->
+    <aside class="openui-sidebar">
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" data-tab="ai" id="tabAi">✨ Familiar AI</button>
+        <button class="sidebar-tab" data-tab="components" id="tabComponents">🧩 Componentes</button>
+        <button class="sidebar-tab" data-tab="manifest" id="tabManifest">⚙️ Manifesto</button>
+      </div>
+
+      <!-- Tab 1: AI Prompt & Generation -->
+      <div class="sidebar-pane active" id="paneAi">
+        <div class="pane-section">
+          <label class="section-label">Modelos Canônicos RDA:</label>
+          <div class="preset-selector-grid">
+            <button class="preset-card-btn active" data-preset="dashboard">
+              <span class="preset-title">📊 Dashboard de Recursos</span>
+              <span class="preset-desc">Cards, KPIs, métricas e log do sistema</span>
+            </button>
+            <button class="preset-card-btn" data-preset="kanban">
+              <span class="preset-title">📋 Quadro Kanban de Tarefas</span>
+              <span class="preset-desc">Colunas Todo, Wip e Done com badges</span>
+            </button>
+            <button class="preset-card-btn" data-preset="form">
+              <span class="preset-title">⚙️ Painel de Configurações</span>
+              <span class="preset-desc">Inputs, switches e persistência local</span>
+            </button>
+            <button class="preset-card-btn" data-preset="file-inspector">
+              <span class="preset-title">📁 Inspetor de VFS</span>
+              <span class="preset-desc">Tabelas e exploração de dados OPFS</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pane-section">
+          <label class="section-label" for="promptInput">Prompt para IA Generativa:</label>
+          <textarea id="promptInput" class="openui-prompt-area" rows="4" placeholder="Descreva a interface desejada usando componentes do Design System RDA..."></textarea>
+          <div class="prompt-hint">Dica: Os tokens do Design System (@reversodoavesso/design-system) são aplicados automaticamente.</div>
+          <button class="generate-action-btn" id="generateActionBtn">
+            <span class="btn-sparkle">✨</span> Gerar Interface com IA
+          </button>
         </div>
       </div>
 
-      <div class="prompt-box">
-        <label for="promptInput">Descreva a Interface Desejada:</label>
-        <textarea id="promptInput" placeholder="Ex: Crie um painel escuro com cartões de status do servidor, indicadores de CPU e memória, e um botão de ação com tokens do Design System RDA..."></textarea>
-      </div>
-
-      <div class="spec-editor-box">
-        <div class="spec-header">
-          <label>Especificação Declarativa (.openui):</label>
-          <button class="copy-btn" id="copySpecBtn">Copiar</button>
+      <!-- Tab 2: RDA DS Component Palette -->
+      <div class="sidebar-pane" id="paneComponents">
+        <div class="pane-section">
+          <label class="section-label">Clique para Inserir no Canvas:</label>
+          <div class="components-palette">
+            <button class="component-item-btn" data-snippet="button-primary">
+              <span class="comp-tag">Botão Primário</span>
+              <code>.rda-btn-primary (Cyan)</code>
+            </button>
+            <button class="component-item-btn" data-snippet="button-secondary">
+              <span class="comp-tag">Botão Secundário</span>
+              <code>.rda-btn-secondary</code>
+            </button>
+            <button class="component-item-btn" data-snippet="card">
+              <span class="comp-tag">Card RDA</span>
+              <code>.rda-card (Dark Surface)</code>
+            </button>
+            <button class="component-item-btn" data-snippet="badge">
+              <span class="comp-tag">Status Badge</span>
+              <code>.rda-badge (Cyan / Success)</code>
+            </button>
+            <button class="component-item-btn" data-snippet="metric">
+              <span class="comp-tag">KPI / Estatística</span>
+              <code>.rda-metric-box</code>
+            </button>
+            <button class="component-item-btn" data-snippet="input">
+              <span class="comp-tag">Input Text</span>
+              <code>.rda-input</code>
+            </button>
+            <button class="component-item-btn" data-snippet="table">
+              <span class="comp-tag">Tabela de Dados</span>
+              <code>.rda-table</code>
+            </button>
+          </div>
         </div>
-        <textarea id="specInput" spellcheck="false"></textarea>
       </div>
 
-      <button class="generate-btn" id="generateBtn">✨ Gerar com IA (Familiar)</button>
+      <!-- Tab 3: Package Manifest & Permissions -->
+      <div class="sidebar-pane" id="paneManifest">
+        <div class="pane-section">
+          <label class="section-label" for="manifestAppId">ID do Aplicativo (slug):</label>
+          <input type="text" id="manifestAppId" class="openui-input" value="openui-custom-app" />
+
+          <label class="section-label" for="manifestAppName" style="margin-top: 10px;">Nome da Aplicação:</label>
+          <input type="text" id="manifestAppName" class="openui-input" value="Meu App Gerado" />
+
+          <label class="section-label" for="manifestAppVersion" style="margin-top: 10px;">Versão SemVer:</label>
+          <input type="text" id="manifestAppVersion" class="openui-input" value="1.0.0" />
+
+          <label class="section-label" style="margin-top: 14px;">Permissões do SDK Declaradas:</label>
+          <div class="permissions-checklist">
+            <label class="perm-check-item">
+              <input type="checkbox" id="permStorageLocal" checked />
+              <span><code>storage:local</code> (Acesso ao VFS do App)</span>
+            </label>
+            <label class="perm-check-item">
+              <input type="checkbox" id="permAiGenerate" checked />
+              <span><code>ai:generate</code> (Chamadas a unkay.ai)</span>
+            </label>
+            <label class="perm-check-item">
+              <input type="checkbox" id="permAuthSession" />
+              <span><code>auth:session</code> (Usuário e JWT)</span>
+            </label>
+            <label class="perm-check-item">
+              <input type="checkbox" id="permComputeWasm" />
+              <span><code>compute:wasm</code> (Cálculo Wasm local)</span>
+            </label>
+          </div>
+        </div>
+      </div>
     </aside>
 
-    <!-- Right Panel: Live Shadow DOM Sandbox Preview -->
-    <main class="openui-preview-pane">
-      <div class="preview-header">
-        <div class="preview-title">
-          <span>🖥️ Live Preview (Shadow DOM Sandbox)</span>
-          <span class="preview-badge" id="previewBadge">Aguardando geração</span>
+    <!-- Center & Right: Canvas and Code Editor Split View -->
+    <main class="openui-workspace" id="workspaceContainer">
+      <!-- Live Sandbox Canvas Panel -->
+      <section class="workspace-canvas-panel" id="canvasPanel">
+        <div class="panel-header">
+          <div class="canvas-info">
+            <span class="canvas-dot online"></span>
+            <span class="canvas-title">Live Preview</span>
+            <span class="canvas-mode-badge" id="canvasModeBadge">Shadow DOM Sandbox • Tokens RDA Ativos</span>
+          </div>
+          <div class="canvas-controls">
+            <button class="canvas-control-btn active" data-res="full" title="100% da Janela">100%</button>
+            <button class="canvas-control-btn" data-res="medium" title="Resolução 720px">720p</button>
+            <button class="canvas-control-btn" data-res="compact" title="Resolução 480px">Compacto</button>
+            <button class="canvas-control-btn" id="reloadCanvasBtn" title="Recarregar Sandbox">🔄</button>
+          </div>
         </div>
-        <button class="reload-btn" id="reloadPreviewBtn">🔄 Recarregar</button>
-      </div>
-      <div class="preview-viewport" id="previewViewport">
-        <div class="placeholder-msg">
-          <div style="font-size: 36px; margin-bottom: 8px;">🎨</div>
-          <p>Selecione um modelo rápido ou descreva uma interface para visualizar a aplicação em tempo real.</p>
+
+        <div class="canvas-viewport" id="canvasViewport">
+          <div class="sandbox-host-container" id="sandboxHost"></div>
         </div>
-      </div>
+      </section>
+
+      <!-- Code & Spec Editor Panel -->
+      <section class="workspace-code-panel" id="codePanel">
+        <div class="panel-header">
+          <div class="code-tabs">
+            <button class="code-tab active" data-mode="spec" id="codeTabSpec">Markup & Layout (.html / .openui)</button>
+            <button class="code-tab" data-mode="manifest" id="codeTabManifest">Manifesto (package.json)</button>
+          </div>
+          <div class="code-actions">
+            <button class="code-action-btn" id="formatCodeBtn">Formatar</button>
+            <button class="code-action-btn" id="copyCodeBtn">Copiar</button>
+          </div>
+        </div>
+
+        <div class="code-editor-viewport">
+          <textarea id="codeEditorInput" class="code-textarea" spellcheck="false" placeholder="Carregando código..."></textarea>
+        </div>
+      </section>
     </main>
   </div>
+
+  <!-- Studio Bottom Statusbar -->
+  <footer class="openui-statusbar">
+    <div class="status-item">
+      <span class="status-label">VFS:</span>
+      <span class="status-value" id="statusVfsPath">/home/user/apps/openui-custom-app</span>
+    </div>
+    <div class="status-separator"></div>
+    <div class="status-item">
+      <span class="status-label">SDK:</span>
+      <span class="status-value">unkayOS v2.0 (Scoped Sandbox)</span>
+    </div>
+    <div class="status-separator"></div>
+    <div class="status-item">
+      <span class="status-label">Design System:</span>
+      <span class="status-value highlight">@reversodoavesso/design-system</span>
+    </div>
+    <div class="status-spacer"></div>
+    <div class="status-item" id="statusNotification">
+      <span class="status-ready">✓ Pronto</span>
+    </div>
+  </footer>
 </div>
