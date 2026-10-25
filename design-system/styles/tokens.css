@@ -179,7 +179,35 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
   --blur-intensity: blur(8px);
-  --size-small-icon: 8px;
+  --size-small-icon: 10px;
+
+  /* ==========================================================================
+     WINDOW SYSTEM & DESKTOP CONTROLS
+     ========================================================================== */
+  --color-window-close: #ff5f56;
+  --color-window-minimize: #ffbd2e;
+  --color-window-maximize: #27c93f;
+
+  --size-button: 14px;
+  --size-resize-handle: 6px;
+  --size-topbar-height: 40px;
+  --size-content-max-width: 300px;
+
+  --border-radius-circle: 50%;
+  --opacity-high: 0.95;
+  --opacity-medium: 0.8;
+  --opacity-low: 0.5;
+
+  --color-dark-primary-middle-up-opacity: rgba(18, 18, 18, 0.88);
+  --color-focus: var(--rda-color-primary-400);
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
 
   --transition-ease: all 0.15s ease;
 }

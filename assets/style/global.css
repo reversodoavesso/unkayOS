@@ -393,26 +393,31 @@ body {
 .app__board_bottom-left,
 .app__board_bottom-right {
   position: absolute;
+  z-index: 25;
+  pointer-events: auto;
+  user-select: none;
   /* z-index gerenciado dinamicamente pelo WindowLayerManager */
   /* Bordas ficam sempre acima da própria janela através do sistema de camadas */
 }
 .app__board_right,
 .app__board_left {
-  width: var(--size-resize-handle);
+  top: 0;
+  width: var(--size-resize-handle, 6px);
   height: 100%;
 }
 .app__board_right {
-  right: -2px; /* Mover 2px para fora para não ser cortado pelo overflow */
+  right: 0;
   cursor: ew-resize;
 }
 .app__board_left {
-  left: -2px; /* Mover 2px para fora para não ser cortado pelo overflow */
+  left: 0;
   cursor: ew-resize;
 }
 .app__board_top,
 .app__board_bottom {
+  left: 0;
   width: 100%;
-  height: var(--size-resize-handle);
+  height: var(--size-resize-handle, 6px);
 }
 .app__board_top {
   top: 0;
@@ -426,10 +431,9 @@ body {
 .app__board_top-right,
 .app__board_bottom-left,
 .app__board_bottom-right {
-  width: var(--size-button);
-  height: var(--size-button);
-  /* z-index relativo - sempre acima da própria janela */
-  z-index: 15;
+  width: var(--size-button, 14px);
+  height: var(--size-button, 14px);
+  z-index: 30;
 }
 .app__board_top-left {
   top: 0;
@@ -477,25 +481,38 @@ body {
 .app__top_bar__close_button,
 .app__top_bar__min_button,
 .app__top_bar__max_button {
-  width: var(--size-button);
-  height: var(--size-button);
-  min-width: var(--size-button);
-  min-height: var(--size-button);
-  border-radius: var(--border-radius-circle);
-  margin-right: var(--spacing-sm);
+  width: var(--size-button, 13px);
+  height: var(--size-button, 13px);
+  min-width: var(--size-button, 13px);
+  min-height: var(--size-button, 13px);
+  border-radius: var(--border-radius-circle, 50%);
+  margin-right: var(--spacing-sm, 8px);
   cursor: pointer;
-  transition: var(--transition-ease);
+  transition: var(--transition-ease, all 0.15s ease);
   position: relative;
-  /* z-index será definido dinamicamente pelo WindowLayerManager */
+  z-index: 35;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 .app__top_bar__close_button {
-  background-color: var(--color-window-close);
+  background-color: var(--color-window-close, #ff5f56);
 }
 .app__top_bar__min_button {
-  background-color: var(--color-window-minimize);
+  background-color: var(--color-window-minimize, #ffbd2e);
 }
 .app__top_bar__max_button {
-  background-color: var(--color-window-maximize);
+  background-color: var(--color-window-maximize, #27c93f);
+}
+.app__top_bar__close_button:hover {
+  filter: brightness(1.25);
+  box-shadow: 0 0 6px rgba(255, 95, 86, 0.6);
+}
+.app__top_bar__min_button:hover {
+  filter: brightness(1.25);
+  box-shadow: 0 0 6px rgba(255, 189, 46, 0.6);
+}
+.app__top_bar__max_button:hover {
+  filter: brightness(1.25);
+  box-shadow: 0 0 6px rgba(39, 201, 63, 0.6);
 }
 
 .app__content {
