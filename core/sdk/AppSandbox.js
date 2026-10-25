@@ -42,32 +42,34 @@ export class AppSandbox {
                 height: 100%;
                 overflow: auto;
                 box-sizing: border-box;
-                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                color: #e5e7eb;
-                background: #111827;
+                font-family: var(--rda-font-family-base, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+                color: var(--rda-content-primary, #fafafa);
+                background: var(--rda-surface-primary, #0a0a0a);
             }
             .app-container {
-                padding: 16px;
+                padding: var(--rda-spacing-md, 16px);
                 min-height: 100%;
                 box-sizing: border-box;
             }
             button {
                 cursor: pointer;
-                border-radius: 6px;
-                border: 1px solid rgba(255,255,255,0.1);
-                background: #374151;
-                color: #fff;
+                border-radius: var(--rda-radius-md, 6px);
+                border: 1px solid var(--rda-border-default, #262626);
+                background: var(--rda-surface-tertiary, #262626);
+                color: var(--rda-content-primary, #fafafa);
                 padding: 8px 14px;
                 font-size: 14px;
-                transition: background 0.15s ease;
+                font-family: inherit;
+                transition: background 0.15s ease, border-color 0.15s ease;
             }
             button:hover {
-                background: #4b5563;
+                background: var(--rda-surface-elevated, #333333);
+                border-color: var(--rda-border-subtle, #404040);
             }
             .badge {
                 display: inline-block;
                 padding: 2px 8px;
-                border-radius: 9999px;
+                border-radius: var(--rda-radius-full, 9999px);
                 font-size: 11px;
                 font-weight: 600;
             }
@@ -197,14 +199,14 @@ export class AppSandbox {
      */
     renderOpenUI(container, spec) {
         container.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
-                    <h2 style="margin: 0; font-size: 18px; color: #60a5fa;">✨ ${this.package.name}</h2>
-                    <span class="badge" style="background: rgba(96,165,250,0.2); color: #93c5fd;">OpenUI Declarativo</span>
+            <div style="display: flex; flex-direction: column; gap: var(--rda-spacing-md, 12px);">
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--rda-border-default, #262626); padding-bottom: 8px;">
+                    <h2 style="margin: 0; font-size: 18px; color: var(--rda-color-primary-base, #06b6d4); font-family: var(--rda-font-family-display, 'Archivo', sans-serif);">✨ ${this.package.name}</h2>
+                    <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: var(--rda-color-primary-light, #22d3ee); border: 1px solid rgba(6, 182, 212, 0.3);">OpenUI Declarativo</span>
                 </div>
-                <p style="color: #9ca3af; font-size: 13px; margin: 0;">${this.package.description}</p>
-                <div id="openui-body" style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 14px; border: 1px solid rgba(255,255,255,0.05);">
-                    <div style="font-size: 13px; color: #d1d5db; line-height: 1.5;">
+                <p style="color: var(--rda-content-secondary, #a3a3a3); font-size: 13px; margin: 0;">${this.package.description}</p>
+                <div id="openui-body" style="background: var(--rda-surface-secondary, #141414); border-radius: var(--rda-radius-lg, 8px); padding: var(--rda-spacing-md, 14px); border: 1px solid var(--rda-border-default, #262626);">
+                    <div style="font-size: 13px; color: var(--rda-content-primary, #fafafa); line-height: 1.5;">
                         ${typeof spec === 'string' && spec.startsWith('<') ? spec : '<p>Ambiente renderizado com tokens do @reversodoavesso/design-system.</p>'}
                     </div>
                 </div>

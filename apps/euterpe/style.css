@@ -1,20 +1,20 @@
-/* apps/euterpe/style.css - Euterpe Audio & Music Station Styles */
+/* apps/euterpe/style.css - Euterpe Music & Audio Station (RDA Design System) */
 
 .euterpe-app {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #090d16;
-  color: #f3f4f6;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--rda-surface-primary);
+  color: var(--rda-content-primary);
+  font-family: var(--rda-font-family-base);
   user-select: none;
   overflow: hidden;
 }
 
 .euterpe-header {
-  background: #111827;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 20px;
+  background: var(--rda-surface-secondary);
+  border-bottom: 1px solid var(--rda-border-primary);
+  padding: var(--rda-spacing-3) var(--rda-spacing-5);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -23,71 +23,80 @@
 .euterpe-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--rda-spacing-3);
 }
 
 .euterpe-icon {
-  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rda-content-brand);
 }
 
 .euterpe-brand h1 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-family: var(--rda-font-family-heading);
   font-weight: 700;
-  background: linear-gradient(135deg, #f472b6, #c084fc);
+  background: linear-gradient(135deg, var(--rda-content-brand), #ec4899);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .euterpe-subtitle {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--rda-content-muted);
 }
 
 .euterpe-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--rda-spacing-2);
 }
 
 .euterpe-btn, .euterpe-btn-upload, .play-btn, .analyze-btn, .export-btn {
-  background: #374151;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  background: var(--rda-surface-tertiary);
+  color: var(--rda-content-primary);
+  border: 1px solid var(--rda-border-primary);
+  border-radius: var(--rda-radius-sm);
   padding: 6px 12px;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-ease);
+}
+
+.euterpe-btn:hover {
+  background: var(--rda-surface-hover);
 }
 
 .euterpe-btn-upload {
-  background: #4f46e5;
-  border-color: #6366f1;
+  background: var(--rda-color-primary-600);
+  border-color: var(--rda-color-primary-500);
 }
 
 .euterpe-btn-upload:hover {
-  background: #4338ca;
+  background: var(--rda-color-primary-500);
 }
 
 .euterpe-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 16px 20px;
-  gap: 16px;
+  padding: var(--rda-spacing-4) var(--rda-spacing-5);
+  gap: var(--rda-spacing-4);
   overflow-y: auto;
 }
 
 .dsp-panel {
-  background: #111827;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 16px;
+  background: var(--rda-surface-card);
+  border: 1px solid var(--rda-border-primary);
+  border-radius: var(--rda-radius-md);
+  padding: var(--rda-spacing-4);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--rda-spacing-3);
 }
 
 .dsp-header {
@@ -98,19 +107,20 @@
 
 .dsp-header h3 {
   margin: 0;
-  font-size: 14px;
-  color: #e5e7eb;
+  font-size: 13px;
+  font-family: var(--rda-font-family-heading);
+  color: var(--rda-content-primary);
 }
 
 .dsp-indicators {
   display: flex;
-  gap: 12px;
+  gap: var(--rda-spacing-3);
 }
 
 .indicator-badge {
-  background: #1f2937;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  background: var(--rda-surface-primary);
+  border: 1px solid var(--rda-border-subtle);
+  border-radius: var(--rda-radius-md);
   padding: 4px 12px;
   display: flex;
   flex-direction: column;
@@ -119,25 +129,26 @@
 
 .indicator-badge .label {
   font-size: 9px;
-  color: #9ca3af;
+  color: var(--rda-content-muted);
   font-weight: 700;
   letter-spacing: 0.05em;
 }
 
 .indicator-badge .val {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
-  color: #38bdf8;
+  font-family: var(--rda-font-family-mono);
+  color: var(--rda-content-brand);
 }
 
-#bpmBadge .val { color: #f43f5e; }
-#keyBadge .val { color: #a855f7; }
-#energyBadge .val { color: #10b981; }
+#bpmBadge .val { color: var(--rda-status-error); }
+#keyBadge .val { color: var(--rda-color-primary-300); }
+#energyBadge .val { color: var(--rda-status-success); }
 
 .canvas-container {
   background: #030712;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--rda-radius-sm);
+  border: 1px solid var(--rda-border-subtle);
   overflow: hidden;
   height: 140px;
   display: flex;
@@ -151,49 +162,50 @@
 .player-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--rda-spacing-3);
   padding-top: 4px;
 }
 
 .play-btn {
-  background: #ec4899;
-  border-color: #f472b6;
+  background: var(--rda-color-primary-500);
+  border-color: var(--rda-color-primary-400);
+  color: var(--rda-content-inverse);
   min-width: 110px;
 }
 
 .play-btn:hover {
-  background: #db2777;
+  background: var(--rda-color-primary-400);
 }
 
 .time-label {
   font-size: 12px;
-  font-family: monospace;
-  color: #9ca3af;
+  font-family: var(--rda-font-family-mono);
+  color: var(--rda-content-secondary);
 }
 
 .track-info-display {
   flex: 1;
   font-size: 12px;
-  color: #d1d5db;
+  color: var(--rda-content-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .analyze-btn {
-  background: #0284c7;
-  border-color: #38bdf8;
+  background: var(--rda-surface-tertiary);
+  border-color: var(--rda-border-primary);
 }
 
 .curations-panel {
-  background: #111827;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 16px;
+  background: var(--rda-surface-card);
+  border: 1px solid var(--rda-border-primary);
+  border-radius: var(--rda-radius-md);
+  padding: var(--rda-spacing-4);
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--rda-spacing-3);
 }
 
 .curations-header {
@@ -204,53 +216,59 @@
 
 .curations-header h3 {
   margin: 0;
-  font-size: 14px;
-  color: #e5e7eb;
+  font-size: 13px;
+  font-family: var(--rda-font-family-heading);
+  color: var(--rda-content-primary);
 }
 
 .export-btn {
-  background: #059669;
-  border-color: #10b981;
+  background: var(--rda-surface-tertiary);
+  border-color: var(--rda-border-primary);
+  color: var(--rda-content-brand);
 }
 
 .curations-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--rda-spacing-2);
   overflow-y: auto;
 }
 
 .track-row {
-  background: #1f2937;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
+  background: var(--rda-surface-primary);
+  border: 1px solid var(--rda-border-subtle);
+  border-radius: var(--rda-radius-sm);
   padding: 8px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 13px;
-  transition: background 0.15s ease;
+  transition: background var(--transition-ease), border-color var(--transition-ease);
+  cursor: pointer;
 }
 
 .track-row:hover {
-  background: #374151;
+  background: var(--rda-surface-hover);
+  border-color: var(--rda-border-hover);
 }
 
 .track-title {
   font-weight: 600;
-  color: #f9fafb;
+  color: var(--rda-content-primary);
 }
 
 .track-meta {
   display: flex;
-  gap: 16px;
+  gap: var(--rda-spacing-4);
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--rda-content-muted);
 }
 
 .meta-pill {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--rda-surface-tertiary);
+  border: 1px solid var(--rda-border-subtle);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--rda-radius-sm);
   font-weight: 600;
+  font-family: var(--rda-font-family-mono);
 }

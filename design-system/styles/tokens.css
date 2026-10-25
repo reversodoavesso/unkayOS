@@ -1,106 +1,185 @@
-/* design-system/styles/tokens.css */
+/* design-system/styles/tokens.css - unkayOS 2.0 / RDA Design System Tokens */
 
 :root {
-    /* Cores Primárias */
-    --color-primary-base: #37eae8;
-    --color-primary-variation-1: #12f9e7;
-    --color-primary-variation-2: #1ac0bb;
-  
-    /* Cores Secundárias */
-    --color-secondary-base: #092335;
-    --color-secondary-variation-1: #0b2c45;
-    --color-secondary-variation-2: #0f3d59;
-  
-    /* Cores Claras */
-    --color-light-primary: rgba(215, 215, 215, 1);
-    --color-light-secondary: rgba(180, 180, 180, 1);
-    --color-light-tertiary: rgba(150, 150, 150, 1);
-  
-    /* Cores Escuras */
-    --color-dark-primary: rgba(43, 43, 43, 1);
-    --color-dark-primary-high-opacity: rgba(43, 43, 43, 0.8);
-    --color-dark-primary-middle-up-opacity: rgba(43, 43, 43, 0.65);
-    --color-dark-primary-middle-opacity: rgba(43, 43, 43, 0.5);
-    --color-dark-secondary: rgba(25, 25, 25, 1);
-    --color-dark-tertiary: rgba(34, 34, 34, 1);
-  
-    /* Cores auxiliares */
-    --color-info: #3498db;
-    --color-success: #2ecc71;
-    --color-warning: #f1c40f;
-    --color-error: #e74c3c;
-    --color-accent-highlight: #ff7f50;
-  
-    /* Window controls */
-    --color-window-close: #ff5f56;
-    --color-window-minimize: #ffbd2e;
-    --color-window-maximize: #27c93f;
-  
-    /* Texto */
-    --color-text-on-dark: #ecf0f1;
-    --color-text-on-light: #2c3e50;
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #cccccc;
-    --color-text-tertiary: #888888;
-    --color-text-muted: #666666;
-  
-    /* Superfícies */
-    --color-surface-primary: #1e1e1e;
-    --color-surface-secondary: #2d2d2d;
-    --color-surface-tertiary: #3e3e3e;
-  
-    /* Background */
-    --color-background-primary: #1e1e1e;
-    --color-background-secondary: #2d2d2d;
-  
-    /* Bordas */
-    --color-border-light: #bdc3c7;
-    --color-border-dark: #34495e;
-    --color-border-primary: #404040;
-    --color-border-secondary: #505050;
-  
-    /* Efeitos */
-    --shadow-color: rgba(0, 0, 0, 0.2);
-    --blur-intensity: 5px;
-  
-    /* Espaçamento */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
-    --spacing-xl: 32px;
+  /* ==========================================================================
+     RDA DESIGN SYSTEM PRIMITIVE TOKENS (§3.2 - Official Cyan Identity)
+     ========================================================================== */
+  --rda-color-primary-50: #ecfeff;
+  --rda-color-primary-100: #cffafe;
+  --rda-color-primary-200: #a5f3fc;
+  --rda-color-primary-300: #67e8f9;
+  --rda-color-primary-400: #22d3ee;
+  --rda-color-primary-500: #06b6d4;
+  --rda-color-primary-600: #0891b2;
+  --rda-color-primary-700: #0e7490;
+  --rda-color-primary-800: #155e75;
+  --rda-color-primary-900: #164e63;
+  --rda-color-primary-950: #083344;
 
-    /* Tamanhos específicos */
-    --size-resize-handle: 5px;
-    --size-small-icon: 10px;
-    --size-button: 15px;
-    --size-topbar-height: 45px;
-    --size-content-max-width: 300px;
-  
-    /* Border radius */
-    --border-radius-sm: 4px;
-    --border-radius-md: 8px;
-    --border-radius-lg: 12px;
-    --border-radius-circle: 50%;
+  /* Secondary (Slate) */
+  --rda-color-secondary-50: #f8fafc;
+  --rda-color-secondary-100: #f1f5f9;
+  --rda-color-secondary-200: #e2e8f0;
+  --rda-color-secondary-300: #cbd5e1;
+  --rda-color-secondary-400: #94a3b8;
+  --rda-color-secondary-500: #64748b;
+  --rda-color-secondary-600: #475569;
+  --rda-color-secondary-700: #334155;
+  --rda-color-secondary-800: #1e293b;
+  --rda-color-secondary-900: #0f172a;
+  --rda-color-secondary-950: #020617;
 
-    /* Opacidade */
-    --opacity-high: 0.9;
-    --opacity-medium: 0.8;
-    --opacity-low: 0.5;
+  /* Neutrals */
+  --rda-color-neutral-950: #0a0a0a;
+  --rda-color-neutral-900: #171717;
+  --rda-color-neutral-800: #262626;
+  --rda-color-neutral-700: #404040;
+  --rda-color-neutral-600: #525252;
+  --rda-color-neutral-500: #737373;
+  --rda-color-neutral-400: #a3a3a3;
+  --rda-color-neutral-200: #e5e5e5;
+  --rda-color-neutral-50: #fafafa;
 
-    /* Transições */
-    --transition-ease: all 0.2s ease-in-out;
-    
-    /* Estados de interação */
-    --color-hover: #4e4e4e;
-    --color-active: #5e5e5e;
-    --color-focus: var(--color-primary-base);
-    
-    /* Cores específicas para aplicativos */
-    --color-folder: #dcb67a;
-    --color-file: #519aba;
-    
-    /* Cores derivadas para compatibilidade */
-    --color-background: var(--color-dark-secondary);
-  }
-  
+  /* ==========================================================================
+     RDA DESIGN SYSTEM SEMANTIC TOKENS (Dark Theme Standard)
+     ========================================================================== */
+  --rda-surface-primary: #0a0a0a;
+  --rda-surface-secondary: #141414;
+  --rda-surface-tertiary: #1e1e1e;
+  --rda-surface-card: #141414;
+  --rda-surface-input: #0f0f0f;
+  --rda-surface-hover: #262626;
+  --rda-surface-active: #333333;
+  --rda-surface-elevated: #1f1f1f;
+  --rda-surface-overlay: rgba(0, 0, 0, 0.65);
+
+  --rda-content-primary: #fafafa;
+  --rda-content-secondary: #e5e5e5;
+  --rda-content-tertiary: #a3a3a3;
+  --rda-content-muted: #737373;
+  --rda-content-brand: #22d3ee;
+  --rda-content-inverse: #0a0a0a;
+
+  --rda-border-primary: #2d2d2d;
+  --rda-border-subtle: #1e1e1e;
+  --rda-border-focus: #22d3ee;
+  --rda-border-hover: #444444;
+
+  --rda-status-success: #10b981;
+  --rda-status-warning: #f59e0b;
+  --rda-status-error: #f43f5e;
+  --rda-status-info: #0ea5e9;
+
+  /* Typography */
+  --rda-font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --rda-font-family-heading: "Archivo", "Inter", sans-serif;
+  --rda-font-family-mono: "Fira Code", "Courier New", monospace;
+
+  /* Spacing */
+  --rda-spacing-1: 0.25rem;
+  --rda-spacing-2: 0.5rem;
+  --rda-spacing-3: 0.75rem;
+  --rda-spacing-4: 1rem;
+  --rda-spacing-5: 1.25rem;
+  --rda-spacing-6: 1.5rem;
+  --rda-spacing-8: 2rem;
+
+  /* Border radius */
+  --rda-radius-sm: 0.25rem;
+  --rda-radius-md: 0.375rem;
+  --rda-radius-lg: 0.5rem;
+  --rda-radius-xl: 0.75rem;
+  --rda-radius-full: 9999px;
+
+  /* ==========================================================================
+     BACKWARD COMPATIBILITY ALIASES (Maps unkayOS legacy variables to RDA DS)
+     ========================================================================== */
+  --color-primary-base: var(--rda-color-primary-400);
+  --color-primary-variation-1: var(--rda-color-primary-300);
+  --color-primary-variation-2: var(--rda-color-primary-500);
+
+  --color-secondary-base: var(--rda-surface-secondary);
+  --color-secondary-variation-1: var(--rda-surface-tertiary);
+  --color-secondary-variation-2: var(--rda-surface-hover);
+
+  --color-dark-primary: var(--rda-surface-primary);
+  --color-dark-secondary: var(--rda-surface-secondary);
+  --color-dark-tertiary: var(--rda-surface-tertiary);
+
+  --color-text-primary: var(--rda-content-primary);
+  --color-text-secondary: var(--rda-content-secondary);
+  --color-text-tertiary: var(--rda-content-tertiary);
+  --color-text-muted: var(--rda-content-muted);
+
+  --color-surface-primary: var(--rda-surface-primary);
+  --color-surface-secondary: var(--rda-surface-secondary);
+  --color-surface-tertiary: var(--rda-surface-tertiary);
+
+  --color-background-primary: var(--rda-surface-primary);
+  --color-background-secondary: var(--rda-surface-secondary);
+
+  --color-border-primary: var(--rda-border-primary);
+  --color-border-secondary: var(--rda-border-subtle);
+  --color-border-dark: var(--rda-border-primary);
+
+  --color-info: var(--rda-status-info);
+  --color-info-base: var(--rda-status-info);
+  --color-success: var(--rda-status-success);
+  --color-warning: var(--rda-status-warning);
+  --color-error: var(--rda-status-error);
+
+  --color-primary: var(--rda-color-primary-500);
+  --color-primary-light: var(--rda-color-primary-400);
+  --color-primary-dark: var(--rda-color-primary-700);
+
+  --color-light-primary: var(--rda-content-primary);
+  --color-light-secondary: var(--rda-content-secondary);
+  --color-light-tertiary: var(--rda-content-tertiary);
+
+  --color-text-on-dark: var(--rda-content-primary);
+  --color-text-on-light: var(--rda-content-inverse);
+
+  --color-dark-primary-high-opacity: rgba(10, 10, 10, 0.85);
+  --color-dark-primary-middle-opacity: rgba(10, 10, 10, 0.5);
+
+  --color-background: var(--rda-surface-primary);
+  --color-surface: var(--rda-surface-secondary);
+  --color-hover: var(--rda-surface-hover);
+  --color-active: var(--rda-surface-active);
+
+  --surface-primary: var(--rda-surface-primary);
+  --surface-secondary: var(--rda-surface-secondary);
+  --surface-tertiary: var(--rda-surface-tertiary);
+
+  --text-primary: var(--rda-content-primary);
+  --text-secondary: var(--rda-content-secondary);
+  --text-tertiary: var(--rda-content-tertiary);
+
+  --border-primary: var(--rda-border-primary);
+  --border-secondary: var(--rda-border-subtle);
+
+  --color-file: var(--rda-content-secondary);
+  --color-folder: var(--rda-color-primary-400);
+
+  --border-radius-sm: var(--rda-radius-sm);
+  --border-radius-md: var(--rda-radius-md);
+  --border-radius-lg: var(--rda-radius-lg);
+
+  --font-family-base: var(--rda-font-family-base);
+  --font-family-heading: var(--rda-font-family-heading);
+  --font-family-mono: var(--rda-font-family-mono);
+
+  --spacing-xs: var(--rda-spacing-1);
+  --spacing-sm: var(--rda-spacing-2);
+  --spacing-md: var(--rda-spacing-4);
+  --spacing-lg: var(--rda-spacing-6);
+  --spacing-xl: var(--rda-spacing-8);
+
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+  --blur-intensity: blur(8px);
+  --size-small-icon: 8px;
+
+  --transition-ease: all 0.15s ease;
+}

@@ -1,20 +1,20 @@
-/* apps/openui/style.css - OpenUI Generative Studio Styles */
+/* apps/openui/style.css - OpenUI Generative Studio (RDA Design System) */
 
 .openui-app {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #090e17;
-  color: #f1f5f9;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--rda-surface-primary);
+  color: var(--rda-content-primary);
+  font-family: var(--rda-font-family-base);
   user-select: none;
   overflow: hidden;
 }
 
 .openui-header {
-  background: #111827;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 12px 20px;
+  background: var(--rda-surface-secondary);
+  border-bottom: 1px solid var(--rda-border-primary);
+  padding: var(--rda-spacing-3) var(--rda-spacing-5);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -23,46 +23,51 @@
 .openui-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--rda-spacing-3);
 }
 
 .openui-icon {
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rda-content-brand);
 }
 
 .openui-brand h1 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-family: var(--rda-font-family-heading);
   font-weight: 700;
-  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  background: linear-gradient(135deg, var(--rda-color-primary-300), var(--rda-color-primary-500));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .openui-subtitle {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--rda-content-muted);
 }
 
 .openui-btn {
-  background: #2563eb;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  background: var(--rda-color-primary-500);
+  color: var(--rda-content-inverse);
+  border: none;
+  border-radius: var(--rda-radius-sm);
   padding: 8px 14px;
+  font-family: inherit;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-ease);
 }
 
 .openui-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .openui-btn.primary:not(:disabled):hover {
-  background: #1d4ed8;
+  background: var(--rda-color-primary-400);
 }
 
 .openui-layout {
@@ -74,19 +79,19 @@
 /* Left Pane */
 .openui-editor-pane {
   width: 380px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  background: #0d131f;
-  padding: 16px;
+  border-right: 1px solid var(--rda-border-primary);
+  background: var(--rda-surface-secondary);
+  padding: var(--rda-spacing-4);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--rda-spacing-3);
   overflow-y: auto;
 }
 
 .preset-section label, .prompt-box label, .spec-header label {
   font-size: 11px;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--rda-content-muted);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-bottom: 6px;
@@ -100,34 +105,39 @@
 }
 
 .preset-btn {
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  color: #cbd5e1;
+  background: var(--rda-surface-tertiary);
+  border: 1px solid var(--rda-border-subtle);
+  border-radius: var(--rda-radius-sm);
+  color: var(--rda-content-secondary);
+  font-family: inherit;
   font-size: 11px;
   padding: 4px 8px;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--transition-ease);
 }
 
 .preset-btn:hover {
-  background: #334155;
-  color: #fff;
+  background: var(--rda-surface-hover);
+  color: var(--rda-content-primary);
 }
 
 .prompt-box textarea {
   width: 100%;
-  height: 90px;
-  background: #131b2e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  height: 80px;
+  background: var(--rda-surface-input);
+  border: 1px solid var(--rda-border-primary);
+  border-radius: var(--rda-radius-sm);
   padding: 8px 10px;
-  color: #f8fafc;
-  font-size: 12px;
+  color: var(--rda-content-primary);
   font-family: inherit;
+  font-size: 12px;
   resize: vertical;
   outline: none;
   box-sizing: border-box;
+}
+
+.prompt-box textarea:focus {
+  border-color: var(--rda-border-focus);
 }
 
 .spec-editor-box {
@@ -146,23 +156,24 @@
 .copy-btn, .reload-btn {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--rda-content-muted);
   font-size: 11px;
   cursor: pointer;
+  transition: color var(--transition-ease);
 }
 
 .copy-btn:hover, .reload-btn:hover {
-  color: #94a3b8;
+  color: var(--rda-content-brand);
 }
 
 #specInput {
   flex: 1;
-  background: #070a10;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
+  background: var(--rda-surface-primary);
+  border: 1px solid var(--rda-border-primary);
+  border-radius: var(--rda-radius-sm);
   padding: 10px;
-  color: #38bdf8;
-  font-family: 'Fira Code', 'Courier New', monospace;
+  color: var(--rda-color-primary-300);
+  font-family: var(--rda-font-family-mono);
   font-size: 11px;
   line-height: 1.4;
   outline: none;
@@ -170,16 +181,21 @@
   box-sizing: border-box;
 }
 
+#specInput:focus {
+  border-color: var(--rda-border-focus);
+}
+
 .generate-btn {
-  background: linear-gradient(135deg, #0284c7, #6366f1);
+  background: linear-gradient(135deg, var(--rda-color-primary-600), var(--rda-color-primary-400));
   border: none;
-  border-radius: 6px;
-  color: #fff;
+  border-radius: var(--rda-radius-sm);
+  color: var(--rda-content-inverse);
   padding: 10px;
-  font-size: 13px;
+  font-family: inherit;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--transition-ease);
 }
 
 .generate-btn:hover {
@@ -191,12 +207,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #080c14;
+  background: var(--rda-surface-primary);
 }
 
 .preview-header {
-  background: #111827;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--rda-surface-secondary);
+  border-bottom: 1px solid var(--rda-border-primary);
   padding: 10px 16px;
   display: flex;
   align-items: center;
@@ -208,22 +224,23 @@
   align-items: center;
   gap: 10px;
   font-size: 12px;
+  font-family: var(--rda-font-family-heading);
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--rda-content-primary);
 }
 
 .preview-badge {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
+  background: rgba(34, 211, 238, 0.15);
+  color: var(--rda-content-brand);
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: var(--rda-radius-full);
   font-size: 10px;
   font-weight: 700;
 }
 
 .preview-viewport {
   flex: 1;
-  padding: 20px;
+  padding: var(--rda-spacing-5);
   overflow: auto;
   display: flex;
   align-items: stretch;
@@ -233,7 +250,7 @@
 .placeholder-msg {
   margin: auto;
   text-align: center;
-  color: #64748b;
+  color: var(--rda-content-muted);
   max-width: 320px;
   font-size: 13px;
   line-height: 1.5;

@@ -96,15 +96,15 @@ export default class EuterpeApp extends BaseApp {
         const canvas = this.$('#dspCanvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#030712';
+        ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         this.drawIdleWaveform(ctx, canvas);
     }
 
     drawIdleWaveform(ctx, canvas) {
-        ctx.fillStyle = '#030712';
+        ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         const midY = canvas.height / 2;
@@ -134,7 +134,7 @@ export default class EuterpeApp extends BaseApp {
                 this.analyser.getByteFrequencyData(dataArray);
             }
 
-            ctx.fillStyle = '#030712';
+            ctx.fillStyle = '#0a0a0a';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             const barWidth = (canvas.width / bufferLength) * 2.2;
@@ -145,9 +145,9 @@ export default class EuterpeApp extends BaseApp {
                 barHeight = (dataArray[i] / 255) * (canvas.height - 10);
 
                 const grad = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
-                grad.addColorStop(0, '#ec4899');
-                grad.addColorStop(0.5, '#a855f7');
-                grad.addColorStop(1, '#38bdf8');
+                grad.addColorStop(0, '#06b6d4');
+                grad.addColorStop(0.5, '#22d3ee');
+                grad.addColorStop(1, '#a5f3fc');
 
                 ctx.fillStyle = grad;
                 ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
@@ -192,12 +192,12 @@ export default class EuterpeApp extends BaseApp {
 
         if (this.isPlaying) {
             btn.textContent = '⏸ Pausar';
-            btn.style.background = '#e11d48';
+            btn.style.background = 'var(--rda-status-error, #f43f5e)';
             this.startSyntheticOscillator();
             this.startSpectrumAnimation();
         } else {
             btn.textContent = '▶ Reproduzir';
-            btn.style.background = '#ec4899';
+            btn.style.background = 'var(--rda-color-primary-500, #06b6d4)';
             this.stopSyntheticOscillator();
         }
     }
