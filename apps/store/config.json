@@ -1,0 +1,16 @@
+{
+  "app_name": "Marketplace",
+  "icon_url": "icon.svg",
+  "dirApp": "index.html",
+  "jsFile": "main.js",
+  "styleFile": "style.css",
+  "mode": "system_window",
+  "width": "860px",
+  "height": "560px",
+  "x_position": "12vw",
+  "y_position": "10vh",
+  "minWidth": 580,
+  "minHeight": 380,
+  "autorun": false,
+  "hidden": false
+}
