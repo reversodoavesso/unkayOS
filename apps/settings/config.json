@@ -1,0 +1,16 @@
+{
+  "app_name": "Configurações",
+  "icon_url": "icon.svg",
+  "dirApp": "index.html",
+  "jsFile": "main.js",
+  "styleFile": "style.css",
+  "mode": "system_window",
+  "width": "880px",
+  "height": "620px",
+  "x_position": "14vw",
+  "y_position": "8vh",
+  "minWidth": 720,
+  "minHeight": 500,
+  "autorun": false,
+  "hidden": false
+}

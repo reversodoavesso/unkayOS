@@ -1,0 +1,287 @@
+<!-- apps/user-profile/index.html - Painel do Usuário unkayOS 2.0 (RDA SSO & Identity) -->
+<div id="user-profile-app" class="profile-container">
+  <!-- Top Identity Header Banner -->
+  <header class="profile-header">
+    <div class="avatar-wrapper">
+      <div class="avatar-ring">
+        <img id="userAvatarImg" class="user-avatar" src="/assets/icons/apps/generic_app_icon.svg" alt="Avatar do Usuário" />
+        <span id="userStatusDot" class="status-indicator status-guest" title="Status da Sessão"></span>
+      </div>
+      <button id="changeAvatarBtn" class="change-avatar-btn" title="Alterar Avatar">📷</button>
+    </div>
+
+    <div class="user-main-info">
+      <div class="user-title-row">
+        <h2 id="headerDisplayName" class="display-name">Convidado</h2>
+        <span id="headerTierBadge" class="tier-pill tier-guest">GUEST</span>
+        <span id="headerCircleBadge" class="circle-pill">Círculo Veil</span>
+      </div>
+      <div class="user-sub-row">
+        <span id="headerUsername" class="user-handle">@guest</span> • 
+        <span id="headerEmail" class="user-email">offline@unkayos.local</span>
+      </div>
+    </div>
+
+    <div class="header-action-group">
+      <button id="ssoQuickActionBtn" class="rda-btn rda-btn-primary">
+        <span class="btn-icon">⚡</span>
+        <span id="ssoQuickActionText">Entrar com SSO RDA</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs Strip -->
+  <nav class="profile-tabs-nav">
+    <button class="profile-tab-btn active" data-tab="identity">
+      <span class="tab-icon">👤</span> Identidade & Perfil
+    </button>
+    <button class="profile-tab-btn" data-tab="sso">
+      <span class="tab-icon">🛡️</span> Autenticação SSO RDA
+    </button>
+    <button class="profile-tab-btn" data-tab="preferences">
+      <span class="tab-icon">⚙️</span> Preferências Locais
+    </button>
+    <button class="profile-tab-btn" data-tab="storage">
+      <span class="tab-icon">💾</span> Quotas & Armazenamento
+    </button>
+  </nav>
+
+  <!-- Tab Content Sections Container -->
+  <main class="profile-content-body">
+    <!-- Section 1: Identidade & Perfil -->
+    <section id="sectionIdentity" class="profile-section active">
+      <div class="section-card">
+        <h3 class="card-title">Dados de Identidade</h3>
+        <p class="card-subtitle">Informações utilizadas em aplicativos, terminal e colaboração no sistema.</p>
+
+        <form id="identityForm" class="profile-form" onsubmit="return false;">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="inputDisplayName">Nome de Exibição</label>
+              <input type="text" id="inputDisplayName" class="rda-input" placeholder="Ex: Demiurge Explorer" />
+            </div>
+            <div class="form-group flex-1">
+              <label for="inputUsername">Nome de Usuário (Handle)</label>
+              <div class="input-prefix-wrapper">
+                <span class="input-prefix">@</span>
+                <input type="text" id="inputUsername" class="rda-input with-prefix" placeholder="usuario" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="inputEmail">E-mail</label>
+              <input type="email" id="inputEmail" class="rda-input" placeholder="usuario@reversodoavesso.com" />
+            </div>
+            <div class="form-group flex-1">
+              <label for="inputOrganization">Organização / Célula RDA</label>
+              <input type="text" id="inputOrganization" class="rda-input" placeholder="Reverso do Avesso • Core Labs" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="inputBio">Biografia & Notas do Operador</label>
+            <textarea id="inputBio" class="rda-textarea" rows="3" placeholder="Escreva sobre suas áreas de atuação ou pesquisas..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Avatar Pré-definido ou Imagem Personalizada</label>
+            <div class="avatar-presets-grid">
+              <button type="button" class="avatar-preset-btn" data-avatar="/assets/icons/apps/generic_app_icon.svg">Default</button>
+              <button type="button" class="avatar-preset-btn" data-avatar="/assets/images/avatar_cyber.svg">Cyber</button>
+              <button type="button" class="avatar-preset-btn" data-avatar="/assets/images/avatar_arcane.svg">Arcane</button>
+              <button type="button" class="avatar-preset-btn" data-avatar="/assets/images/avatar_matrix.svg">Matrix</button>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button id="saveIdentityBtn" class="rda-btn rda-btn-primary">Salvar Alterações de Perfil</button>
+            <button id="resetIdentityBtn" class="rda-btn rda-btn-secondary">Restaurar Padrão</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Section 2: Autenticação SSO RDA -->
+    <section id="sectionSso" class="profile-section" style="display: none;">
+      <div class="section-card">
+        <h3 class="card-title">Provedor de Identidade Central (Zitadel OIDC)</h3>
+        <p class="card-subtitle">Autenticação única com criptografia PKCE, sincronizada com o cluster do Reverso do Avesso.</p>
+
+        <div class="sso-status-card" id="ssoStatusCard">
+          <div class="status-left">
+            <div class="status-symbol">🛡️</div>
+            <div class="status-meta">
+              <h4 id="ssoStatusTitle">Sessão Local (Não Autenticado)</h4>
+              <p id="ssoStatusDesc">Conecte-se para sincronizar seus arquivos, web clips e permissões de computação.</p>
+            </div>
+          </div>
+          <div class="status-actions">
+            <button id="loginZitadelBtn" class="rda-btn rda-btn-primary">Entrar com Zitadel SSO</button>
+            <button id="logoutBtn" class="rda-btn rda-btn-danger" style="display: none;">Encerrar Sessão</button>
+          </div>
+        </div>
+
+        <!-- Dev Mode Simulated Auth Profiles -->
+        <div class="dev-auth-box">
+          <h4 class="dev-auth-title">🧪 Simulação de Perfis de Desenvolvimento (Offline / Dev)</h4>
+          <p class="dev-auth-subtitle">Alterne rapidamente entre níveis para testar recursos de Guest, Membro e Sysadmin.</p>
+          <div class="dev-profile-buttons">
+            <button class="dev-profile-btn" data-tier="guest" data-role="guest" data-name="Convidado Visitante">
+              <span class="role-icon">👤</span> Guest (Visitante)
+            </button>
+            <button class="dev-profile-btn" data-tier="standard" data-role="acolyte" data-name="Acólito Iniciante">
+              <span class="role-icon">🔮</span> Acólito (Tier 2)
+            </button>
+            <button class="dev-profile-btn" data-tier="standard" data-role="member" data-name="Membro Egrégora">
+              <span class="role-icon">⚡</span> Membro (Tier 5)
+            </button>
+            <button class="dev-profile-btn" data-tier="sysadmin" data-role="sysadmin" data-name="Demiurgo Administrador">
+              <span class="role-icon">👑</span> Sysadmin (Tier 14)
+            </button>
+          </div>
+        </div>
+
+        <!-- Linked Identities -->
+        <h4 class="sub-header-title">Identidades Vinculadas</h4>
+        <div class="linked-identities-list">
+          <div class="identity-item">
+            <div class="identity-info">
+              <span class="identity-icon">💬</span>
+              <div>
+                <strong>Discord</strong>
+                <p id="discordLinkedStatus" class="identity-status">Não conectado</p>
+              </div>
+            </div>
+            <button id="linkDiscordBtn" class="rda-btn rda-btn-secondary">Vincular</button>
+          </div>
+          <div class="identity-item">
+            <div class="identity-info">
+              <span class="identity-icon">🐙</span>
+              <div>
+                <strong>GitHub</strong>
+                <p id="githubLinkedStatus" class="identity-status">Não conectado</p>
+              </div>
+            </div>
+            <button id="linkGithubBtn" class="rda-btn rda-btn-secondary">Vincular</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Preferências Locais no unkayOS -->
+    <section id="sectionPreferences" class="profile-section" style="display: none;">
+      <div class="section-card">
+        <h3 class="card-title">Ambiente do Usuário</h3>
+        <p class="card-subtitle">Configurações de ambiente, shell do terminal e preferências salvas no VFS.</p>
+
+        <form id="preferencesForm" class="profile-form" onsubmit="return false;">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="selectDefaultShell">Shell Padrão do Terminal</label>
+              <select id="selectDefaultShell" class="rda-select">
+                <option value="wasi-bash">WASI Bash (WebAssembly GNU)</option>
+                <option value="unkay-cli">unkayOS Core Shell</option>
+                <option value="python-wasm">Python 3.12 (Pyodide Wasm)</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label for="selectPromptStyle">Estilo de Prompt do Terminal</label>
+              <select id="selectPromptStyle" class="rda-select">
+                <option value="standard">user@unkayos:~#</option>
+                <option value="minimal">❯ unkayos</option>
+                <option value="cybersigil">[user@rda-egregore] $</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="inputHomeDir">Diretório Raiz do Usuário</label>
+              <input type="text" id="inputHomeDir" class="rda-input" value="/home/user" />
+            </div>
+            <div class="form-group flex-1">
+              <label for="selectTimezone">Fuso Horário</label>
+              <select id="selectTimezone" class="rda-select">
+                <option value="America/Sao_Paulo">Brasília (GMT-3)</option>
+                <option value="UTC">UTC (Universal Coordinated)</option>
+                <option value="America/New_York">New York (GMT-4)</option>
+                <option value="Europe/Lisbon">Lisboa (GMT+1)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="checkAutoSaveClips" checked />
+              <span>Salvar automaticamente Web Clips do The Orb Browser em <code>/home/user/documents/web-clips/</code></span>
+            </label>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="checkSyncHistory" checked />
+              <span>Salvar histórico do terminal em <code>/home/user/.bash_history</code></span>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button id="savePreferencesBtn" class="rda-btn rda-btn-primary">Salvar Preferências</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Section 4: Quotas & Armazenamento -->
+    <section id="sectionStorage" class="profile-section" style="display: none;">
+      <div class="section-card">
+        <h3 class="card-title">Armazenamento do Usuário</h3>
+        <p class="card-subtitle">Uso do OPFS (Origin Private File System) e cotas de arquivos locais.</p>
+
+        <div class="storage-meter-box">
+          <div class="storage-meter-header">
+            <span>Espaço Utilizado no VFS</span>
+            <span id="storageUsageText">0.42 MB de 500 MB (0.1%)</span>
+          </div>
+          <div class="meter-bar-track">
+            <div id="storageMeterFill" class="meter-bar-fill" style="width: 2%;"></div>
+          </div>
+        </div>
+
+        <div class="user-directories-grid">
+          <div class="dir-card">
+            <span class="dir-icon">📁</span>
+            <div class="dir-info">
+              <strong>/home/user</strong>
+              <p id="homeFilesCount">Documentos e dados locais</p>
+            </div>
+          </div>
+          <div class="dir-card">
+            <span class="dir-icon">📰</span>
+            <div class="dir-info">
+              <strong>web-clips/</strong>
+              <p id="webClipsCount">Artigos salvos pelo The Orb</p>
+            </div>
+          </div>
+          <div class="dir-card">
+            <span class="dir-icon">📦</span>
+            <div class="dir-info">
+              <strong>cloud/</strong>
+              <p id="cloudSyncStatus">Sincronizado com MinIO</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="storage-actions">
+          <button id="openFileManagerBtn" class="rda-btn rda-btn-secondary">
+            <span>📂</span> Abrir Pasta Pessoal
+          </button>
+          <button id="cleanUserTmpBtn" class="rda-btn rda-btn-secondary">
+            <span>🧹</span> Limpar Arquivos Temporários
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

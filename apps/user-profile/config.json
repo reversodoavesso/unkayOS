@@ -1,0 +1,16 @@
+{
+  "app_name": "Painel do Usuário",
+  "icon_url": "icon.svg",
+  "dirApp": "index.html",
+  "jsFile": "main.js",
+  "styleFile": "style.css",
+  "mode": "system_window",
+  "width": "840px",
+  "height": "620px",
+  "x_position": "16vw",
+  "y_position": "10vh",
+  "minWidth": 680,
+  "minHeight": 480,
+  "autorun": false,
+  "hidden": false
+}

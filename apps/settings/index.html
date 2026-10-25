@@ -1,0 +1,379 @@
+<!-- apps/settings/index.html - Configurações Gerais do Sistema unkayOS 2.0 -->
+<div id="settings-app" class="settings-container">
+  <!-- Left Navigation Sidebar -->
+  <aside class="settings-sidebar">
+    <div class="sidebar-header">
+      <div class="header-logo">⚙️</div>
+      <div>
+        <h2 class="sidebar-title">Configurações</h2>
+        <span class="sidebar-version">unkayOS 2.0</span>
+      </div>
+    </div>
+
+    <div class="sidebar-search">
+      <input type="text" id="settingsSearchInput" class="sidebar-search-input" placeholder="Buscar ajuste..." />
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-panel="appearance">
+        <span class="nav-icon">🎨</span> Aparência
+      </button>
+      <button class="nav-item" data-panel="windowing">
+        <span class="nav-icon">🪟</span> Janelas & Desktop
+      </button>
+      <button class="nav-item" data-panel="storage">
+        <span class="nav-icon">💾</span> Armazenamento & VFS
+      </button>
+      <button class="nav-item" data-panel="services">
+        <span class="nav-icon">🌐</span> Rede & Serviços RDA
+      </button>
+      <button class="nav-item" data-panel="security">
+        <span class="nav-icon">🛡️</span> Segurança & Sandbox
+      </button>
+      <button class="nav-item" data-panel="about">
+        <span class="nav-icon">ℹ️</span> Sobre o Sistema
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Right Content Viewport -->
+  <main class="settings-content">
+    <!-- Panel 1: Aparência & Personalização -->
+    <div id="panelAppearance" class="settings-panel active">
+      <div class="panel-header">
+        <h2>Aparência & Personalização</h2>
+        <p>Personalize o tema, cores de destaque, papel de parede e efeitos visuais da interface.</p>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Tema do Sistema</h3>
+        <div class="theme-picker">
+          <label class="theme-option active" data-theme="dark">
+            <input type="radio" name="systemTheme" value="dark" checked />
+            <span class="theme-preview dark-theme-preview"></span>
+            <span class="theme-name">Escuro Obsidian (Padrão)</span>
+          </label>
+          <label class="theme-option" data-theme="light">
+            <input type="radio" name="systemTheme" value="light" />
+            <span class="theme-preview light-theme-preview"></span>
+            <span class="theme-name">Claro Minimalista</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Cor de Destaque (Accent Palette)</h3>
+        <p class="card-subtext">Afeta botões de ação, foco de janelas, barras de progresso e seleções.</p>
+        <div class="accent-color-picker">
+          <button class="accent-dot active" data-color="#22d3ee" style="background-color: #22d3ee;" title="Cyan Oficial RDA"></button>
+          <button class="accent-dot" data-color="#a855f7" style="background-color: #a855f7;" title="Ametista Arcane"></button>
+          <button class="accent-dot" data-color="#10b981" style="background-color: #10b981;" title="Esmeralda Matrix"></button>
+          <button class="accent-dot" data-color="#f59e0b" style="background-color: #f59e0b;" title="Âmbar Helios"></button>
+          <button class="accent-dot" data-color="#f43f5e" style="background-color: #f43f5e;" title="Rubi Alarme"></button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Papel de Parede do Desktop</h3>
+        <div class="wallpaper-grid">
+          <button class="wallpaper-thumb active" data-wp="/assets/images/wallpaper_01.jpg">
+            <span class="wp-label">Montanhas Cyan</span>
+          </button>
+          <button class="wallpaper-thumb" data-wp="radial-gradient(circle at 50% 50%, #164e63 0%, #0a0a0a 100%)">
+            <span class="wp-label">Nebulosa RDA</span>
+          </button>
+          <button class="wallpaper-thumb" data-wp="#0a0a0a">
+            <span class="wp-label">Obsidian Puro</span>
+          </button>
+        </div>
+        <div class="custom-wp-row">
+          <input type="text" id="customWallpaperUrl" class="rda-input flex-1" placeholder="URL ou caminho VFS (/home/user/pictures/wallpaper.png)" />
+          <button id="applyCustomWallpaperBtn" class="rda-btn rda-btn-secondary">Aplicar</button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Efeitos Visuais & Tipografia</h3>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Efeitos de Vidro (Backdrop Blur)</strong>
+            <p>Aplica desfoque e transparência refinada nas janelas e barra de tarefas.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggleGlassmorphism" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Escala de Fonte da Interface</strong>
+            <p>Ajuste o tamanho do texto para conforto visual.</p>
+          </div>
+          <select id="selectFontScale" class="rda-select">
+            <option value="compact">Compacto (85%)</option>
+            <option value="standard" selected>Padrão (100%)</option>
+            <option value="large">Grande (115%)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Janelas & Desktop -->
+    <div id="panelWindowing" class="settings-panel" style="display: none;">
+      <div class="panel-header">
+        <h2>Janelas & Desktop</h2>
+        <p>Configurações do gerenciador de janelas, Aero Snap e barra de tarefas.</p>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Aero Snap & Gestos de Janela</h3>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Ativar Aero Snap</strong>
+            <p>Arraste janelas para os cantos ou bordas da tela para redimensionamento instantâneo.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggleAeroSnap" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Centralizar Novas Janelas</strong>
+            <p>Abre novos aplicativos no centro da tela ao invés de cascata.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggleCenterWindows" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Barra de Tarefas</h3>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Posição da Barra</strong>
+            <p>Escolha a ancoragem principal da barra na área de trabalho.</p>
+          </div>
+          <select id="selectTaskbarPosition" class="rda-select">
+            <option value="bottom" selected>Inferior (Padrão)</option>
+            <option value="top">Superior</option>
+          </select>
+        </div>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Ocultação Automática</strong>
+            <p>Oculte a barra de tarefas quando o mouse não estiver sobre ela.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggleAutoHideTaskbar" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Armazenamento & VFS -->
+    <div id="panelStorage" class="settings-panel" style="display: none;">
+      <div class="panel-header">
+        <h2>Armazenamento & Virtual File System (VFS)</h2>
+        <p>Gerencie o armazenamento persistente em OPFS Wasm, sincronização MinIO e backups.</p>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Driver de Arquivos Wasm Kernel</h3>
+        <div class="vfs-status-row">
+          <div class="vfs-status-badge">
+            <span class="status-indicator status-online"></span>
+            <strong>OPFS Wasm Driver Ativo</strong>
+          </div>
+          <span class="vfs-meta">Engine: Rust/Wasm v2.0 • Zero Copy</span>
+        </div>
+        <div class="storage-meter-box">
+          <div class="storage-meter-header">
+            <span>Uso Geral do VFS</span>
+            <span id="vfsUsageText">1.2 MB utilizado</span>
+          </div>
+          <div class="meter-bar-track">
+            <div id="vfsMeterFill" class="meter-bar-fill" style="width: 3%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Sincronização em Nuvem (MinIO S3)</h3>
+        <p class="card-subtext">Sincroniza automaticamente <code>/home/user/cloud</code> com seu bucket na nuvem RDA.</p>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="inputMinioUrl">Endpoint S3 / MinIO</label>
+            <input type="text" id="inputMinioUrl" class="rda-input" value="http://localhost:9000" />
+          </div>
+          <div class="form-group flex-1">
+            <label for="inputMinioBucket">Bucket</label>
+            <input type="text" id="inputMinioBucket" class="rda-input" value="unkayos-storage" />
+          </div>
+        </div>
+        <div class="card-actions-row">
+          <button id="syncMinioNowBtn" class="rda-btn rda-btn-primary">
+            <span>🔄</span> Sincronizar Agora
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Manutenção & Backup</h3>
+        <div class="backup-actions-grid">
+          <button id="exportBackupBtn" class="rda-btn rda-btn-secondary">
+            <span>💾</span> Exportar Backup do VFS (JSON)
+          </button>
+          <button id="cleanTmpBtn" class="rda-btn rda-btn-secondary">
+            <span>🧹</span> Limpar Arquivos Temporários (/tmp)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 4: Rede & Serviços RDA -->
+    <div id="panelServices" class="settings-panel" style="display: none;">
+      <div class="panel-header">
+        <h2>Rede & Microsserviços RDA</h2>
+        <p>Monitoramento e conexão com o cluster de microsserviços do Reverso do Avesso.</p>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Status dos Serviços em Tempo Real</h3>
+        <div class="services-status-list">
+          <div class="service-row" id="serviceComputeRow">
+            <div class="service-info">
+              <span class="service-dot online"></span>
+              <div>
+                <strong>compute-service</strong>
+                <p>Streaming Proxy e Remote Browser Isolation (Porta 3005)</p>
+              </div>
+            </div>
+            <span class="service-latency" id="computeLatency">Verificando...</span>
+          </div>
+
+          <div class="service-row" id="serviceAuthRow">
+            <div class="service-info">
+              <span class="service-dot online"></span>
+              <div>
+                <strong>auth-service (Zitadel OIDC)</strong>
+                <p>Provedor de Identidade Central RDA (id.reversodoavesso.com)</p>
+              </div>
+            </div>
+            <span class="service-latency" id="authLatency">Ativo</span>
+          </div>
+
+          <div class="service-row" id="serviceUserRow">
+            <div class="service-info">
+              <span class="service-dot online"></span>
+              <div>
+                <strong>user-service</strong>
+                <p>Perfis, Círculos RDA e Vinculação de Identidades (Porta 3001)</p>
+              </div>
+            </div>
+            <span class="service-latency" id="userLatency">Ativo</span>
+          </div>
+        </div>
+
+        <div class="card-actions-row">
+          <button id="checkServicesHealthBtn" class="rda-btn rda-btn-secondary">
+            <span>⚡</span> Testar Conectividade Novamente
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Modo Offline & Isolamento</h3>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Isolar Conexões Externas</strong>
+            <p>Bloqueia requisições de rede remotas, mantendo execução 100% no sandbox local.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggleOfflineMode" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 5: Segurança & Sandbox -->
+    <div id="panelSecurity" class="settings-panel" style="display: none;">
+      <div class="panel-header">
+        <h2>Segurança & Sandbox</h2>
+        <p>Políticas de isolamento de processos, sandbox de apps de terceiros e permissões.</p>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Políticas do App Sandbox</h3>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Modo Sandbox Estrito para Apps do Marketplace</strong>
+            <p>Restringe acesso a APIs do sistema e bloqueia scripts com avaliação dinâmica.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggleStrictSandbox" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Host Drag & Drop Seguro</strong>
+            <p>Higieniza arquivos arrastados do sistema operacional hospedeiro antes de salvar no VFS.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggleSecureHostDrop" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 6: Sobre o Sistema -->
+    <div id="panelAbout" class="settings-panel" style="display: none;">
+      <div class="panel-header">
+        <h2>Sobre o unkayOS</h2>
+        <p>Informações de versão, kernel WebAssembly e tecnologias do ecossistema.</p>
+      </div>
+
+      <div class="settings-card text-center">
+        <div class="about-hero">
+          <div class="about-logo">🌐</div>
+          <h1 class="about-title">unkayOS 2.0</h1>
+          <span class="about-badge">v2.0.0-alpha.1 • Hybrid Architecture</span>
+          <p class="about-desc">
+            Sistema operacional web completo baseado em WebAssembly, Rust VFS com persistência OPFS, 
+            e componentes nativos do RDA Design System (§3.2 Identidade Cyan).
+          </p>
+        </div>
+
+        <div class="about-specs-grid">
+          <div class="spec-card">
+            <span class="spec-label">Kernel VFS</span>
+            <strong class="spec-value">unkay-wasm-vfs (Rust)</strong>
+          </div>
+          <div class="spec-card">
+            <span class="spec-label">Engine Gráfica</span>
+            <strong class="spec-value">RDA DS Tokenized DOM</strong>
+          </div>
+          <div class="spec-card">
+            <span class="spec-label">SSO Cluster</span>
+            <strong class="spec-value">Zitadel OIDC + PKCE</strong>
+          </div>
+          <div class="spec-card">
+            <span class="spec-label">Browser Engine</span>
+            <strong class="spec-value">The Orb Adaptive Tiered</strong>
+          </div>
+        </div>
+
+        <div class="about-actions">
+          <button id="checkUpdatesBtn" class="rda-btn rda-btn-primary">Verificar Atualizações</button>
+          <button id="resetAllSettingsBtn" class="rda-btn rda-btn-danger">Restaurar Padrões de Fábrica</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

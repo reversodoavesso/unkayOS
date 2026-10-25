@@ -10,6 +10,8 @@
     { "id": "file-manager", "path": "/apps/file-manager/" },
     { "id": "text-editor", "path": "/apps/text-editor/" },
     { "id": "store", "path": "/apps/store/" },
-    { "id": "openui", "path": "/apps/openui/" }
+    { "id": "openui", "path": "/apps/openui/" },
+    { "id": "user-profile", "path": "/apps/user-profile/" },
+    { "id": "settings", "path": "/apps/settings/" }
   ]
 }

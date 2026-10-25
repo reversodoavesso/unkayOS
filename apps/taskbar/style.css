@@ -236,3 +236,27 @@
   color: var(--color-light-secondary);
   margin: 0;
 } 
+
+
+/* System Tray Items */
+.taskbar__tray_item {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-sm, 4px);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.taskbar__tray_item:hover {
+  background-color: var(--color-dark-secondary, #141414);
+  transform: translateY(-1px);
+}
+
+.taskbar__tray_icon {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}

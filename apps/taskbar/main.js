@@ -244,6 +244,7 @@ export default class TaskbarApp extends BaseApp {
 
         // Inicializa o menu de aplicativos
         this.initializeMenuApps();
+        this.initSystemTray();
 
         // Toda comunicação com apps e ciclo de vida é feita via eventBus (sem dependência do AppManager)
 
