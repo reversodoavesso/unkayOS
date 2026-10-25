@@ -1,0 +1,16 @@
+{
+  "app_name": "Euterpe Studio",
+  "icon_url": "icon.svg",
+  "dirApp": "index.html",
+  "jsFile": "main.js",
+  "styleFile": "style.css",
+  "mode": "system_window",
+  "width": "880px",
+  "height": "580px",
+  "x_position": "10vw",
+  "y_position": "8vh",
+  "minWidth": 620,
+  "minHeight": 420,
+  "autorun": false,
+  "hidden": false
+}

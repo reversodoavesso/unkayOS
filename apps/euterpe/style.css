@@ -1,0 +1,256 @@
+/* apps/euterpe/style.css - Euterpe Audio & Music Station Styles */
+
+.euterpe-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #090d16;
+  color: #f3f4f6;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  user-select: none;
+  overflow: hidden;
+}
+
+.euterpe-header {
+  background: #111827;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.euterpe-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.euterpe-icon {
+  font-size: 26px;
+}
+
+.euterpe-brand h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f472b6, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.euterpe-subtitle {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.euterpe-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.euterpe-btn, .euterpe-btn-upload, .play-btn, .analyze-btn, .export-btn {
+  background: #374151;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.euterpe-btn-upload {
+  background: #4f46e5;
+  border-color: #6366f1;
+}
+
+.euterpe-btn-upload:hover {
+  background: #4338ca;
+}
+
+.euterpe-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.dsp-panel {
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dsp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dsp-header h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #e5e7eb;
+}
+
+.dsp-indicators {
+  display: flex;
+  gap: 12px;
+}
+
+.indicator-badge {
+  background: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 4px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.indicator-badge .label {
+  font-size: 9px;
+  color: #9ca3af;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.indicator-badge .val {
+  font-size: 15px;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+#bpmBadge .val { color: #f43f5e; }
+#keyBadge .val { color: #a855f7; }
+#energyBadge .val { color: #10b981; }
+
+.canvas-container {
+  background: #030712;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  height: 140px;
+  display: flex;
+}
+
+#dspCanvas {
+  width: 100%;
+  height: 100%;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.play-btn {
+  background: #ec4899;
+  border-color: #f472b6;
+  min-width: 110px;
+}
+
+.play-btn:hover {
+  background: #db2777;
+}
+
+.time-label {
+  font-size: 12px;
+  font-family: monospace;
+  color: #9ca3af;
+}
+
+.track-info-display {
+  flex: 1;
+  font-size: 12px;
+  color: #d1d5db;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.analyze-btn {
+  background: #0284c7;
+  border-color: #38bdf8;
+}
+
+.curations-panel {
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.curations-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.curations-header h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #e5e7eb;
+}
+
+.export-btn {
+  background: #059669;
+  border-color: #10b981;
+}
+
+.curations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.track-row {
+  background: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  transition: background 0.15s ease;
+}
+
+.track-row:hover {
+  background: #374151;
+}
+
+.track-title {
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+.track-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.meta-pill {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}

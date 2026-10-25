@@ -9,6 +9,9 @@
     { "id": "process-manager", "path": "/apps/process-manager/" },
     { "id": "file-manager", "path": "/apps/file-manager/" },
     { "id": "text-editor", "path": "/apps/text-editor/" },
-    { "id": "store", "path": "/apps/store/" }
+    { "id": "store", "path": "/apps/store/" },
+    { "id": "euterpe", "path": "/apps/euterpe/" },
+    { "id": "cine", "path": "/apps/cine/" },
+    { "id": "openui", "path": "/apps/openui/" }
   ]
 }

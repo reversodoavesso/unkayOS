@@ -1,0 +1,63 @@
+<div class="euterpe-app">
+  <header class="euterpe-header">
+    <div class="euterpe-brand">
+      <span class="euterpe-icon">🎵</span>
+      <div>
+        <h1>Euterpe Audio & Music Station</h1>
+        <span class="euterpe-subtitle">Curadoria Musical, BPM & Análise DSP com Web Audio API</span>
+      </div>
+    </div>
+    <div class="euterpe-actions">
+      <button class="euterpe-btn" id="euterpeLoadDemoBtn">Carregar Faixa Demo</button>
+      <label class="euterpe-btn-upload">
+        Importar Arquivo (.mp3, .wav)
+        <input type="file" id="euterpeAudioFileInput" accept="audio/*" style="display: none;" />
+      </label>
+    </div>
+  </header>
+
+  <div class="euterpe-main">
+    <!-- Visualizer & DSP Section -->
+    <section class="dsp-panel">
+      <div class="dsp-header">
+        <h3>Espectrograma em Tempo Real (FFT)</h3>
+        <div class="dsp-indicators">
+          <div class="indicator-badge" id="bpmBadge">
+            <span class="label">BPM</span>
+            <span class="val" id="bpmValue">--</span>
+          </div>
+          <div class="indicator-badge" id="keyBadge">
+            <span class="label">TOM (CAMELOT)</span>
+            <span class="val" id="keyValue">--</span>
+          </div>
+          <div class="indicator-badge" id="energyBadge">
+            <span class="label">ENERGIA</span>
+            <span class="val" id="energyValue">--</span>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-container">
+        <canvas id="dspCanvas" width="800" height="140"></canvas>
+      </div>
+
+      <!-- Player controls -->
+      <div class="player-controls">
+        <button class="play-btn" id="playPauseBtn">▶ Reproduzir</button>
+        <span class="time-label" id="timeLabel">0:00 / 0:00</span>
+        <div class="track-info-display" id="currentTrackTitle">Nenhuma faixa carregada</div>
+        <button class="analyze-btn" id="runDspAnalysisBtn">⚡ Analisar Faixa Completa</button>
+      </div>
+    </section>
+
+    <!-- Curations & Stems Section -->
+    <section class="curations-panel">
+      <div class="curations-header">
+        <h3>Fila de Curadoria & Metadados</h3>
+        <button class="export-btn" id="exportCurationBtn">💾 Salvar Curadoria no VFS</button>
+      </div>
+      <div class="curations-list" id="curationsList">
+        <!-- Tracks injected dynamically -->
+      </div>
+    </section>
+  </div>
+</div>

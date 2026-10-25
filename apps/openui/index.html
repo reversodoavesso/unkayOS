@@ -1,0 +1,60 @@
+<div class="openui-app">
+  <header class="openui-header">
+    <div class="openui-brand">
+      <span class="openui-icon">✨</span>
+      <div>
+        <h1>OpenUI Generative Studio</h1>
+        <span class="openui-subtitle">Criação Declarativa de Aplicativos & Componentes com IA</span>
+      </div>
+    </div>
+    <div class="openui-header-actions">
+      <button class="openui-btn primary" id="installGeneratedBtn" disabled>🚀 Instalar como .unkayapp</button>
+    </div>
+  </header>
+
+  <div class="openui-layout">
+    <!-- Left Panel: Prompt Editor & Presets -->
+    <aside class="openui-editor-pane">
+      <div class="preset-section">
+        <label>Modelos Rápidos:</label>
+        <div class="preset-chips">
+          <button class="preset-btn" data-preset="monitor">📊 Monitor de Recursos</button>
+          <button class="preset-btn" data-preset="converter">💱 Conversor de Câmbio</button>
+          <button class="preset-btn" data-preset="pomodoro">⏱️ Cronômetro Pomodoro</button>
+        </div>
+      </div>
+
+      <div class="prompt-box">
+        <label for="promptInput">Descreva a Interface Desejada:</label>
+        <textarea id="promptInput" placeholder="Ex: Crie um painel escuro com cartões de status do servidor, indicadores de CPU e memória, e um botão de ação com tokens do Design System RDA..."></textarea>
+      </div>
+
+      <div class="spec-editor-box">
+        <div class="spec-header">
+          <label>Especificação Declarativa (.openui):</label>
+          <button class="copy-btn" id="copySpecBtn">Copiar</button>
+        </div>
+        <textarea id="specInput" spellcheck="false"></textarea>
+      </div>
+
+      <button class="generate-btn" id="generateBtn">✨ Gerar com IA (Familiar)</button>
+    </aside>
+
+    <!-- Right Panel: Live Shadow DOM Sandbox Preview -->
+    <main class="openui-preview-pane">
+      <div class="preview-header">
+        <div class="preview-title">
+          <span>🖥️ Live Preview (Shadow DOM Sandbox)</span>
+          <span class="preview-badge" id="previewBadge">Aguardando geração</span>
+        </div>
+        <button class="reload-btn" id="reloadPreviewBtn">🔄 Recarregar</button>
+      </div>
+      <div class="preview-viewport" id="previewViewport">
+        <div class="placeholder-msg">
+          <div style="font-size: 36px; margin-bottom: 8px;">🎨</div>
+          <p>Selecione um modelo rápido ou descreva uma interface para visualizar a aplicação em tempo real.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

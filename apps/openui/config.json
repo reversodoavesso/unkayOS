@@ -1,0 +1,16 @@
+{
+  "app_name": "OpenUI Studio",
+  "icon_url": "icon.svg",
+  "dirApp": "index.html",
+  "jsFile": "main.js",
+  "styleFile": "style.css",
+  "mode": "system_window",
+  "width": "920px",
+  "height": "600px",
+  "x_position": "12vw",
+  "y_position": "6vh",
+  "minWidth": 640,
+  "minHeight": 440,
+  "autorun": false,
+  "hidden": false
+}

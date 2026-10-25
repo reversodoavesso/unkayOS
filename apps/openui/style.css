@@ -1,0 +1,240 @@
+/* apps/openui/style.css - OpenUI Generative Studio Styles */
+
+.openui-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #090e17;
+  color: #f1f5f9;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  user-select: none;
+  overflow: hidden;
+}
+
+.openui-header {
+  background: #111827;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.openui-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.openui-icon {
+  font-size: 24px;
+}
+
+.openui-brand h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.openui-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.openui-btn {
+  background: #2563eb;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.openui-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.openui-btn.primary:not(:disabled):hover {
+  background: #1d4ed8;
+}
+
+.openui-layout {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Left Pane */
+.openui-editor-pane {
+  width: 380px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0d131f;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.preset-section label, .prompt-box label, .spec-header label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preset-btn {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.preset-btn:hover {
+  background: #334155;
+  color: #fff;
+}
+
+.prompt-box textarea {
+  width: 100%;
+  height: 90px;
+  background: #131b2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #f8fafc;
+  font-size: 12px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.spec-editor-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 140px;
+}
+
+.spec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.copy-btn, .reload-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.copy-btn:hover, .reload-btn:hover {
+  color: #94a3b8;
+}
+
+#specInput {
+  flex: 1;
+  background: #070a10;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px;
+  color: #38bdf8;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  outline: none;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.generate-btn {
+  background: linear-gradient(135deg, #0284c7, #6366f1);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.generate-btn:hover {
+  opacity: 0.9;
+}
+
+/* Right Pane */
+.openui-preview-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #080c14;
+}
+
+.preview-header {
+  background: #111827;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preview-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.preview-badge {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.preview-viewport {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.placeholder-msg {
+  margin: auto;
+  text-align: center;
+  color: #64748b;
+  max-width: 320px;
+  font-size: 13px;
+  line-height: 1.5;
+}
