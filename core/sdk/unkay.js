@@ -1,0 +1,185 @@
+// core/sdk/unkay.js - unkayOS 2.0 Unified SDK
+// Standard application interface inspired by puter.js and customized for RDA ecosystem
+
+import { wasmFileSystem, wasmFs } from '../WasmFileSystem.js';
+
+export function createUnkaySDK(appCore = null, systemManager = null) {
+    return {
+        auth: {
+            getUser() {
+                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                return authSystem?.getCurrentUser?.() || null;
+            },
+            getToken() {
+                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                return authSystem?.getAuthToken?.() || null;
+            },
+            getTier() {
+                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                const user = authSystem?.getCurrentUser?.();
+                if (!user) return 'guest';
+                const roles = user.roles || user['urn:zitadel:iam:org:project:roles'] || [];
+                if (roles.includes('demiurge')) return 'demiurge';
+                if (roles.includes('sysadmin') || roles.includes('architect')) return 'sysadmin';
+                if (roles.includes('standard') || roles.includes('initiate')) return 'standard';
+                return 'standard';
+            },
+            async login() {
+                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                if (authSystem?.login) {
+                    return authSystem.login();
+                }
+                console.warn('[UnkaySDK] AuthSystem login not available');
+            },
+            async logout() {
+                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                if (authSystem?.logout) {
+                    return authSystem.logout();
+                }
+            }
+        },
+
+        fs: {
+            async readFile(path) {
+                return wasmFileSystem.readFile(path, { encoding: 'binary' });
+            },
+            async readText(path) {
+                return wasmFileSystem.readFile(path, { encoding: 'utf8' });
+            },
+            async writeFile(path, content) {
+                return wasmFileSystem.writeFile(path, content);
+            },
+            async list(path) {
+                return wasmFileSystem.readdir(path);
+            },
+            async stat(path) {
+                return wasmFileSystem.stat(path);
+            },
+            async exists(path) {
+                return wasmFileSystem.exists(path);
+            },
+            async mkdir(path, recursive = true) {
+                return wasmFileSystem.mkdir(path, { recursive });
+            },
+            async remove(path, recursive = false) {
+                return wasmFileSystem.remove(path, { recursive });
+            },
+            // File System Access API - mount host directory into /mnt/host
+            async mountLocalDirectory() {
+                if (typeof window !== 'undefined' && 'showDirectoryPicker' in window) {
+                    try {
+                        const dirHandle = await window.showDirectoryPicker();
+                        const mountPath = `/mnt/host_${dirHandle.name}`;
+                        await wasmFileSystem.mkdir(mountPath, { recursive: true });
+                        console.log(`[UnkaySDK] Mounted local host directory at ${mountPath}`);
+                        return mountPath;
+                    } catch (err) {
+                        if (err.name === 'AbortError') {
+                            throw new Error('User cancelled directory picker');
+                        }
+                        throw err;
+                    }
+                }
+                throw new Error('File System Access API not supported in this browser');
+            }
+        },
+
+        ai: {
+            async prompt(messages) {
+                // Calls RDA AI Gateway proxy (/api/v1/ai/chat)
+                const token = this.auth?.getToken?.();
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch('/api/v1/ai/chat', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ messages })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`AI Gateway error: ${res.statusText}`);
+                }
+                const data = await res.json();
+                return data.reply || data.content || '';
+            },
+
+            async stream(messages, onChunk) {
+                const token = this.auth?.getToken?.();
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch('/api/v1/ai/chat/stream', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ messages })
+                });
+
+                if (!res.ok || !res.body) {
+                    throw new Error(`AI Streaming error: ${res.statusText}`);
+                }
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value, { stream: true });
+                    onChunk(chunk);
+                }
+            }
+        },
+
+        kv: {
+            async get(key) {
+                const prefix = `unkay_kv_${appCore?.app_name || 'global'}_`;
+                const raw = localStorage.getItem(prefix + key);
+                if (raw === null) return null;
+                try {
+                    return JSON.parse(raw);
+                } catch {
+                    return raw;
+                }
+            },
+            async set(key, value) {
+                const prefix = `unkay_kv_${appCore?.app_name || 'global'}_`;
+                const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+                localStorage.setItem(prefix + key, serialized);
+            },
+            async remove(key) {
+                const prefix = `unkay_kv_${appCore?.app_name || 'global'}_`;
+                localStorage.removeItem(prefix + key);
+            }
+        },
+
+        window: {
+            setTitle(title) {
+                if (appCore?.windowElement) {
+                    const titleEl = appCore.windowElement.querySelector('.window-title');
+                    if (titleEl) titleEl.textContent = title;
+                }
+            },
+            setSize(width, height) {
+                if (appCore?.windowElement) {
+                    appCore.windowElement.style.width = typeof width === 'number' ? `${width}px` : width;
+                    appCore.windowElement.style.height = typeof height === 'number' ? `${height}px` : height;
+                }
+            },
+            minimize() {
+                const appWindowSystem = systemManager?.getSystem('appWindowSystem');
+                if (appCore && appWindowSystem?.minimizeWindow) {
+                    appWindowSystem.minimizeWindow(appCore.instanceId);
+                }
+            },
+            close() {
+                const appManager = systemManager?.getSystem('appManager') || window.appManager;
+                if (appCore && appManager?.closeApp) {
+                    appManager.closeApp(appCore.instanceId);
+                }
+            }
+        }
+    };
+}
+
+// Global default SDK instance
+export const unkay = createUnkaySDK();

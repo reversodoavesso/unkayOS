@@ -68,8 +68,6 @@ export default {
     outDir: 'dist',
     sourcemap: true,
     // Only process index.html — don't bundle JS modules.
-    // unkayOS uses dynamic import() for all core and app modules,
-    // so bundling would create duplicate module instances.
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html')
@@ -82,8 +80,14 @@ export default {
       }
     }
   },
+  worker: {
+    format: 'es'
+  },
   appType: 'mpa',
   server: {
-    // HMR enabled by default
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'credentialless'
+    }
   }
 }

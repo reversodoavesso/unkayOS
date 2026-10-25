@@ -20,6 +20,9 @@ async function init() {
             fileSystem: systemManager.getSystem('fileSystem'),
             fs: systemManager.getSystem('fs')
         };
+        window.wasmFileSystem = systemManager.getSystem('wasmFileSystem');
+        window.wasmFs = systemManager.getSystem('wasmFs');
+        window.unkay = systemManager.getSystem('unkaySDK');
         window.loadingManager = systemManager.getSystem('loadingManager');
         window.loadingUI = systemManager.getSystem('loadingUI');
         window.lazyResourceLoader = systemManager.getSystem('lazyResourceLoader');

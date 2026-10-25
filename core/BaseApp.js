@@ -31,6 +31,10 @@ export class BaseApp {
         // Sistema de arquivos disponível para todos os apps
         this.fileSystem = standardAPIs.fileSystem;
         this.fs = standardAPIs.fs;
+        this.wasmFileSystem = standardAPIs.wasmFileSystem;
+        this.wasmFs = standardAPIs.wasmFs;
+        this.unkay = standardAPIs.unkaySDK;
+        this.standardAPIs = standardAPIs;
         // O elemento HTML que contém o conteúdo do aplicativo.
         this.appContentRoot = appContentRoot;
         // O elemento desktop para referência de posicionamento e drag and drop

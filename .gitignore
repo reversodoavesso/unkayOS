@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Rust Wasm target
+src-wasm/target/
+
 # Build output
 dist/
 

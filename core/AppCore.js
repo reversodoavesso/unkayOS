@@ -56,8 +56,12 @@ export class AppCore {
             appManager: window.systemManager?.getSystem('appManager') || window.appManager,
             // Sistema de arquivos disponível para todos os apps
             fileSystem: window.systemManager?.getSystem('fileSystem') || window.unkayFileSystem?.fileSystem,
-            fs: window.systemManager?.getSystem('fs') || window.unkayFileSystem?.fs
+            fs: window.systemManager?.getSystem('fs') || window.unkayFileSystem?.fs,
+            wasmFileSystem: window.systemManager?.getSystem('wasmFileSystem') || window.wasmFileSystem,
+            wasmFs: window.systemManager?.getSystem('wasmFs') || window.wasmFs,
+            unkaySDK: window.systemManager?.getSystem('unkaySDK') || window.unkay
         };
+        this.standardAPIs = standardAPIs;
 
         // Carrega o módulo JS do aplicativo e instancia a classe BaseApp (ou sua extensão)
         // A referência ao appContentRoot será definida pelo AppWindowSystem

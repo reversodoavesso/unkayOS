@@ -12,6 +12,9 @@ import { windowLayerManager } from './WindowLayerManager.js';
 import { dragManager } from './DragManager.js';
 import { positionManager } from './PositionManager.js';
 import eventBus from './eventBus.js';
+import { wasmFileSystem, wasmFs } from './WasmFileSystem.js';
+import { unkay } from './sdk/unkay.js';
+import { migrateLegacyStorage } from './utils/storageMigration.js';
 
 /**
  * SystemManager - Gerenciador centralizado de todos os sistemas do unkayOS
@@ -42,6 +45,9 @@ export class SystemManager {
             loadingManager: loadingManager,
             loadingUI: loadingUI,
             lazyResourceLoader: lazyResourceLoader,
+            wasmFileSystem: wasmFileSystem,
+            wasmFs: wasmFs,
+            unkaySDK: unkay,
             authSystem: null, // Será inicializado
             appManager: null  // Será inicializado
         };
@@ -140,6 +146,16 @@ export class SystemManager {
             throw new Error('Sistemas de loading não foram carregados corretamente');
         }
         
+        // Inicializa unkayOS 2.0 Wasm Kernel e VFS
+        try {
+            console.log('[SystemManager] Inicializando WasmFileSystem e Worker...');
+            await wasmFileSystem.initialize();
+            console.log('[SystemManager] WasmFileSystem pronto.');
+            await migrateLegacyStorage(wasmFileSystem);
+        } catch (vfsErr) {
+            console.warn('[SystemManager] WasmFileSystem inicializado com fallback:', vfsErr);
+        }
+
         console.log('[SystemManager] Fase 1 concluída');
     }
 
@@ -305,6 +321,9 @@ export class SystemManager {
             // Para todos os apps
             if (this.systems.appManager) {
                 this.systems.appManager.killAll();
+            }
+            if (this.systems.wasmFileSystem?.shutdown) {
+                this.systems.wasmFileSystem.shutdown();
             }
             
             // Limpa listeners de eventos
