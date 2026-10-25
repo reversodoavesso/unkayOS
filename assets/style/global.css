@@ -648,3 +648,73 @@ body {
   user-select: none;
   pointer-events: none;
 }
+
+/* Aero Snap Preview Overlay (unkayOS 2.0) */
+.aero-snap-preview {
+  position: fixed;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 99990;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  display: none;
+}
+
+.aero-snap-preview.snap-left {
+  top: 0;
+  left: 0;
+  width: 50vw;
+  height: 100vh;
+}
+
+.aero-snap-preview.snap-right {
+  top: 0;
+  left: 50vw;
+  width: 50vw;
+  height: 100vh;
+}
+
+.aero-snap-preview.snap-top {
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Snapped window utility classes */
+.app__window.snapped-left {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.app__window.snapped-right {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+/* Host Drag and Drop file overlay */
+.desktop-drop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 24, 38, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 3px dashed rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  margin: 16px;
+  z-index: 99995;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-family: var(--font-family-base, sans-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  pointer-events: none;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}

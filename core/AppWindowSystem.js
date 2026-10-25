@@ -6,6 +6,7 @@ import eventBus from './eventBus.js';
 import { windowLayerManager } from './WindowLayerManager.js';
 import { loadingUI } from './LoadingUI.js';
 import { lazyResourceLoader } from './LazyResourceLoader.js';
+import { aeroSnapManager } from './AeroSnapManager.js';
 
 export class AppWindowSystem {
     constructor(core, desktopElement) { // Renomeado 'desktop' para 'desktopElement' para clareza
@@ -42,6 +43,7 @@ export class AppWindowSystem {
 
         this.isMaximized = false;
         this.isMinimized = false;
+        this.snapState = 'none';
 
         this.namespaceCSS = this.namespaceCSS.bind(this);
 
@@ -102,25 +104,40 @@ export class AppWindowSystem {
         // Habilita o arrastar na barra de título usando DragManager
         this.dragCleanup = dragManager.enableWindowDrag(this.appWindowElement, topBar, {
             onDragStart: (e) => {
-                // CORREÇÃO: Impede arrasto se a janela estiver maximizada
                 if (this.isMaximized) {
-                    console.log(`[AppWindowSystem] Arrasto bloqueado - janela '${this.appName}' está maximizada`);
-                    return false; // Cancela o arrasto
+                    return false;
                 }
-                
+                if (this.snapState && this.snapState !== 'none') {
+                    aeroSnapManager.unsnap(this.appWindowElement, this);
+                }
                 eventBus.emit("window:focus", { instanceId: this.instanceId });
-                // Define z-index alto para arrasto
                 windowLayerManager.setDraggingLayer(this.appWindowElement);
             },
+            onDragMove: (moveEvent) => {
+                const snapZone = aeroSnapManager.checkSnapZone(moveEvent.clientX, moveEvent.clientY);
+                if (snapZone !== 'none') {
+                    aeroSnapManager.showPreview(snapZone);
+                } else {
+                    aeroSnapManager.hidePreview();
+                }
+            },
             onDragEnd: () => {
-                // Só executa se o arrasto não foi cancelado
                 if (!this.isMaximized) {
-                    // Atualiza posição de restauração
-                    const rect = this.appWindowElement.getBoundingClientRect();
-                    this.restoreX = rect.left;
-                    this.restoreY = rect.top;
+                    let snapped = false;
+                    const snapZone = aeroSnapManager.currentPreview;
+                    aeroSnapManager.hidePreview();
+                    if (snapZone && snapZone !== 'none') {
+                        aeroSnapManager.applySnap(this.appWindowElement, this, snapZone);
+                        snapped = true;
+                    }
+
+                    if (!snapped) {
+                        const rect = this.appWindowElement.getBoundingClientRect();
+                        this.restoreX = rect.left;
+                        this.restoreY = rect.top;
+                        this.snapState = 'none';
+                    }
                     
-                    // Restaura z-index após arrasto
                     windowLayerManager.restoreFromDragging(this.instanceId, this.appWindowElement);
                 }
             }

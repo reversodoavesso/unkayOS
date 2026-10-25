@@ -15,6 +15,7 @@ import eventBus from './eventBus.js';
 import { wasmFileSystem, wasmFs } from './WasmFileSystem.js';
 import { unkay } from './sdk/unkay.js';
 import { migrateLegacyStorage } from './utils/storageMigration.js';
+import { hostDropManager } from './HostDropManager.js';
 
 /**
  * SystemManager - Gerenciador centralizado de todos os sistemas do unkayOS
@@ -216,6 +217,11 @@ export class SystemManager {
         
         // Inicia apps que devem executar automaticamente
         this.systems.appManager.initAutorunApps();
+
+        // Inicializa suporte a arrastar arquivos do sistema operacional para o desktop
+        if (this.config.desktop) {
+            hostDropManager.initialize(this.config.desktop);
+        }
         
         console.log('[SystemManager] Fase 4 concluída');
     }
