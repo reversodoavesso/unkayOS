@@ -1,35 +1,148 @@
-<!-- apps/browser/index.html - v1.0.5 -->
+<!-- apps/browser/index.html - The Orb Browser v2.0 (Tiered Engine) -->
 <div id="theorb-app" class="browser-container">
-    <div class="browser-toolbar">
-        <button id="backBtn" class="browser-btn" title="Voltar">
-            <span class="theorb-icon theorb-icon-nav material-icons-outlined small">arrow_back</span>
-        </button>
-        <button id="forwardBtn" class="browser-btn" title="Avançar">
-            <span class="theorb-icon theorb-icon-nav material-icons-outlined small">arrow_forward</span>
-        </button>
-        <button id="reloadBtn" class="browser-btn" title="Recarregar">
-            <span class="theorb-icon theorb-icon-reload material-icons-outlined small">refresh</span>
-        </button>
-        <button id="homeBtn" class="browser-btn" title="Página Inicial">
-            <span class="theorb-icon material-icons-outlined small">home</span>
-        </button>
-        <input type="text" id="urlInput" class="browser-url-input" placeholder="Digite uma URL ou pesquisa...">
-        <button id="goBtn" class="browser-btn primary" title="Ir">
-            <span class="theorb-icon material-icons-outlined small">navigate_next</span>
-        </button>
-        <button id="newTabBtn" class="browser-btn" title="Nova Aba">
-            <span class="theorb-icon theorb-icon-new-tab material-icons-outlined small">add</span>
-        </button>
-        <button id="bookmarksBtn" class="browser-btn" title="Favoritos">
-            <span class="theorb-icon material-icons-outlined small">bookmark</span>
-        </button>
+  <!-- Top Navigation Toolbar -->
+  <header class="browser-toolbar">
+    <div class="nav-button-group">
+      <button id="backBtn" class="browser-btn" title="Voltar (Alt + Esquerda)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <button id="forwardBtn" class="browser-btn" title="Avançar (Alt + Direita)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <button id="reloadBtn" class="browser-btn" title="Recarregar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button id="homeBtn" class="browser-btn" title="Página Inicial">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
     </div>
 
-    <div id="tabsContainer" class="browser-tabs-container">
-        <!-- Abas serão injetadas aqui pelo JS -->
+    <!-- URL and Search Bar -->
+    <div class="browser-address-bar">
+      <span class="security-indicator" id="securityIndicator" title="Conexão Protegida">🔒</span>
+      <input type="text" id="urlInput" class="browser-url-input" placeholder="Digite uma URL (ex: github.com) ou pesquise..." spellcheck="false" />
+      <button id="goBtn" class="browser-btn-go" title="Ir para o endereço">➜</button>
     </div>
 
-    <div id="contentArea" class="browser-content-area">
-        <!-- Conteúdo da página (iframe ou oEmbed) será injetado aqui -->
+    <!-- Mode and Tools Group -->
+    <div class="browser-tools-group">
+      <button id="readerModeBtn" class="browser-btn tool-btn" title="Alternar Modo Leitor RDA">
+        <span>📖</span> <span class="tool-label">Leitor</span>
+      </button>
+      <button id="saveClipBtn" class="browser-btn tool-btn" title="Salvar Artigo no VFS (Markdown)">
+        <span>💾</span> <span class="tool-label">Salvar</span>
+      </button>
+      <button id="newTabBtn" class="browser-btn" title="Nova Aba">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="user-tier-badge" id="browserTierBadge" title="Nível de Acesso do Navegador">
+        <span class="tier-dot"></span>
+        <span class="tier-text">GUEST</span>
+      </div>
     </div>
+  </header>
+
+  <!-- Tabs Strip -->
+  <nav id="tabsContainer" class="browser-tabs-container">
+    <!-- Abas injetadas dinamicamente via JS -->
+  </nav>
+
+  <!-- Main Multi-Tier Viewport Area -->
+  <main id="contentArea" class="browser-content-area">
+    <!-- View 1: Welcome & Speed Dial -->
+    <div id="welcomeView" class="browser-view welcome-view">
+      <div class="welcome-box">
+        <div class="orb-brand-hero">
+          <div class="hero-logo">🌐</div>
+          <h1>The Orb Browser</h1>
+          <p class="hero-subtitle">Navegador adaptativo com streaming proxy, modo leitor RDA e zero barreiras de frame.</p>
+        </div>
+
+        <div class="speed-dial-section">
+          <h3>Acesso Rápido</h3>
+          <div class="speed-dial-grid">
+            <button class="speed-dial-card" data-url="https://github.com/trending">
+              <span class="card-icon">🐙</span>
+              <span class="card-title">GitHub Trending</span>
+              <span class="card-url">github.com</span>
+            </button>
+            <button class="speed-dial-card" data-url="https://news.ycombinator.com">
+              <span class="card-icon">⚡</span>
+              <span class="card-title">Hacker News</span>
+              <span class="card-url">ycombinator.com</span>
+            </button>
+            <button class="speed-dial-card" data-url="https://pt.wikipedia.org">
+              <span class="card-icon">📚</span>
+              <span class="card-title">Wikipedia</span>
+              <span class="card-url">wikipedia.org</span>
+            </button>
+            <button class="speed-dial-card" data-url="https://httpbin.org/html">
+              <span class="card-icon">🧪</span>
+              <span class="card-title">HTML Test Sandbox</span>
+              <span class="card-url">httpbin.org</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="tier-info-banner" id="tierInfoBanner">
+          <div class="banner-icon">🛡️</div>
+          <div class="banner-body">
+            <h4 id="tierBannerTitle">Modo Convidado (Guest) Ativo</h4>
+            <p id="tierBannerDesc">Sites que proíbem frames externos abrem em Modo Leitor RDA ou em nova aba externa. Faça login para navegação direta sem restrições via Streaming Proxy.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 2: Proxy Web Frame (Cleaned headers without X-Frame-Options) -->
+    <div id="proxyView" class="browser-view proxy-view" style="display: none;">
+      <iframe id="browserProxyIframe" class="browser-viewport-frame" sandbox="allow-scripts allow-forms allow-same-origin allow-popups"></iframe>
+    </div>
+
+    <!-- View 3: RDA Reader Mode (Dark Typography + Clean Markdown Extract) -->
+    <div id="readerView" class="browser-view reader-view" style="display: none;">
+      <article class="reader-article">
+        <div class="reader-header">
+          <div class="reader-tag">📖 Modo Leitor RDA</div>
+          <h1 id="readerArticleTitle" class="reader-title">Título do Artigo</h1>
+          <div class="reader-meta">
+            <span id="readerArticleSource">Fonte: web</span> • 
+            <span id="readerArticleDate">Data: hoje</span>
+          </div>
+        </div>
+        <div id="readerArticleBody" class="reader-body">
+          <!-- Conteúdo extraído formatado com tokens do RDA DS -->
+        </div>
+      </article>
+    </div>
+
+    <!-- View 4: Guest Restricted Warning & Fallback Panel -->
+    <div id="guestFallbackView" class="browser-view fallback-view" style="display: none;">
+      <div class="fallback-card">
+        <div class="fallback-icon">🔒</div>
+        <h2>Site com Proteção de Quadro (Anti-Framing)</h2>
+        <p>O site <strong id="restrictedDomainName">exemplo.com</strong> bloqueia conexões embutidas por padrão (<code>X-Frame-Options: SAMEORIGIN</code>).</p>
+        <div class="fallback-actions">
+          <button class="fallback-btn primary" id="openExternalTabBtn">
+            <span>↗</span> Abrir no Navegador Hospedeiro
+          </button>
+          <button class="fallback-btn secondary" id="activateReaderFallbackBtn">
+            <span>📖</span> Carregar no Modo Leitor RDA
+          </button>
+          <button class="fallback-btn tertiary" id="loginToProxyBtn">
+            <span>⚡</span> Ativar Proxy RDA (Login)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 5: Sysadmin Remote Browser Stream Canvas (RBI) -->
+    <div id="canvasView" class="browser-view canvas-view" style="display: none;">
+      <div class="canvas-header">
+        <span class="rbi-badge">🛡️ RBI Headless Engine • 60 FPS</span>
+        <span id="rbiLatency">Latência: 1.2ms</span>
+      </div>
+      <canvas id="orbRemoteCanvas" width="1280" height="720"></canvas>
+    </div>
+  </main>
 </div>

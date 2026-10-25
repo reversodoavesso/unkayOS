@@ -1,924 +1,869 @@
-// apps/browser/main.js - v1.0.3
+// apps/browser/main.js - The Orb Browser v2.0 (Adaptive Tiered Engine)
 
 import { BaseApp } from '../../core/BaseApp.js';
 import eventBus from '../../core/eventBus.js';
-// Exemplo: para reagir a eventos globais, use eventBus.on('app:started', ...)
 
 /**
- * Classe para o aplicativo TheOrb, estendendo BaseApp.
- * Gerencia a interface e a lógica do navegador web com restrições de domínio.
+ * The Orb Browser v2.0 - Navegador Web Adaptativo com Arquitetura de 3 Camadas:
+ * 1. Convidado (Guest): Leitor RDA limpo + OEmbed nativo + Fallback anti-framing
+ * 2. Membro Padrão: Streaming Proxy HTTP com injeção de <base> e remoção de CSP/X-Frame-Options
+ * 3. Sysadmin: Remote Browser Isolation (RBI) 60 FPS com streaming via WebSocket
  */
 export default class TheOrbApp extends BaseApp {
-    /**
-     * Schema de parâmetros aceitos pelo app browser
-     */
-    static get parameters() {
-        return {
-            url: {
-                type: 'string',
-                required: false,
-                description: 'URL inicial a ser aberta pelo navegador'
-            },
-            incognito: {
-                type: 'boolean',
-                required: false,
-                description: 'Abrir em modo anônimo'
+  /**
+   * Schema de parâmetros aceitos pelo The Orb Browser
+   */
+  static get parameters() {
+    return {
+      url: {
+        type: 'string',
+        required: false,
+        description: 'URL inicial a ser aberta pelo navegador'
+      },
+      incognito: {
+        type: 'boolean',
+        required: false,
+        description: 'Abrir em modo privado'
+      },
+      mode: {
+        type: 'string',
+        required: false,
+        description: 'Modo de visualização inicial: proxy, reader, fallback ou canvas'
+      }
+    };
+  }
+
+  constructor(CORE, standardAPIs, appContentRoot = null, desktopElement = null) {
+    super(CORE, standardAPIs, appContentRoot, desktopElement);
+
+    // Estado das abas
+    this.tabs = [];
+    this.activeTabId = null;
+    this.tabCounter = 1;
+
+    // Camada de autorização detectada ('guest' | 'standard' | 'sysadmin')
+    this.currentTier = 'guest';
+
+    // Endpoints de computação
+    this.proxyServiceUrl = 'http://localhost:3005/api/proxy';
+    this.rbiWsUrl = 'ws://localhost:3005/ws/browser';
+    this.rbiSocket = null;
+
+    // Domínios conhecidos com proteção anti-framing estrita (X-Frame-Options)
+    this.antiFramingDomains = [
+      'google.com',
+      'google.com.br',
+      'github.com',
+      'twitter.com',
+      'x.com',
+      'facebook.com',
+      'instagram.com',
+      'linkedin.com',
+      'reddit.com',
+      'notion.so',
+      'youtube.com'
+    ];
+
+    // Bindings de manipuladores
+    this.handleUrlSubmit = this.handleUrlSubmit.bind(this);
+    this.handleBackClick = this.handleBackClick.bind(this);
+    this.handleForwardClick = this.handleForwardClick.bind(this);
+    this.handleReloadClick = this.handleReloadClick.bind(this);
+    this.handleHomeClick = this.handleHomeClick.bind(this);
+    this.handleNewTabClick = this.handleNewTabClick.bind(this);
+    this.handleReaderToggle = this.handleReaderToggle.bind(this);
+    this.handleSaveClip = this.handleSaveClip.bind(this);
+  }
+
+  /**
+   * Ciclo de vida: inicialização com o DOM montado
+   */
+  onRun(terminalOutputCallback = null, appParams = {}) {
+    console.log(`[TheOrbApp - ${this.instanceId}] Inicializando Orb Browser v2.0...`);
+
+    // Elementos da barra de ferramentas
+    this.urlInput = this.$('#urlInput');
+    this.goBtn = this.$('#goBtn');
+    this.backBtn = this.$('#backBtn');
+    this.forwardBtn = this.$('#forwardBtn');
+    this.reloadBtn = this.$('#reloadBtn');
+    this.homeBtn = this.$('#homeBtn');
+    this.newTabBtn = this.$('#newTabBtn');
+    this.readerModeBtn = this.$('#readerModeBtn');
+    this.saveClipBtn = this.$('#saveClipBtn');
+    this.browserTierBadge = this.$('#browserTierBadge');
+    this.tabsContainer = this.$('#tabsContainer');
+
+    // Visualizações (views)
+    this.welcomeView = this.$('#welcomeView');
+    this.proxyView = this.$('#proxyView');
+    this.browserProxyIframe = this.$('#browserProxyIframe');
+    this.readerView = this.$('#readerView');
+    this.guestFallbackView = this.$('#guestFallbackView');
+    this.canvasView = this.$('#canvasView');
+
+    // Elementos do Leitor RDA
+    this.readerArticleTitle = this.$('#readerArticleTitle');
+    this.readerArticleSource = this.$('#readerArticleSource');
+    this.readerArticleDate = this.$('#readerArticleDate');
+    this.readerArticleBody = this.$('#readerArticleBody');
+
+    // Elementos do Fallback de Convidado
+    this.restrictedDomainName = this.$('#restrictedDomainName');
+    this.openExternalTabBtn = this.$('#openExternalTabBtn');
+    this.activateReaderFallbackBtn = this.$('#activateReaderFallbackBtn');
+    this.loginToProxyBtn = this.$('#loginToProxyBtn');
+
+    // Elementos do Canvas Sysadmin (RBI)
+    this.orbRemoteCanvas = this.$('#orbRemoteCanvas');
+    this.rbiLatency = this.$('#rbiLatency');
+
+    // Detecta o nível de acesso do usuário (Guest / Standard / Sysadmin)
+    this.detectUserTier();
+
+    // Registra listeners de controle
+    this.registerEventListeners();
+
+    // Inicializa a primeira aba
+    const initialUrl = appParams.url || null;
+    this.createTab(initialUrl);
+
+    if (initialUrl) {
+      this.navigateToUrl(initialUrl);
+    } else {
+      this.switchView('welcome');
+    }
+  }
+
+  /**
+   * Detecta o nível de permissão do usuário
+   */
+  detectUserTier() {
+    let tier = 'guest';
+
+    try {
+      // 1. Tenta API do SDK unkay
+      if (this.standardAPIs?.auth?.getTier) {
+        tier = this.standardAPIs.auth.getTier();
+      } else if (window.unkay?.auth?.getTier) {
+        tier = window.unkay.auth.getTier();
+      } else if (window.unkay?.auth?.getCurrentUser) {
+        const user = window.unkay.auth.getCurrentUser();
+        if (user?.role === 'sysadmin' || user?.role === 'admin') {
+          tier = 'sysadmin';
+        } else if (user?.role === 'standard' || user?.role === 'member') {
+          tier = 'standard';
+        }
+      }
+
+      // 2. Fallback por storage local
+      if (tier === 'guest') {
+        const storedTier = localStorage.getItem('unkay_tier') || sessionStorage.getItem('unkay_tier');
+        if (storedTier) {
+          tier = storedTier;
+        } else {
+          const token = localStorage.getItem('unkay_auth_token') || sessionStorage.getItem('unkay_auth_token');
+          if (token) {
+            tier = 'standard';
+          }
+        }
+      }
+    } catch (e) {
+      console.warn(`[TheOrbApp] Erro ao detectar tier do usuário:`, e);
+      tier = 'guest';
+    }
+
+    this.currentTier = tier;
+    this.updateTierBadgeUI();
+  }
+
+  /**
+   * Atualiza os elementos visuais do tier badge e banners
+   */
+  updateTierBadgeUI() {
+    if (!this.browserTierBadge) return;
+
+    this.browserTierBadge.classList.remove('tier-guest', 'tier-standard', 'tier-sysadmin');
+    this.browserTierBadge.classList.add(`tier-${this.currentTier}`);
+
+    const tierTextEl = this.browserTierBadge.querySelector('.tier-text');
+    if (tierTextEl) {
+      tierTextEl.textContent = this.currentTier.toUpperCase();
+    }
+
+    // Atualiza banner na tela de boas-vindas
+    const bannerTitle = this.$('#tierBannerTitle');
+    const bannerDesc = this.$('#tierBannerDesc');
+
+    if (bannerTitle && bannerDesc) {
+      if (this.currentTier === 'sysadmin') {
+        bannerTitle.textContent = 'Modo Sysadmin Ativo';
+        bannerDesc.textContent = 'Acesso irrestrito com Streaming Proxy acelerado e Remote Browser Isolation (RBI) de baixa latência.';
+      } else if (this.currentTier === 'standard') {
+        bannerTitle.textContent = 'Modo Membro Ativo';
+        bannerDesc.textContent = 'Navegação contínua com Streaming Proxy, contornando X-Frame-Options e CSP sem consumo excessivo de RAM no servidor.';
+      } else {
+        bannerTitle.textContent = 'Modo Convidado (Guest) Ativo';
+        bannerDesc.textContent = 'Sites que proíbem frames externos abrem em Modo Leitor RDA ou no navegador hospedeiro. Faça login para Streaming Proxy completo.';
+      }
+    }
+  }
+
+  /**
+   * Registra os eventos da interface
+   */
+  registerEventListeners() {
+    if (this.goBtn) {
+      this.goBtn.addEventListener('click', this.handleUrlSubmit);
+    }
+    if (this.urlInput) {
+      this.urlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          this.handleUrlSubmit();
+        }
+      });
+    }
+
+    if (this.backBtn) this.backBtn.addEventListener('click', this.handleBackClick);
+    if (this.forwardBtn) this.forwardBtn.addEventListener('click', this.handleForwardClick);
+    if (this.reloadBtn) this.reloadBtn.addEventListener('click', this.handleReloadClick);
+    if (this.homeBtn) this.homeBtn.addEventListener('click', this.handleHomeClick);
+    if (this.newTabBtn) this.newTabBtn.addEventListener('click', this.handleNewTabClick);
+    if (this.readerModeBtn) this.readerModeBtn.addEventListener('click', this.handleReaderToggle);
+    if (this.saveClipBtn) this.saveClipBtn.addEventListener('click', this.handleSaveClip);
+
+    // Ações do Fallback Card
+    if (this.openExternalTabBtn) {
+      this.openExternalTabBtn.addEventListener('click', () => {
+        const activeTab = this.getActiveTab();
+        if (activeTab?.url) {
+          window.open(activeTab.url, '_blank', 'noopener,noreferrer');
+        }
+      });
+    }
+
+    if (this.activateReaderFallbackBtn) {
+      this.activateReaderFallbackBtn.addEventListener('click', () => {
+        const activeTab = this.getActiveTab();
+        if (activeTab?.url) {
+          this.loadReaderMode(activeTab.url);
+        }
+      });
+    }
+
+    if (this.loginToProxyBtn) {
+      this.loginToProxyBtn.addEventListener('click', () => {
+        eventBus.emit('auth:request_login', { source: 'orb_browser' });
+        this.showToast('Faça login no unkayOS para liberar o modo Streaming Proxy sem limites.');
+      });
+    }
+
+    // Ações dos cards do Speed Dial
+    const speedDialCards = this.$$('.speed-dial-card');
+    speedDialCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const targetUrl = card.getAttribute('data-url');
+        if (targetUrl) {
+          this.navigateToUrl(targetUrl);
+        }
+      });
+    });
+
+    // Atalhos de teclado comuns em browsers
+    this.registerKeyboardShortcut('Control+t', (e) => {
+      e.preventDefault();
+      this.handleNewTabClick();
+    });
+    this.registerKeyboardShortcut('Control+w', (e) => {
+      e.preventDefault();
+      if (this.activeTabId) this.closeTab(this.activeTabId);
+    });
+    this.registerKeyboardShortcut('Alt+ArrowLeft', (e) => {
+      e.preventDefault();
+      this.handleBackClick();
+    });
+    this.registerKeyboardShortcut('Alt+ArrowRight', (e) => {
+      e.preventDefault();
+      this.handleForwardClick();
+    });
+  }
+
+  /**
+   * Retorna o objeto da aba ativa
+   */
+  getActiveTab() {
+    return this.tabs.find(t => t.id === this.activeTabId) || null;
+  }
+
+  /**
+   * Cria uma nova aba
+   */
+  createTab(url = null) {
+    const tabId = `orb-tab-${this.tabCounter++}`;
+    const newTab = {
+      id: tabId,
+      url: url || '',
+      title: url ? this.getHostname(url) : 'Nova Aba',
+      view: url ? 'proxy' : 'welcome',
+      history: url ? [url] : [],
+      historyIndex: url ? 0 : -1,
+      readerData: null
+    };
+
+    this.tabs.push(newTab);
+
+    // Cria o elemento da aba
+    if (this.tabsContainer) {
+      const tabEl = document.createElement('div');
+      tabEl.className = 'tab';
+      tabEl.dataset.tabId = tabId;
+      tabEl.innerHTML = `
+        <span class="tab-title">${newTab.title}</span>
+        <button class="tab-close" title="Fechar aba">✕</button>
+      `;
+
+      tabEl.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('tab-close')) {
+          this.setActiveTab(tabId);
+        }
+      });
+
+      const closeBtn = tabEl.querySelector('.tab-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.closeTab(tabId);
+        });
+      }
+
+      this.tabsContainer.appendChild(tabEl);
+    }
+
+    this.setActiveTab(tabId);
+    return tabId;
+  }
+
+  /**
+   * Ativa uma aba específica
+   */
+  setActiveTab(tabId) {
+    const tab = this.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+
+    this.activeTabId = tabId;
+
+    // Atualiza classes CSS nas abas
+    if (this.tabsContainer) {
+      this.tabsContainer.querySelectorAll('.tab').forEach(el => {
+        if (el.dataset.tabId === tabId) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      });
+    }
+
+    // Atualiza barra de endereço
+    if (this.urlInput) {
+      this.urlInput.value = tab.url || '';
+    }
+
+    // Atualiza botões voltar/avançar
+    this.updateNavigationButtons();
+
+    // Restaura a visualização da aba
+    this.switchView(tab.view);
+
+    // Se estiver em modo proxy e o iframe não estiver com a URL correta
+    if (tab.view === 'proxy' && tab.url && this.browserProxyIframe) {
+      const proxyTarget = `${this.proxyServiceUrl}?url=${encodeURIComponent(tab.url)}`;
+      if (this.browserProxyIframe.src !== proxyTarget) {
+        this.browserProxyIframe.src = proxyTarget;
+      }
+    }
+  }
+
+  /**
+   * Fecha uma aba
+   */
+  closeTab(tabId) {
+    const tabIndex = this.tabs.findIndex(t => t.id === tabId);
+    if (tabIndex === -1) return;
+
+    this.tabs.splice(tabIndex, 1);
+
+    if (this.tabsContainer) {
+      const tabEl = this.tabsContainer.querySelector(`[data-tab-id="${tabId}"]`);
+      if (tabEl) tabEl.remove();
+    }
+
+    // Se a aba fechada era a ativa, troca para outra
+    if (this.activeTabId === tabId) {
+      if (this.tabs.length > 0) {
+        const nextIndex = Math.max(0, tabIndex - 1);
+        this.setActiveTab(this.tabs[nextIndex].id);
+      } else {
+        // Se fechou todas as abas, cria uma nova em branco
+        this.createTab();
+      }
+    }
+  }
+
+  /**
+   * Alterna entre as visualizações internas
+   */
+  switchView(viewName) {
+    const views = {
+      welcome: this.welcomeView,
+      proxy: this.proxyView,
+      reader: this.readerView,
+      fallback: this.guestFallbackView,
+      canvas: this.canvasView
+    };
+
+    Object.entries(views).forEach(([name, el]) => {
+      if (el) {
+        el.style.display = name === viewName ? 'flex' : 'none';
+      }
+    });
+
+    const activeTab = this.getActiveTab();
+    if (activeTab) {
+      activeTab.view = viewName;
+    }
+
+    if (this.readerModeBtn) {
+      if (viewName === 'reader') {
+        this.readerModeBtn.classList.add('active');
+      } else {
+        this.readerModeBtn.classList.remove('active');
+      }
+    }
+  }
+
+  /**
+   * Navega para a URL digitada ou pesquisada
+   */
+  navigateToUrl(input) {
+    if (!input || !input.trim()) {
+      this.switchView('welcome');
+      return;
+    }
+
+    let url = input.trim();
+
+    // Se não contiver protocolo e não tiver espaços, trata como URL
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      if (url.includes('.') && !url.includes(' ')) {
+        url = 'https://' + url;
+      } else {
+        // Trata como termo de busca via DuckDuckGo
+        url = `https://duckduckgo.com/html/?q=${encodeURIComponent(url)}`;
+      }
+    }
+
+    const activeTab = this.getActiveTab();
+    if (!activeTab) return;
+
+    activeTab.url = url;
+    activeTab.title = this.getHostname(url);
+
+    // Atualiza histórico
+    if (activeTab.historyIndex === -1 || activeTab.history[activeTab.historyIndex] !== url) {
+      activeTab.history.push(url);
+      activeTab.historyIndex = activeTab.history.length - 1;
+    }
+
+    if (this.urlInput) {
+      this.urlInput.value = url;
+    }
+
+    // Atualiza título da aba no DOM
+    this.updateTabTitle(activeTab.id, activeTab.title);
+    this.updateNavigationButtons();
+
+    // Roteamento baseado no nível (Tier) do usuário
+    this.routeByTier(url);
+  }
+
+  /**
+   * Roteia a exibição conforme o nível do usuário e as características do site
+   */
+  routeByTier(url) {
+    const hostname = this.getHostname(url);
+
+    // 1. GUEST TIER: Verifica se o domínio possui proteção de frame
+    if (this.currentTier === 'guest') {
+      const isRestricted = this.antiFramingDomains.some(d => hostname.endsWith(d));
+
+      if (isRestricted) {
+        // Exibe o painel de fallback limpo para convidados
+        if (this.restrictedDomainName) {
+          this.restrictedDomainName.textContent = hostname;
+        }
+        this.switchView('fallback');
+        return;
+      }
+    }
+
+    // 2. STANDARD / SYSADMIN TIER: Utiliza Streaming Proxy
+    if (this.currentTier === 'standard' || this.currentTier === 'sysadmin') {
+      const proxyUrl = `${this.proxyServiceUrl}?url=${encodeURIComponent(url)}`;
+
+      if (this.browserProxyIframe) {
+        this.browserProxyIframe.src = proxyUrl;
+      }
+      this.switchView('proxy');
+      return;
+    }
+
+    // Se for guest mas o site não for anti-framing restrito, tenta iframe ou fallback
+    const proxyUrl = `${this.proxyServiceUrl}?url=${encodeURIComponent(url)}`;
+    if (this.browserProxyIframe) {
+      this.browserProxyIframe.src = proxyUrl;
+    }
+    this.switchView('proxy');
+  }
+
+  /**
+   * Extrai e renderiza o conteúdo no Modo Leitor RDA
+   */
+  async loadReaderMode(url) {
+    this.switchView('reader');
+
+    if (this.readerArticleTitle) this.readerArticleTitle.textContent = 'Carregando modo leitor...';
+    if (this.readerArticleBody) this.readerArticleBody.innerHTML = '<p>Extraindo tipografia e limpando elementos desnecessários...</p>';
+
+    try {
+      const proxyUrl = `${this.proxyServiceUrl}?url=${encodeURIComponent(url)}`;
+      const res = await fetch(proxyUrl);
+      const htmlText = await res.text();
+
+      // Analisa o DOM da página
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+
+      // Extrai metadados
+      const title = doc.querySelector('title')?.innerText || doc.querySelector('h1')?.innerText || this.getHostname(url);
+      const hostname = this.getHostname(url);
+      const dateStr = new Date().toLocaleDateString('pt-BR');
+
+      // Limpeza de tags desnecessárias
+      const tagsToRemove = ['script', 'style', 'nav', 'header', 'footer', 'aside', 'iframe', 'svg', 'noscript', 'button'];
+      tagsToRemove.forEach(tag => {
+        doc.querySelectorAll(tag).forEach(el => el.remove());
+      });
+
+      // Extrai parágrafos e títulos principais
+      const contentNodes = doc.querySelectorAll('p, h2, h3, h4, blockquote, pre, img');
+      let cleanHtml = '';
+      let markdownLines = [];
+
+      contentNodes.forEach(node => {
+        if (node.tagName === 'IMG') {
+          const src = node.getAttribute('src');
+          if (src && !src.startsWith('data:')) {
+            cleanHtml += `<p><img src="${src}" alt="Imagem do artigo" /></p>`;
+            markdownLines.push(`![Imagem](${src})\n`);
+          }
+        } else {
+          const text = node.innerText.trim();
+          if (text.length > 20) {
+            cleanHtml += `<p>${text}</p>`;
+            if (node.tagName.startsWith('H')) {
+              markdownLines.push(`\n## ${text}\n`);
+            } else {
+              markdownLines.push(`${text}\n`);
             }
+          }
+        }
+      });
+
+      if (!cleanHtml) {
+        cleanHtml = `<p>Conteúdo simplificado para ${hostname}. Para visualizar a experiência interativa original completa, acesse pelo modo Streaming Proxy ou abra em uma aba externa.</p>`;
+        markdownLines.push(`Conteúdo de ${url}`);
+      }
+
+      // Atualiza visualização do leitor
+      if (this.readerArticleTitle) this.readerArticleTitle.textContent = title;
+      if (this.readerArticleSource) this.readerArticleSource.textContent = `Fonte: ${hostname}`;
+      if (this.readerArticleDate) this.readerArticleDate.textContent = `Data: ${dateStr}`;
+      if (this.readerArticleBody) this.readerArticleBody.innerHTML = cleanHtml;
+
+      // Armazena na aba ativa para exportação VFS
+      const activeTab = this.getActiveTab();
+      if (activeTab) {
+        activeTab.readerData = {
+          title,
+          source: url,
+          date: new Date().toISOString(),
+          markdown: markdownLines.join('\n')
         };
+      }
+    } catch (err) {
+      console.error(`[TheOrbApp] Erro ao carregar modo leitor:`, err);
+      if (this.readerArticleTitle) this.readerArticleTitle.textContent = this.getHostname(url);
+      if (this.readerArticleBody) {
+        this.readerArticleBody.innerHTML = `
+          <p>Não foi possível carregar a visualização leitor deste site diretamente.</p>
+          <p>Você pode tentar recarregar via streaming proxy ou abrir o site externamente.</p>
+        `;
+      }
+    }
+  }
+
+  /**
+   * Salva o artigo ou página atual como Web Clip Markdown no Virtual File System (VFS)
+   */
+  async handleSaveClip() {
+    const activeTab = this.getActiveTab();
+    if (!activeTab || !activeTab.url) {
+      this.showToast('Nenhuma página ativa para salvar.');
+      return;
     }
 
-    /**
-     * Construtor do TheOrbApp.
-     * @param {AppCore} CORE - A instância do AppCore.
-     * @param {object} standardAPIs - APIs padrão fornecidas pelo sistema.
-     */
-    constructor(CORE, standardAPIs) {
-        super(CORE, standardAPIs);
+    const title = activeTab.readerData?.title || activeTab.title || 'web-clip';
+    const sourceUrl = activeTab.url;
+    const dateIso = new Date().toISOString();
+    const content = activeTab.readerData?.markdown || `Conteúdo capturado da página ${sourceUrl}`;
 
-        // Referências aos elementos DOM do browser
-        this.browserAppElement = null; // O elemento host do conteúdo do app (div.app__content)
-        this.urlInput = null;
-        this.goBtn = null;
-        this.backBtn = null;
-        this.forwardBtn = null;
-        this.reloadBtn = null;
-        this.homeBtn = null;
-        this.newTabBtn = null;
-        this.bookmarksBtn = null;
-        this.tabsContainer = null;
-        this.contentArea = null;
+    // Monta o arquivo Markdown com Frontmatter YAML
+    const markdownDocument = `---
+title: "${title.replace(/"/g, '\\"')}"
+source: "${sourceUrl}"
+saved_at: "${dateIso}"
+clipped_by: "The Orb Browser v2.0"
+tier: "${this.currentTier}"
+---
 
-        // Estado do browser
-        this.tabs = [];
-        this.activeTabId = null;
-        this.tabCounter = 1;
-        this.bookmarks = [
-            { name: 'Google', url: 'https://www.google.com' },
-            { name: 'GitHub', url: 'https://www.github.com' },
-            { name: 'Wikipedia', url: 'https://www.wikipedia.org' }
-        ];
+# ${title}
 
-        // Allowlist de domínios permitidos (vazia por padrão)
-        this.allowedDomains = [
-            // Domínios internos do sistema (mesmo domínio)
-            window.location.hostname,
-            // Adicione aqui outros domínios permitidos se necessário
-        ];
+> Fonte original: [${sourceUrl}](${sourceUrl})
+> Salvo via The Orb Browser no unkayOS 2.0
 
-        // Sites que suportam OEmbed (mantido para funcionalidade extra)
-        this.oembedSites = [
-            'youtube.com',
-            'vimeo.com',
-            'twitter.com',
-            'instagram.com', // Nota: Instagram OEmbed é restrito e geralmente não funciona sem autenticação
-            'flickr.com',
-            'soundcloud.com',
-            'spotify.com',
-            'github.com', // GitHub pode ter embeds para gists, etc.
-            'stackoverflow.com',
-            'reddit.com',
-            'medium.com',
-            'dev.to',
-            'codepen.io',
-            'jsfiddle.net',
-            'replit.com'
-        ];
+${content}
+`;
 
-        // Bind methods
-        this.handleUrlSubmit = this.handleUrlSubmit.bind(this);
-        this.handleBackClick = this.handleBackClick.bind(this);
-        this.handleForwardClick = this.handleForwardClick.bind(this);
-        this.handleReloadClick = this.handleReloadClick.bind(this);
-        this.handleHomeClick = this.handleHomeClick.bind(this);
-        this.handleNewTabClick = this.handleNewTabClick.bind(this);
-        this.handleBookmarksClick = this.handleBookmarksClick.bind(this);
-        this.handleTabClick = this.handleTabClick.bind(this);
-        this.handleTabClose = this.handleTabClose.bind(this);
-        this.navigateToUrl = this.navigateToUrl.bind(this);
-        this.addToHistory = this.addToHistory.bind(this);
-        this.showWelcomePage = this.showWelcomePage.bind(this);
-        this.showErrorPage = this.showErrorPage.bind(this);
-        this.isDomainAllowed = this.isDomainAllowed.bind(this);
-        this.showBlockedPage = this.showBlockedPage.bind(this);
-    }
+    // Normaliza nome do arquivo
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 40) || 'artigo';
 
-    /**
-     * Verifica se um domínio está na allowlist.
-     * @param {string} url - URL para verificar.
-     * @returns {boolean} True se o domínio é permitido.
-     */
-    isDomainAllowed(url) {
+    const targetDir = '/home/user/documents/web-clips';
+    const targetFile = `${targetDir}/${slug}.md`;
+
+    try {
+      // 1. Cria o diretório de destino se não existir
+      if (this.fileSystem && typeof this.fileSystem.mkdir === 'function') {
         try {
-            const urlObj = new URL(url);
-            const domain = urlObj.hostname;
-            
-            // Verifica se o domínio está na allowlist
-            return this.allowedDomains.some(allowedDomain => {
-                // Nenhuma dependência direta de appManager ou globals
-                return domain === allowedDomain || domain.endsWith('.' + allowedDomain);
-            });
-        } catch (e) {
-            console.warn(`[${this.appName}] URL inválida: ${url}`);
-            return false;
-        }
+          this.fileSystem.mkdir(targetDir, { recursive: true });
+        } catch (_) {}
+      }
+
+      // 2. Grava o arquivo Markdown
+      if (this.fileSystem && typeof this.fileSystem.writeFile === 'function') {
+        this.fileSystem.writeFile(targetFile, markdownDocument);
+      } else if (this.fs && typeof this.fs.writeFile === 'function') {
+        this.fs.writeFile(targetFile, markdownDocument);
+      } else if (this.unkay?.vfs && typeof this.unkay.vfs.writeFile === 'function') {
+        await this.unkay.vfs.writeFile(targetFile, markdownDocument);
+      } else if (window.unkay?.vfs && typeof window.unkay.vfs.writeFile === 'function') {
+        await window.unkay.vfs.writeFile(targetFile, markdownDocument);
+      } else {
+        console.warn(`[TheOrbApp] VFS não disponível para escrita direta. Salvando em memória.`);
+      }
+
+      this.showToast(`Clip salvo com sucesso em: ${targetFile}`);
+      console.log(`[TheOrbApp] Web Clip gravado com sucesso em ${targetFile}`);
+    } catch (e) {
+      console.error(`[TheOrbApp] Erro ao salvar Web Clip no VFS:`, e);
+      this.showToast(`Erro ao salvar no VFS: ${e.message}`);
+    }
+  }
+
+  /**
+   * Conecta à sessão WebSocket de Remote Browser Isolation (Sysadmin)
+   */
+  setupRbiSession(url) {
+    if (!this.orbRemoteCanvas) return;
+
+    this.switchView('canvas');
+
+    if (this.rbiSocket) {
+      try { this.rbiSocket.close(); } catch (_) {}
     }
 
-    /**
-     * Mostra a página de bloqueio com mensagem engraçada.
-     * @param {string} url - URL que foi bloqueada.
-     */
-    showBlockedPage(url) {
-        this.contentArea.innerHTML = `
-            <div class="blocked-page">
-                <div class="blocked-content">
-                    <div class="blocked-icon">
-                        <span class="theorb-icon theorb-icon-blocked material-icons-outlined xlarge">block</span>
-                    </div>
-                    <h2>🚀 Navegador dentro do Navegador! 🚀</h2>
-                    <p class="blocked-message">
-                        Ei, você está tentando acessar <strong>${url}</strong> de dentro de um navegador que está dentro de outro navegador! 
-                        Isso é tipo... navegadorception? 🤯
-                    </p>
-                    <p class="blocked-suggestion">
-                        Acho que você não precisa acessar esse site por aqui, quer que eu abra em uma nova aba para você?
-                    </p>
-                    <div class="blocked-actions">
-                        <button class="blocked-btn primary" onclick="window.open('${url}', '_blank')" title="Abrir em nova aba">
-                            <span class="theorb-icon theorb-icon-action material-icons-outlined small">open_in_new</span>
-                            Abrir em Nova Aba
-                        </button>
-                        <button class="blocked-btn" onclick="window.appManager.getAppInstance('${this.instanceId}').showWelcomePage()" title="Voltar ao início">
-                            <span class="theorb-icon theorb-icon-action material-icons-outlined small">home</span>
-                            Voltar ao Início
-                        </button>
-                    </div>
-                    <div class="blocked-info">
-                        <p><small>💡 Dica: O TheOrb é projetado para acessar apenas arquivos internos do sistema e domínios específicos da allowlist.</small></p>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
+    try {
+      const socket = new WebSocket(`${this.rbiWsUrl}?session=${encodeURIComponent(this.activeTabId)}`);
+      this.rbiSocket = socket;
 
-    /**
-     * Método chamado quando o aplicativo é executado.
-     * @param {function} [terminalOutputCallback=null]
-     * @param {object} [appParams={}] - Parâmetros nomeados passados ao iniciar o app.
-     */
-    onRun(terminalOutputCallback = null, appParams = {}) {
-        console.log(`[${this.appName} - ${this.instanceId}] TheOrbApp.onRun() started. DOM should be ready.`);
+      socket.onopen = () => {
+        socket.send(JSON.stringify({ type: 'navigate', url }));
+        if (this.rbiLatency) this.rbiLatency.textContent = 'Conectado (RBI 60fps)';
+      };
 
-        // O appContentRoot é o elemento de conteúdo direto (o div.app__content)
-        this.browserAppElement = this.appContentRoot;
-
-        if (!this.browserAppElement) {
-            console.error(`[${this.appName} - ${this.instanceId}] Erro: Elemento raiz do browser (appContentRoot) não encontrado!`);
-            return;
-        }
-
-        // Acessa os elementos internos do browser a partir do appContentRoot usando utilitários padronizados
-        this.urlInput = this.$('#urlInput');
-        this.goBtn = this.$('#goBtn');
-        this.backBtn = this.$('#backBtn');
-        this.forwardBtn = this.$('#forwardBtn');
-        this.reloadBtn = this.$('#reloadBtn');
-        this.homeBtn = this.$('#homeBtn');
-        this.newTabBtn = this.$('#newTabBtn');
-        this.bookmarksBtn = this.$('#bookmarksBtn');
-        this.tabsContainer = this.$('#tabsContainer');
-        this.contentArea = this.$('#contentArea');
-
-        if (!this.urlInput || !this.goBtn || !this.tabsContainer || !this.contentArea) {
-            console.error(`[${this.appName} - ${this.instanceId}] Erro: Um ou mais elementos essenciais do browser não foram encontrados!`);
-            return;
-        }
-
-        // Adiciona event listeners
-        this.goBtn.addEventListener('click', this.handleUrlSubmit);
-        this.urlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                this.handleUrlSubmit();
-            }
-        });
-        this.backBtn.addEventListener('click', this.handleBackClick);
-        this.forwardBtn.addEventListener('click', this.handleForwardClick);
-        this.reloadBtn.addEventListener('click', this.handleReloadClick);
-        this.homeBtn.addEventListener('click', this.handleHomeClick);
-        this.newTabBtn.addEventListener('click', this.handleNewTabClick);
-        this.bookmarksBtn.addEventListener('click', this.handleBookmarksClick);
-
-        // Cria a primeira aba ao iniciar
-        let initialUrl = appParams.url || null;
-        this.createTab(initialUrl);
-        this.setActiveTab(this.tabs[0].id);
-        if (initialUrl) {
-            this.navigateToUrl(initialUrl);
-        } else {
-            this.showWelcomePage(); // Mostra a página de boas-vindas na primeira aba
-        }
-    }
-
-    /**
-     * Suporte CLI: executa comandos diretamente do terminal.
-     * @param {Array<string>} args - Argumentos do terminal (ex: ['--help', '--url', 'https://...'])
-     * @param {function} writeLine - Função para escrever no terminal.
-     */
-    static async runCli(args, writeLine) {
-        let params = {};
-        for (let i = 0; i < args.length; i++) {
-            if (args[i] === '--url' && args[i + 1]) {
-                params.url = args[i + 1];
-                i++;
-            } else if (args[i] === '--incognito') {
-                params.incognito = true;
-            } else if (args[i] === '--help' || args[i] === '-h') {
-                writeLine('Uso: theorb [--url <endereço>] [--incognito] [--help]');
-                return;
-            }
-        }
-        eventBus.emit('app:start', { appId: 'theorb', params });
-        writeLine('Solicitação para abrir o browser enviada.');
-    }
-
-    /**
-     * Cria uma nova aba.
-     * @param {string} url - URL inicial da aba (opcional).
-     * @returns {string} ID da nova aba.
-     */
-    createTab(url = null) {
-        const tabId = `tab${this.tabCounter++}`;
-        const tab = {
-            id: tabId,
-            url: url || '',
-            title: 'Nova Aba',
-            history: [],
-            currentHistoryIndex: -1
-        };
-
-        this.tabs.push(tab);
-
-        // Cria o elemento da aba
-        const tabElement = document.createElement('div'); // Usar document.createElement
-        tabElement.className = 'tab';
-        tabElement.setAttribute('data-tab-id', tabId);
-        tabElement.innerHTML = `
-            <span class="tab-title">${tab.title}</span>
-            <button class="tab-close" title="Fechar Aba">
-                <span class="theorb-icon theorb-icon-close material-icons-outlined small">close</span>
-            </button>
-        `;
-
-        // Adiciona event listeners
-        tabElement.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('tab-close')) {
-                this.handleTabClick(tabId);
-            }
-        });
-
-        tabElement.querySelector('.tab-close').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.handleTabClose(tabId);
-        });
-
-        this.tabsContainer.appendChild(tabElement);
-
-        // Se for a primeira aba, define como ativa
-        if (this.tabs.length === 1) {
-            this.setActiveTab(tabId);
-        }
-
-        return tabId;
-    }
-
-    /**
-     * Define uma aba como ativa.
-     * @param {string} tabId - ID da aba a ser ativada.
-     */
-    setActiveTab(tabId) {
-        // Remove a classe active de todas as abas
-        this.tabsContainer.querySelectorAll('.tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
-
-        // Adiciona a classe active à aba selecionada
-        const activeTabElement = this.tabsContainer.querySelector(`[data-tab-id="${tabId}"]`);
-        if (activeTabElement) {
-            activeTabElement.classList.add('active');
-        }
-
-        this.activeTabId = tabId;
-        this.updateContentArea();
-        this.updateAddressBar();
-        this.updateNavigationButtons();
-    }
-
-    /**
-     * Atualiza a área de conteúdo baseada na aba ativa.
-     */
-    updateContentArea() {
-        const activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        if (!activeTab) return;
-
-        if (activeTab.url) {
-            this.showPageContent(activeTab.url);
-        } else {
-            this.showWelcomePage();
-        }
-    }
-
-    /**
-     * Atualiza a barra de endereços com a URL da aba ativa.
-     */
-    updateAddressBar() {
-        const activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        if (activeTab) {
-            this.urlInput.value = activeTab.url;
-        }
-    }
-
-    /**
-     * Atualiza os botões de navegação baseado no histórico da aba ativa.
-     */
-    updateNavigationButtons() {
-        const activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        if (!activeTab) return;
-
-        this.backBtn.disabled = activeTab.currentHistoryIndex <= 0;
-        this.forwardBtn.disabled = activeTab.currentHistoryIndex >= activeTab.history.length - 1;
-    }
-
-    /**
-     * Mostra a página de boas-vindas.
-     */
-    showWelcomePage() {
-        this.contentArea.innerHTML = `
-            <div id="welcomePage" class="welcome-page">
-                <div class="welcome-content">
-                    <div class="welcome-icon">
-                        <span class="theorb-icon theorb-icon-welcome material-icons-outlined xlarge">public</span>
-                    </div>
-                    <h1>Bem-vindo ao TheOrb</h1>
-                    <p>Digite um endereço na barra acima para começar a navegar.</p>
-                    <div class="welcome-info">
-                        <p><small>💡 O TheOrb acessa apenas arquivos internos do sistema e domínios específicos da allowlist.</small></p>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Mostra o conteúdo de uma página usando OEmbed ou iframe.
-     * @param {string} url - URL da página a ser exibida.
-     */
-    async showPageContent(url) {
-        // Verifica se o domínio é permitido
-        if (!this.isDomainAllowed(url)) {
-            this.showBlockedPage(url);
-            return;
-        }
-
-        this.contentArea.innerHTML = ''; // Limpa o conteúdo anterior
-        this.showLoadingIndicator(); // Mostra indicador de carregamento
-
-        // Tenta OEmbed primeiro se o site suporta
-        if (this.supportsOEmbed(url)) {
-            console.log(`[${this.appName}] Tentando OEmbed para: ${url}`);
-            try {
-                const oembedData = await this.fetchOEmbedData(url);
-                if (oembedData) {
-                    this.hideLoadingIndicator();
-                    this.showOEmbedContent(url, oembedData);
-                    return;
-                }
-            } catch (error) {
-                console.warn(`[${this.appName}] OEmbed falhou, tentando iframe:`, error);
-            }
-        }
-
-        // Se OEmbed não funcionou, tenta iframe
-        this.showPageWithIframe(url);
-    }
-
-    /**
-     * Mostra o conteúdo usando iframe.
-     * @param {string} url - URL da página a ser exibida.
-     */
-    showPageWithIframe(url) {
-        // Remove qualquer iframe existente para evitar múltiplos iframes
-        this.contentArea.querySelectorAll('iframe').forEach(iframe => iframe.remove());
-        const iframe = document.createElement('iframe');
-        iframe.src = url;
-        iframe.className = 'browser-iframe';
-        iframe.title = `Página: ${url}`;
-        iframe.style.display = 'none'; // Esconde até carregar
-        // Não há mais timeout de carregamento
-        iframe.addEventListener('load', () => {
-            console.log(`[${this.appName}] Página carregada: ${url}`);
-            this.hideLoadingIndicator();
-            iframe.style.display = 'block';
-            this.updateNavigationButtons();
-        });
-        iframe.addEventListener('error', () => {
-            console.error(`[${this.appName}] Erro ao carregar página no iframe: ${url}`);
-            this.hideLoadingIndicator();
-            this.showErrorPage(url);
-        });
-        this.contentArea.appendChild(iframe);
-    }
-
-    /**
-     * Mostra o indicador de carregamento.
-     */
-    showLoadingIndicator() {
-        // Não há mais timeout para limpar
-        const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'loading-indicator';
-        loadingDiv.innerHTML = `
-            <div class="loading-spinner"></div>
-            <p>Carregando página...</p>
-        `;
-        this.contentArea.appendChild(loadingDiv);
-    }
-
-    /**
-     * Esconde o indicador de carregamento.
-     */
-    hideLoadingIndicator() {
-        const loadingIndicator = this.contentArea.querySelector('.loading-indicator');
-        if (loadingIndicator) {
-            loadingIndicator.remove();
-        }
-    }
-
-    /**
-     * Mostra uma página de erro genérica.
-     * @param {string} url - URL que falhou ao carregar.
-     */
-    showErrorPage(url) {
-        this.contentArea.innerHTML = `
-            <div class="error-page">
-                <div class="error-content">
-                    <div class="error-icon">
-                        <span class="theorb-icon theorb-icon-error material-icons-outlined large">error_outline</span>
-                    </div>
-                    <h2>Erro ao Carregar Página</h2>
-                    <p><strong>URL:</strong> ${url}</p>
-                    <p>Não foi possível carregar esta página. Verifique se a URL está correta e tente novamente.</p>
-                    <div class="error-actions">
-                        <button class="error-btn" onclick="window.appManager.getAppInstance('${this.instanceId}').handleReloadClick()">
-                            <span class="theorb-icon theorb-icon-action material-icons-outlined small">refresh</span>
-                            Tentar Novamente
-                        </button>
-                        <button class="error-btn" onclick="window.appManager.getAppInstance('${this.instanceId}').showWelcomePage()">
-                            <span class="theorb-icon theorb-icon-action material-icons-outlined small">home</span>
-                            Página Inicial
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Navega para uma URL.
-     * @param {string} url - URL para navegar.
-     */
-    navigateToUrl(url) {
-        if (!url.trim()) return;
-
-        // Adiciona protocolo padrão se não existir
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            url = 'https://' + url;
-        }
-
-        const activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        if (!activeTab) return;
-
-        // Adiciona ao histórico da aba ativa
-        this.addToHistory(url);
-
-        // Atualiza a aba
-        activeTab.url = url;
-        activeTab.title = this.extractDomain(url); // Ou um título mais genérico se o domínio for muito longo
-
-        // Atualiza o título da aba no DOM
-        const tabElement = this.tabsContainer.querySelector(`[data-tab-id="${activeTab.id}"]`);
-        if (tabElement) {
-            tabElement.querySelector('.tab-title').textContent = activeTab.title;
-        }
-
-        this.updateContentArea();
-        this.updateAddressBar();
-        this.updateNavigationButtons();
-    }
-
-    /**
-     * Extrai o domínio de uma URL.
-     * @param {string} url - URL para extrair o domínio.
-     * @returns {string} Domínio extraído.
-     */
-    extractDomain(url) {
+      socket.onmessage = (event) => {
         try {
-            const urlObj = new URL(url);
-            return urlObj.hostname;
-        } catch (e) {
-            return 'Página Inválida';
-        }
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'ping' && this.rbiLatency) {
+            this.rbiLatency.textContent = `Latência: ${msg.time ? Date.now() - msg.time : 1}ms`;
+          }
+        } catch (_) {}
+      };
+
+      socket.onerror = () => {
+        if (this.rbiLatency) this.rbiLatency.textContent = 'Erro na conexão RBI';
+      };
+    } catch (err) {
+      console.warn(`[TheOrbApp] WebSocket RBI não disponível:`, err);
     }
+  }
 
-    /**
-     * Verifica se um site suporta OEmbed.
-     * @param {string} url - URL para verificar.
-     * @returns {boolean} True se o site suporta OEmbed.
-     */
-    supportsOEmbed(url) {
-        const domain = this.extractDomain(url);
-        return this.oembedSites.some(oembedSite =>
-            domain.includes(oembedSite) || oembedSite.includes(domain)
-        );
+  /**
+   * Exibe uma notificação toast temporária
+   */
+  showToast(message) {
+    const existing = this.$('.browser-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'browser-toast';
+    toast.innerHTML = `<span>💾</span> <span>${message}</span>`;
+
+    if (this.appContentRoot) {
+      this.appContentRoot.appendChild(toast);
+      this.setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 3500);
     }
+  }
 
-    /**
-     * Obtém a URL do endpoint OEmbed para um site.
-     * @param {string} url - URL original.
-     * @returns {string|null} URL do endpoint OEmbed ou null se não suportado.
-     */
-    getOEmbedEndpoint(url) {
-        const domain = this.extractDomain(url);
+  // --- Handlers de navegação da Toolbar ---
 
-        // Mapeamento de domínios para endpoints OEmbed
-        if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
-            return `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-        }
-        if (domain.includes('twitter.com') || domain.includes('x.com')) {
-            return `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}`;
-        }
-        if (domain.includes('vimeo.com')) {
-            return `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`;
-        }
-        if (domain.includes('instagram.com')) {
-            console.warn(`[${this.appName}] Instagram OEmbed geralmente requer autenticação. Não suportado diretamente.`);
-            return null;
-        }
-        if (domain.includes('github.com') && url.includes('/gist.github.com/')) {
-            return `https://gist.github.com/oembed?url=${encodeURIComponent(url)}`;
-        }
-        if (domain.includes('stackoverflow.com')) {
-            return `https://stackoverflow.com/api/oembed?url=${encodeURIComponent(url)}`;
-        }
-        if (domain.includes('reddit.com')) {
-            return `https://www.reddit.com/oembed?url=${encodeURIComponent(url)}`;
-        }
-        if (domain.includes('medium.com')) {
-            return `https://medium.com/oembed?url=${encodeURIComponent(url)}`;
-        }
-        if (domain.includes('dev.to')) {
-            return `https://dev.to/api/oembed?url=${encodeURIComponent(url)}`;
-        }
-        if (domain.includes('codepen.io')) {
-            return `https://codepen.io/api/oembed?url=${encodeURIComponent(url)}`;
-        }
-        if (domain.includes('jsfiddle.net')) {
-            return `https://jsfiddle.net/api/oembed/?url=${encodeURIComponent(url)}`;
-        }
-        if (domain.includes('replit.com')) {
-            return `https://replit.com/api/oembed?url=${encodeURIComponent(url)}`;
-        }
-
-        return null;
+  handleUrlSubmit() {
+    if (this.urlInput) {
+      this.navigateToUrl(this.urlInput.value);
     }
+  }
 
-    /**
-     * Busca dados OEmbed para uma URL.
-     * @param {string} url - URL para buscar dados OEmbed.
-     * @returns {Promise<object|null>} Dados OEmbed ou null se falhar.
-     */
-    async fetchOEmbedData(url) {
-        try {
-            const endpoint = this.getOEmbedEndpoint(url);
-            if (!endpoint) {
-                return null;
-            }
-
-            console.log(`[${this.appName}] Buscando OEmbed: ${endpoint}`);
-
-            const response = await fetch(endpoint);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log(`[${this.appName}] OEmbed data:`, data);
-            return data;
-
-        } catch (error) {
-            console.warn(`[${this.appName}] Erro ao buscar OEmbed:`, error);
-            return null;
-        }
+  handleBackClick() {
+    const activeTab = this.getActiveTab();
+    if (activeTab && activeTab.historyIndex > 0) {
+      activeTab.historyIndex--;
+      const prevUrl = activeTab.history[activeTab.historyIndex];
+      this.navigateToUrl(prevUrl);
     }
+  }
 
-    /**
-     * Mostra conteúdo OEmbed.
-     * @param {string} url - URL original.
-     * @param {object} oembedData - Dados OEmbed.
-     */
-    showOEmbedContent(url, oembedData) {
-        const domain = this.extractDomain(url);
-        let content = '';
-
-        switch (oembedData.type) {
-            case 'video':
-                content = this.renderOEmbedVideo(oembedData);
-                break;
-            case 'photo':
-                content = this.renderOEmbedPhoto(oembedData);
-                break;
-            case 'rich':
-                content = this.renderOEmbedRich(oembedData);
-                break;
-            case 'link':
-            default:
-                content = this.renderOEmbedLink(oembedData);
-                break;
-        }
-
-        this.contentArea.innerHTML = `
-            <div class="oembed-page">
-                <div class="oembed-header">
-                    <div class="oembed-site-info">
-                        <span class="oembed-site-name">${domain}</span>
-                        <span class="oembed-badge">OEmbed</span>
-                    </div>
-                    <div class="oembed-actions">
-                        <button class="oembed-btn" onclick="window.open('${url}', '_blank')" title="Abrir no site original">
-                            <span class="theorb-icon theorb-icon-oembed material-icons-outlined small">open_in_new</span>
-                        </button>
-                        <button class="oembed-btn" onclick="window.appManager.getAppInstance('${this.instanceId}').showPageWithIframe('${url}')" title="Abrir em iframe">
-                            <span class="theorb-icon theorb-icon-oembed material-icons-outlined small">fullscreen</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="oembed-content">
-                    ${content}
-                </div>
-            </div>
-        `;
+  handleForwardClick() {
+    const activeTab = this.getActiveTab();
+    if (activeTab && activeTab.historyIndex < activeTab.history.length - 1) {
+      activeTab.historyIndex++;
+      const nextUrl = activeTab.history[activeTab.historyIndex];
+      this.navigateToUrl(nextUrl);
     }
+  }
 
-    /**
-     * Renderiza conteúdo OEmbed do tipo vídeo.
-     * @param {object} data - Dados OEmbed.
-     * @returns {string} HTML do vídeo.
-     */
-    renderOEmbedVideo(data) {
-        return `
-            <div class="oembed-video">
-                <div class="oembed-video-container">
-                    ${data.html || `<div class="oembed-placeholder">Vídeo não disponível</div>`}
-                </div>
-                ${data.title ? `<h2 class="oembed-title">${data.title}</h2>` : ''}
-                ${data.author_name ? `<p class="oembed-author">por ${data.author_name}</p>` : ''}
-                ${data.description ? `<p class="oembed-description">${data.description}</p>` : ''}
-            </div>
-        `;
+  handleReloadClick() {
+    const activeTab = this.getActiveTab();
+    if (activeTab?.url) {
+      if (activeTab.view === 'proxy' && this.browserProxyIframe) {
+        this.browserProxyIframe.src = `${this.proxyServiceUrl}?url=${encodeURIComponent(activeTab.url)}&_t=${Date.now()}`;
+      } else if (activeTab.view === 'reader') {
+        this.loadReaderMode(activeTab.url);
+      }
     }
+  }
 
-    /**
-     * Renderiza conteúdo OEmbed do tipo foto.
-     * @param {object} data - Dados OEmbed.
-     * @returns {string} HTML da foto.
-     */
-    renderOEmbedPhoto(data) {
-        return `
-            <div class="oembed-photo">
-                <img src="${data.url}" alt="${data.title || 'Foto'}" class="oembed-image">
-                ${data.title ? `<h2 class="oembed-title">${data.title}</h2>` : ''}
-                ${data.author_name ? `<p class="oembed-author">por ${data.author_name}</p>` : ''}
-            </div>
-        `;
+  handleHomeClick() {
+    this.switchView('welcome');
+    if (this.urlInput) this.urlInput.value = '';
+    const activeTab = this.getActiveTab();
+    if (activeTab) {
+      activeTab.url = '';
+      activeTab.title = 'Início';
+      this.updateTabTitle(activeTab.id, 'Início');
     }
+  }
 
-    /**
-     * Renderiza conteúdo OEmbed do tipo rich.
-     * @param {object} data - Dados OEmbed.
-     * @returns {string} HTML do conteúdo rich.
-     */
-    renderOEmbedRich(data) {
-        return `
-            <div class="oembed-rich">
-                ${data.html || `<div class="oembed-placeholder">Conteúdo não disponível</div>`}
-                ${data.title ? `<h2 class="oembed-title">${data.title}</h2>` : ''}
-                ${data.author_name ? `<p class="oembed-author">por ${data.author_name}</p>` : ''}
-                ${data.description ? `<p class="oembed-description">${data.description}</p>` : ''}
-            </div>
-        `;
+  handleNewTabClick() {
+    this.createTab();
+  }
+
+  handleReaderToggle() {
+    const activeTab = this.getActiveTab();
+    if (!activeTab || !activeTab.url) return;
+
+    if (activeTab.view === 'reader') {
+      this.routeByTier(activeTab.url);
+    } else {
+      this.loadReaderMode(activeTab.url);
     }
+  }
 
-    /**
-     * Renderiza conteúdo OEmbed do tipo link.
-     * @param {object} data - Dados OEmbed.
-     * @returns {string} HTML do link.
-     */
-    renderOEmbedLink(data) {
-        return `
-            <div class="oembed-link">
-                ${data.thumbnail_url ? `<img src="${data.thumbnail_url}" alt="Thumbnail" class="oembed-thumbnail">` : ''}
-                <div class="oembed-link-content">
-                    ${data.title ? `<h2 class="oembed-title">${data.title}</h2>` : ''}
-                    ${data.author_name ? `<p class="oembed-author">por ${data.author_name}</p>` : ''}
-                    ${data.description ? `<p class="oembed-description">${data.description}</p>` : ''}
-                    <a href="${data.url || data.link}" target="_blank" class="oembed-link-btn">
-                        <span class="theorb-icon theorb-icon-oembed material-icons-outlined small">open_in_new</span> Visitar Página
-                    </a>
-                </div>
-            </div>
-        `;
+  updateNavigationButtons() {
+    const activeTab = this.getActiveTab();
+    if (!activeTab) return;
+
+    if (this.backBtn) {
+      this.backBtn.disabled = activeTab.historyIndex <= 0;
     }
-
-    /**
-     * Adiciona uma URL ao histórico da aba ativa.
-     * @param {string} url - URL a ser adicionada ao histórico.
-     */
-    addToHistory(url) {
-        const activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        if (!activeTab) return;
-
-        // Remove URLs futuras se navegou para uma nova URL
-        activeTab.history = activeTab.history.slice(0, activeTab.currentHistoryIndex + 1);
-
-        // Adiciona a nova URL
-        activeTab.history.push(url);
-        activeTab.currentHistoryIndex = activeTab.history.length - 1;
+    if (this.forwardBtn) {
+      this.forwardBtn.disabled = activeTab.historyIndex >= activeTab.history.length - 1;
     }
+  }
 
-    /**
-     * Manipula o envio da URL.
-     */
-    handleUrlSubmit() {
-        const url = this.urlInput.value.trim();
-        if (url) {
-            this.navigateToUrl(url);
-        }
+  updateTabTitle(tabId, title) {
+    if (!this.tabsContainer) return;
+    const tabEl = this.tabsContainer.querySelector(`[data-tab-id="${tabId}"] .tab-title`);
+    if (tabEl) {
+      tabEl.textContent = title;
     }
+  }
 
-    /**
-     * Manipula o clique no botão voltar.
-     */
-    handleBackClick() {
-        const activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        if (!activeTab || activeTab.currentHistoryIndex <= 0) return;
-
-        activeTab.currentHistoryIndex--;
-        const url = activeTab.history[activeTab.currentHistoryIndex];
-        activeTab.url = url;
-        activeTab.title = this.extractDomain(url);
-
-        this.updateContentArea();
-        this.updateAddressBar();
-        this.updateNavigationButtons();
+  getHostname(url) {
+    try {
+      return new URL(url).hostname;
+    } catch (_) {
+      return url;
     }
+  }
 
-    /**
-     * Manipula o clique no botão avançar.
-     */
-    handleForwardClick() {
-        const activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        if (!activeTab || activeTab.currentHistoryIndex >= activeTab.history.length - 1) return;
-
-        activeTab.currentHistoryIndex++;
-        const url = activeTab.history[activeTab.currentHistoryIndex];
-        activeTab.url = url;
-        activeTab.title = this.extractDomain(url);
-
-        this.updateContentArea();
-        this.updateAddressBar();
-        this.updateNavigationButtons();
+  /**
+   * Suporte CLI: executa comandos diretamente do terminal
+   */
+  static async runCli(args, writeLine) {
+    let params = {};
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '--url' && args[i + 1]) {
+        params.url = args[i + 1];
+        i++;
+      } else if (args[i] === '--incognito') {
+        params.incognito = true;
+      } else if (args[i] === '--mode' && args[i + 1]) {
+        params.mode = args[i + 1];
+        i++;
+      } else if (args[i] === '--help' || args[i] === '-h') {
+        writeLine('Uso: theorb [--url <endereço>] [--mode <proxy|reader>] [--incognito] [--help]');
+        return;
+      }
     }
+    eventBus.emit('app:start', { appId: 'browser', params });
+    writeLine('The Orb Browser iniciado com sucesso.');
+  }
 
-    /**
-     * Manipula o clique no botão recarregar.
-     */
-    handleReloadClick() {
-        const activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        if (!activeTab || !activeTab.url) return; // Só recarrega se houver uma URL
-
-        this.navigateToUrl(activeTab.url); // Navega para a URL atual novamente
+  /**
+   * Limpeza de recursos ao fechar o app
+   */
+  async onCleanup() {
+    if (this.rbiSocket) {
+      try {
+        this.rbiSocket.close();
+      } catch (_) {}
+      this.rbiSocket = null;
     }
-
-    /**
-     * Manipula o clique no botão home.
-     */
-    handleHomeClick() {
-        this.showWelcomePage();
-        const activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        if (activeTab) {
-            activeTab.url = ''; // Limpa a URL da aba ativa
-            activeTab.title = 'Nova Aba';
-            activeTab.history = []; // Limpa o histórico da aba
-            activeTab.currentHistoryIndex = -1;
-            this.updateAddressBar();
-            this.updateNavigationButtons();
-            const tabElement = this.tabsContainer.querySelector(`[data-tab-id="${activeTab.id}"]`);
-            if (tabElement) {
-                tabElement.querySelector('.tab-title').textContent = activeTab.title;
-            }
-        }
-    }
-
-    /**
-     * Manipula o clique no botão nova aba.
-     */
-    handleNewTabClick() {
-        const newTabId = this.createTab();
-        this.setActiveTab(newTabId);
-        this.showWelcomePage();
-    }
-
-    /**
-     * Manipula o clique no botão favoritos.
-     * Implementação futura: Abrir um modal ou menu de favoritos.
-     */
-    handleBookmarksClick() {
-        console.log(`[${this.appName}] Botão Favoritos clicado. Favoritos atuais:`, this.bookmarks);
-        // Implementação futura: Mostrar uma lista de favoritos em um modal
-        alert('Funcionalidade de Favoritos em desenvolvimento!');
-    }
-
-    /**
-     * Manipula o clique em uma aba.
-     * @param {string} tabId - ID da aba clicada.
-     */
-    handleTabClick(tabId) {
-        if (this.activeTabId !== tabId) {
-            this.setActiveTab(tabId);
-        }
-    }
-
-    /**
-     * Manipula o fechamento de uma aba.
-     * @param {string} tabId - ID da aba a ser fechada.
-     */
-    handleTabClose(tabId) {
-        const tabIndex = this.tabs.findIndex(tab => tab.id === tabId);
-        if (tabIndex === -1) return;
-
-        // Remove o elemento DOM da aba
-        const tabElement = this.tabsContainer.querySelector(`[data-tab-id="${tabId}"]`);
-        if (tabElement) {
-            tabElement.remove();
-        }
-
-        // Remove a aba do array
-        this.tabs.splice(tabIndex, 1);
-
-        if (this.tabs.length === 0) {
-            // Se não há mais abas, cria uma nova e mostra a página de boas-vindas
-            this.createTab();
-            this.setActiveTab(this.tabs[0].id);
-            this.showWelcomePage();
-        } else if (this.activeTabId === tabId) {
-            // Se a aba fechada era a ativa, ativa a próxima ou a anterior
-            const newActiveTabIndex = Math.min(tabIndex, this.tabs.length - 1);
-            this.setActiveTab(this.tabs[newActiveTabIndex].id);
-        } else {
-            // Se a aba fechada não era a ativa, apenas atualiza a UI
-            this.updateNavigationButtons();
-        }
-    }
-
-    /**
-     * Método chamado quando o aplicativo é encerrado.
-     * Limpa event listeners e referências.
-     */
-    onCleanup() {
-        console.log(`[${this.appName} - ${this.instanceId}] Método onCleanup() do TheOrbApp executado.`);
-        // Remove event listeners
-        if (this.goBtn) this.goBtn.removeEventListener('click', this.handleUrlSubmit);
-        if (this.urlInput) this.urlInput.removeEventListener('keydown', this.handleUrlSubmit);
-        if (this.backBtn) this.backBtn.removeEventListener('click', this.handleBackClick);
-        if (this.forwardBtn) this.forwardBtn.removeEventListener('click', this.handleForwardClick);
-        if (this.reloadBtn) this.reloadBtn.removeEventListener('click', this.handleReloadClick);
-        if (this.homeBtn) this.homeBtn.removeEventListener('click', this.handleHomeClick);
-        if (this.newTabBtn) this.newTabBtn.removeEventListener('click', this.handleNewTabClick);
-        if (this.bookmarksBtn) this.bookmarksBtn.removeEventListener('click', this.handleBookmarksClick);
-
-        // Limpar referências DOM
-        this.browserAppElement = null;
-        this.urlInput = null;
-        this.goBtn = null;
-        this.backBtn = null;
-        this.forwardBtn = null;
-        this.reloadBtn = null;
-        this.homeBtn = null;
-        this.newTabBtn = null;
-        this.bookmarksBtn = null;
-        this.tabsContainer = null;
-        this.contentArea = null;
-
-        // Limpar arrays de estado
-        this.tabs = [];
-        this.activeTabId = null;
-        this.bookmarks = [];
-    }
+    await super.onCleanup();
+  }
 }
