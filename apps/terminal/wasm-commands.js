@@ -1,5 +1,5 @@
 // apps/terminal/wasm-commands.js - unkayOS 2.0 WASI & System Commands
-// Wasm runner, grep, jq, and unkay diagnostics CLI
+// Wasm runner, grep, jq, cloud, compute, and unkay diagnostics CLI
 
 import { WasiRunner } from '../../core/wasi/WasiRunner.js';
 import { unkay } from '../../core/sdk/unkay.js';
@@ -9,7 +9,7 @@ const getVfs = () => (typeof window !== 'undefined' && window.wasmFileSystem) ||
 
 export const wasmTerminalCommands = {
     unkay: {
-        description: "CLI de gerenciamento e diagnósticos do unkayOS 2.0 (info, tier, ai, cloud, vfs).",
+        description: "CLI de gerenciamento e diagnósticos do unkayOS 2.0 (info, tier, ai, cloud, compute, vfs).",
         action: async (args, appendToTerminal) => {
             const sub = args[0] || 'info';
             switch (sub) {
@@ -57,6 +57,24 @@ export const wasmTerminalCommands = {
                     }
                     return '<span class="yellow">Uso: unkay cloud sync</span>';
                 }
+                case 'compute': {
+                    const action = args[1] || 'status';
+                    if (action === 'status') {
+                        const { computeBridge } = await import('./compute-bridge.js');
+                        return `<span class="cyan">[Compute] Status da conexão:</span> <span class="${computeBridge.isConnected ? 'green' : 'gray'}">${computeBridge.isConnected ? 'Conectado (Container Pi)' : 'Desconectado (WASI Local)'}</span>`;
+                    }
+                    if (action === 'connect') {
+                        const { computeBridge } = await import('./compute-bridge.js');
+                        computeBridge.connect({ writeLine: (txt) => appendToTerminal(txt) }, args[2] || null);
+                        return '';
+                    }
+                    if (action === 'disconnect') {
+                        const { computeBridge } = await import('./compute-bridge.js');
+                        computeBridge.disconnect();
+                        return '<span class="yellow">[Compute] Desconectado.</span>';
+                    }
+                    return '<span class="yellow">Uso: unkay compute [status|connect|disconnect]</span>';
+                }
                 case 'vfs': {
                     const action = args[1] || 'stats';
                     if (action === 'export') {
@@ -66,7 +84,7 @@ export const wasmTerminalCommands = {
                     return '<span class="yellow">Uso: unkay vfs export</span>';
                 }
                 default:
-                    return '<span class="yellow">Subcomandos válidos: info, tier, ai, cloud, vfs</span>';
+                    return '<span class="yellow">Subcomandos válidos: info, tier, ai, cloud, compute, vfs</span>';
             }
         }
     },
