@@ -1,9 +1,11 @@
 // apps/terminal/commands.js - v1.1.0 (Com sistema de arquivos)
 import { filesystemCommands } from './filesystem-commands.js';
+import { wasmTerminalCommands } from './wasm-commands.js';
 
 export const commands = {
     // Comandos do sistema de arquivos
     ...filesystemCommands,
+    ...wasmTerminalCommands,
     help: {
         description: "Exibe a lista de comandos disponíveis.",
         action: (args, appendToTerminal, terminalOutput, displayInitialMessages, allCommands) => {

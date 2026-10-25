@@ -4,18 +4,21 @@
 import { wasmFileSystem, wasmFs } from '../WasmFileSystem.js';
 
 export function createUnkaySDK(appCore = null, systemManager = null) {
+    const getAuth = () => systemManager?.getSystem('authSystem') || (typeof window !== 'undefined' ? window.authSystem : null);
+    const getVfs = () => (typeof window !== 'undefined' && window.wasmFileSystem) || wasmFileSystem;
+
     return {
         auth: {
             getUser() {
-                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                const authSystem = getAuth();
                 return authSystem?.getCurrentUser?.() || null;
             },
             getToken() {
-                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                const authSystem = getAuth();
                 return authSystem?.getAuthToken?.() || null;
             },
             getTier() {
-                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                const authSystem = getAuth();
                 const user = authSystem?.getCurrentUser?.();
                 if (!user) return 'guest';
                 const roles = user.roles || user['urn:zitadel:iam:org:project:roles'] || [];
@@ -25,14 +28,14 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                 return 'standard';
             },
             async login() {
-                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                const authSystem = getAuth();
                 if (authSystem?.login) {
                     return authSystem.login();
                 }
                 console.warn('[UnkaySDK] AuthSystem login not available');
             },
             async logout() {
-                const authSystem = systemManager?.getSystem('authSystem') || window.authSystem;
+                const authSystem = getAuth();
                 if (authSystem?.logout) {
                     return authSystem.logout();
                 }
@@ -41,28 +44,28 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
 
         fs: {
             async readFile(path) {
-                return wasmFileSystem.readFile(path, { encoding: 'binary' });
+                return getVfs().readFile(path, { encoding: 'binary' });
             },
             async readText(path) {
-                return wasmFileSystem.readFile(path, { encoding: 'utf8' });
+                return getVfs().readFile(path, { encoding: 'utf8' });
             },
             async writeFile(path, content) {
-                return wasmFileSystem.writeFile(path, content);
+                return getVfs().writeFile(path, content);
             },
             async list(path) {
-                return wasmFileSystem.readdir(path);
+                return getVfs().readdir(path);
             },
             async stat(path) {
-                return wasmFileSystem.stat(path);
+                return getVfs().stat(path);
             },
             async exists(path) {
-                return wasmFileSystem.exists(path);
+                return getVfs().exists(path);
             },
             async mkdir(path, recursive = true) {
-                return wasmFileSystem.mkdir(path, { recursive });
+                return getVfs().mkdir(path, { recursive });
             },
             async remove(path, recursive = false) {
-                return wasmFileSystem.remove(path, { recursive });
+                return getVfs().remove(path, { recursive });
             },
             // File System Access API - mount host directory into /mnt/host
             async mountLocalDirectory() {
@@ -70,7 +73,7 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                     try {
                         const dirHandle = await window.showDirectoryPicker();
                         const mountPath = `/mnt/host_${dirHandle.name}`;
-                        await wasmFileSystem.mkdir(mountPath, { recursive: true });
+                        await getVfs().mkdir(mountPath, { recursive: true });
                         console.log(`[UnkaySDK] Mounted local host directory at ${mountPath}`);
                         return mountPath;
                     } catch (err) {
@@ -132,6 +135,7 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
 
         kv: {
             async get(key) {
+                if (typeof localStorage === 'undefined') return null;
                 const prefix = `unkay_kv_${appCore?.app_name || 'global'}_`;
                 const raw = localStorage.getItem(prefix + key);
                 if (raw === null) return null;
@@ -142,11 +146,13 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                 }
             },
             async set(key, value) {
+                if (typeof localStorage === 'undefined') return;
                 const prefix = `unkay_kv_${appCore?.app_name || 'global'}_`;
                 const serialized = typeof value === 'string' ? value : JSON.stringify(value);
                 localStorage.setItem(prefix + key, serialized);
             },
             async remove(key) {
+                if (typeof localStorage === 'undefined') return;
                 const prefix = `unkay_kv_${appCore?.app_name || 'global'}_`;
                 localStorage.removeItem(prefix + key);
             }
@@ -172,7 +178,7 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                 }
             },
             close() {
-                const appManager = systemManager?.getSystem('appManager') || window.appManager;
+                const appManager = systemManager?.getSystem('appManager') || (typeof window !== 'undefined' ? window.appManager : null);
                 if (appCore && appManager?.closeApp) {
                     appManager.closeApp(appCore.instanceId);
                 }

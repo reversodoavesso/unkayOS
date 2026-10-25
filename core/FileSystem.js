@@ -715,23 +715,40 @@ export default ExemploApp;`,
      * Carrega o sistema de arquivos do localStorage
      */
     loadFileSystem() {
+        if (this.memoryTree && Object.keys(this.memoryTree).length > 0) {
+            return this.memoryTree;
+        }
         try {
-            const data = localStorage.getItem(this.STORAGE_KEY);
-            return data ? JSON.parse(data) : {};
+            if (typeof localStorage !== 'undefined') {
+                const data = localStorage.getItem(this.STORAGE_KEY);
+                if (data) {
+                    this.memoryTree = JSON.parse(data);
+                    return this.memoryTree;
+                }
+            }
         } catch (error) {
             console.error('[FileSystem] Erro ao carregar sistema de arquivos:', error);
-            return {};
         }
+        if (!this.memoryTree || Object.keys(this.memoryTree).length === 0) {
+            this.memoryTree = this.createRealFileSystemStructure();
+        }
+        return this.memoryTree;
     }
 
     /**
-     * Salva o sistema de arquivos no localStorage
+     * Salva o sistema de arquivos no localStorage e sincroniza com o kernel Wasm
      */
     saveFileSystem(fs) {
+        this.memoryTree = fs;
         try {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(fs));
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(fs));
+            }
         } catch (error) {
-            console.error('[FileSystem] Erro ao salvar sistema de arquivos:', error);
+            // Cota do localStorage excedida; memória e OPFS garantem operação contínua
+        }
+        if (typeof window !== 'undefined' && window.wasmFileSystem?.isReady) {
+            window.wasmFileSystem.importLegacyTree(fs).catch(() => {});
         }
     }
 

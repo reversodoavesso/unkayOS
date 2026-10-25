@@ -1,108 +1,74 @@
-// /core/configs/auth-config.js - Configuração do Sistema de Autenticação unkayOS
+// /core/configs/auth-config.js - unkayOS 2.0 Identity & Zitadel OIDC Configuration
+// Configuração do provedor de identidade do ecossistema Reverso do Avesso (Zitadel)
 
-/**
- * Configuração do sistema de autenticação
- * 
- * IMPORTANTE: Atualize estas configurações de acordo com seu servidor Authentik
- */
 export const AUTH_CONFIG = {
-    // URL base do seu servidor Authentik
-    // Exemplo: 'https://auth.seudominio.com' ou 'http://localhost:9000' (para desenvolvimento)
-    baseUrl: 'https://auth.reversodoavesso.online',
+    // Provedor central Zitadel do ecossistema RDA
+    baseUrl: 'https://id.reversodoavesso.com',
 
-    // ID do cliente OAuth2 (será criado no admin do Authentik)
-    clientId: 'unkayos-client',
+    // ID do cliente OAuth2/OIDC
+    clientId: 'unkayos',
 
-    // URI de redirecionamento (deve ser configurado no Authentik)
-    redirectUri: window.location.origin + '/auth/callback.html',
+    // URI de redirecionamento (PKCE)
+    redirectUri: typeof window !== 'undefined' ? window.location.origin + '/auth/callback.html' : 'https://unkayos.reversodoavesso.com/auth/callback.html',
 
-    // Escopo das permissões solicitadas
-    scope: 'openid profile email',
+    // Escopos do RDA: perfil, email e roles da organização Zitadel
+    scope: 'openid profile email urn:zitadel:iam:org:project:roles',
 
-    // Configurações adicionais
     settings: {
-        // Tempo de expiração do token (em segundos)
         tokenExpiry: 3600,
-
-        // Tempo de expiração do refresh token (em segundos)
         refreshTokenExpiry: 86400,
-
-        // Nome da aplicação no Authentik
         appName: 'unkayOS',
-
-        // Descrição da aplicação
-        appDescription: 'Sistema Operacional Web unkayOS'
+        appDescription: 'Sistema Operacional Web unkayOS 2.0 (RDA Ecosystem)'
     }
 };
 
 /**
- * URLs das APIs do Authentik
+ * Endpoints padrão OpenID Connect (OIDC) do Zitadel
  */
-export const AUTHENTIK_ENDPOINTS = {
-    // Endpoint de autorização
-    authorize: '/application/o/authorize/',
-
-    // Endpoint de token
-    token: '/application/o/token/',
-
-    // Endpoint de informações do usuário
-    userinfo: '/application/o/userinfo/',
-
-    // Endpoint de logout
-    logout: '/application/o/logout/',
-
-    // Endpoint de discovery (OpenID Connect)
-    discovery: '/application/o/.well-known/openid_configuration/'
+export const ZITADEL_ENDPOINTS = {
+    authorize: '/oauth/v2/authorize',
+    token: '/oauth/v2/token',
+    userinfo: '/oidc/v1/userinfo',
+    logout: '/oidc/v1/end_session',
+    discovery: '/.well-known/openid-configuration'
 };
 
-/**
- * Configurações de desenvolvimento
- */
+// Alias de retrocompatibilidade
+export const AUTHENTIK_ENDPOINTS = ZITADEL_ENDPOINTS;
+
 export const DEV_CONFIG = {
-    // Habilitar logs detalhados
-    debug: true,
-
-    // URL de desenvolvimento (se diferente da produção)
-    devBaseUrl: 'https://auth.reversodoavesso.online',
-
-    // Cliente de desenvolvimento
+    debug: false,
+    devBaseUrl: 'http://localhost:8080',
     devClientId: 'dev-unkayos-client'
 };
 
-/**
- * Função para obter a configuração baseada no ambiente
- */
 export function getAuthConfig() {
-    const isDevelopment = window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.protocol === 'http:';
+    if (typeof window !== 'undefined') {
+        const isLocalDev = window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1';
 
-    if (isDevelopment && DEV_CONFIG.debug) {
-        console.log('[AuthConfig] Modo de desenvolvimento detectado');
-        return {
-            ...AUTH_CONFIG,
-            baseUrl: DEV_CONFIG.devBaseUrl,
-            clientId: DEV_CONFIG.devClientId
-        };
+        if (isLocalDev && DEV_CONFIG.debug) {
+            console.log('[AuthConfig] Modo de desenvolvimento local detectado');
+            return {
+                ...AUTH_CONFIG,
+                baseUrl: DEV_CONFIG.devBaseUrl,
+                clientId: DEV_CONFIG.devClientId
+            };
+        }
     }
 
     return AUTH_CONFIG;
 }
 
-/**
- * Função para validar a configuração
- */
 export function validateAuthConfig(config) {
     const errors = [];
 
     if (!config.baseUrl) {
         errors.push('baseUrl não configurada');
     }
-
     if (!config.clientId) {
         errors.push('clientId não configurado');
     }
-
     if (!config.redirectUri) {
         errors.push('redirectUri não configurada');
     }
@@ -112,6 +78,5 @@ export function validateAuthConfig(config) {
         return false;
     }
 
-    console.log('[AuthConfig] Configuração válida:', config);
     return true;
-} 
+}
