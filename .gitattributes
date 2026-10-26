@@ -1,0 +1,6 @@
+# Integrity manifests describe exact bytes on every platform and in git archive.
+design-system/rda/** text eol=lf
+apps/*/icon.svg text eol=lf
+docker/*.sh text eol=lf
+public/*.js text eol=lf
+public/*.json text eol=lf
