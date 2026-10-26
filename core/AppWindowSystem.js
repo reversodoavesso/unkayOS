@@ -261,48 +261,21 @@ export class AppWindowSystem {
 
     async loadAppContent() {
         try {
-            // Carrega o HTML do aplicativo com loading progressivo
-            if (this.core.dirApp) {
-                const html = await lazyResourceLoader.loadHTMLProgressively(this.core.dirApp, this.instanceId);
-                if (this.core.stopped) return;
-                
-                this.appContentRoot.innerHTML = html;
-
-                // Configura lazy loading para imagens e ícones no conteúdo
-                lazyResourceLoader.setupLazyImages(this.appContentRoot);
-                lazyResourceLoader.setupLazyIcons(this.appContentRoot);
-
-            } else {
-                console.warn(`[${this.appName}] Nenhuma URL dirApp fornecida para o conteúdo da janela.`);
-                eventBus.emit('app:loading:complete', { 
-                    instanceId: this.instanceId, 
-                    resourceType: 'html' 
-                });
-            }
-
-            // Carrega o CSS do aplicativo com loading progressivo
-            if (this.core.styleFile) {
-                const styleText = await lazyResourceLoader.loadCSSProgressively(this.core.styleFile, this.instanceId);
-                if (this.core.stopped) return;
-
-                // Aplica namespace ao CSS
-                const namespacedCSS = this.namespaceCSS(styleText);
-
-                // Cria elemento de estilo no head do documento
+            // Commit styled content together; a slow stylesheet must not expose raw controls.
+            const [html, styleText] = await Promise.all([
+                this.core.dirApp ? lazyResourceLoader.loadHTMLProgressively(this.core.dirApp, this.instanceId) : '',
+                this.core.styleFile ? lazyResourceLoader.loadCSSProgressively(this.core.styleFile, this.instanceId) : ''
+            ]);
+            if (this.core.stopped) return;
+            if (styleText) {
                 const styleElement = document.createElement('style');
                 styleElement.id = `style-${this.namespace}`;
-                styleElement.textContent = namespacedCSS;
+                styleElement.textContent = this.namespaceCSS(styleText);
                 document.head.appendChild(styleElement);
-
-                console.log(`[AppWindowSystem] CSS carregado e namespaced para ${this.appName}`);
-
-            } else {
-                // Marca CSS como concluído mesmo se não existir
-                eventBus.emit('app:loading:complete', { 
-                    instanceId: this.instanceId, 
-                    resourceType: 'css' 
-                });
             }
+            this.appContentRoot.innerHTML = html;
+            lazyResourceLoader.setupLazyImages(this.appContentRoot);
+            lazyResourceLoader.setupLazyIcons(this.appContentRoot);
 
             // Verifica se há fontes para carregar
             const fontElements = this.appContentRoot.querySelectorAll('[data-font-family]');
