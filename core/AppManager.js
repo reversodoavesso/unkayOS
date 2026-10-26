@@ -176,7 +176,7 @@ export class AppManager {
     }
 
 
-    async runApp(appId, appParams = {}) {
+    async runApp(appId, appParams = {}, options = {}) {
 
         eventBus.emit('app:starting', { appId, params: appParams });
 
@@ -198,6 +198,7 @@ export class AppManager {
         console.log(`[AppManager] App ${appData.app_name} não está rodando, prosseguindo com inicialização...`);
 
         const CORE = new AppCore(appData);
+        CORE.reloadModule = options.reloadModule === true;
 
         if (appData.mode === 'system_window') {
             eventBus.emit('app:loading:start', { instanceId: CORE.instanceId, resourceType: 'boot' });
@@ -215,16 +216,19 @@ export class AppManager {
 
             if (UI && 'ready' in UI) await UI.ready;
             if (CORE.stopped) return null;
+            CORE.initialized = !CORE.launchFailed;
             eventBus.emit('app:loading:complete', { instanceId: CORE.instanceId, resourceType: 'boot' });
 
-            console.log(`Aplicativo '${appData.app_name}' (instanceId: ${CORE.instanceId}) iniciado no modo: ${appData.mode}`);
-            eventBus.emit('app:started', { appId, instanceId: CORE.instanceId });
+            console.log(`[AppManager] ${appData.app_name}: ${CORE.launchFailed ? 'falha ao abrir' : 'inicialização concluída'} (${CORE.instanceId})`);
+            if (CORE.launchFailed) eventBus.emit('app:start:error', { appId, instanceId: CORE.instanceId, reason: 'initialization' });
+            else eventBus.emit('app:started', { appId, instanceId: CORE.instanceId });
 
             // Para apps system_window, dar foco automaticamente após a criação
             if (appData.mode === 'system_window') {
                 // Aguarda um frame para garantir que o DOM está pronto
                 requestAnimationFrame(() => {
                     this.defineFirstPlaneApp(CORE.instanceId);
+                    if (CORE.launchFailed && UI && 'focusLoadError' in UI) UI.focusLoadError();
                 });
             }
 
@@ -241,6 +245,14 @@ export class AppManager {
             this.runningApps.delete(CORE.instanceId);
             return null;
         }
+    }
+
+    async restartApp(instanceId) {
+        const app = this.runningApps.get(instanceId);
+        if (!app || app.CORE.mode !== 'system_window') return null;
+        const { id, lastAppParams } = app.CORE;
+        await this.stopApp(instanceId);
+        return this.runApp(id, lastAppParams, { reloadModule: true });
     }
 
     isAppRunning(appId) {

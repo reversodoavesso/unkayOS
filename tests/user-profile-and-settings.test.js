@@ -1,3 +1,4 @@
+import { currentRelease } from '../core/release-info.js';
 // @vitest-environment happy-dom
 // tests/user-profile-and-settings.test.js - unkayOS 2.0 User Profile & Settings Test Suite
 
@@ -318,7 +319,7 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
       expect(mockStandardAPIs.fileSystem.mkdir).toHaveBeenCalledWith('/home/user/documents', { recursive: true });
       expect(mockStandardAPIs.fileSystem.writeFile).toHaveBeenCalledWith(
         expect.stringMatching(/\/home\/user\/documents\/unkayos-backup-\d+\.json/),
-        expect.stringContaining('"version": "2.0.0-alpha.2"')
+        expect.stringContaining(`"version": "${currentRelease.version}"`)
       );
     });
   });

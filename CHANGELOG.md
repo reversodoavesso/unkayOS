@@ -2,6 +2,15 @@
 
 O contador de releases começa em 1 com a versão 2.0.0-alpha.2. Builds da mesma versão preservam o número; cada release preparada incrementa o contador.
 
+## 2.0.0-alpha.3 · Release 2 · 2026-10-26
+
+Abertura confiável e recuperação de aplicativos
+
+- Corrigido o tipo MIME de módulos .mjs no Nginx, permitindo abrir OpenUI Studio e Marketplace.
+- Nova tela de falha com tentar novamente, fechar, recarregar o sistema e diagnóstico técnico copiável.
+- Falhas de inicialização recebem tratamento próprio; repetir cria uma instância limpa e encerra recursos anteriores.
+- Validação de produção exige instâncias inicializadas, verifica dependências ES modules e exercita o OpenUI real.
+
 ## 2.0.0-alpha.2 · Release 1 · 2026-10-26
 
 Seu espaço, do seu jeito

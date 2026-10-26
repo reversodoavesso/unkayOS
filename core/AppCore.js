@@ -22,6 +22,10 @@ export class AppCore {
 
         this.rawData = appData; // Mantém os dados originais também
         this.appInstance = null; // Armazenará a instância do aplicativo (ex: TerminalApp)
+        this.initialized = false;
+        this.reloadModule = false;
+        this.launchFailed = false;
+        this.cleanedUp = false;
 
         this.managedTimeouts = new Set();
         this.managedIntervals = new Set();
@@ -82,7 +86,13 @@ export class AppCore {
                     message: 'Carregando lógica do aplicativo...' 
                 });
 
-                const module = await import(this.jsFile);
+                let moduleUrl = this.jsFile;
+                if (this.reloadModule) {
+                    const retryUrl = new URL(this.jsFile, location.href);
+                    retryUrl.searchParams.set('unkay-retry', generateUniqueId());
+                    moduleUrl = retryUrl.href;
+                }
+                const module = await import(/* @vite-ignore */ moduleUrl);
                 if (this.stopped) return;
                 
                 eventBus.emit('app:loading:progress', { 
@@ -117,14 +127,7 @@ export class AppCore {
 
                     console.log(`[AppCore] Instância do app ${this.app_name} criada com sucesso`);
                 } else {
-                    // Para apps que não estendem BaseApp, eles ainda podem ter seu HTML/CSS/JS injetado,
-                    // mas não terão acesso às APIs ou ao ciclo de vida onRun/onCleanup.
-                    console.warn(`Módulo JS de ${this.app_name} não exporta uma classe padrão que estende BaseApp. O app pode funcionar, mas não terá acesso às APIs do sistema ou ao ciclo de vida do app.`);
-                    
-                    eventBus.emit('app:loading:complete', { 
-                        instanceId: this.instanceId, 
-                        resourceType: 'js' 
-                    });
+                    throw Object.assign(new TypeError('O módulo não exporta um aplicativo compatível com BaseApp.'), { code: 'APP_MODULE_INVALID' });
                 }
             } catch (e) {
                 this.moduleError = e;
@@ -195,22 +198,19 @@ export class AppCore {
 
     async stop() {
         this.stopped = true;
-        if (this.appInstance && typeof this.appInstance.onCleanup === "function") {
-            // Suporta tanto onCleanup async quanto sync
-            const result = this.appInstance.onCleanup();
-            if (result && typeof result.then === 'function') {
-                await result;
-            }
+        await this.cleanup();
+    }
+
+    async cleanup() {
+        if (this.cleanedUp) return;
+        this.cleanedUp = true;
+        try { await this.appInstance?.onCleanup?.(); }
+        catch (error) { console.warn(`[AppCore] Falha na limpeza de ${this.id}:`, error); }
+        finally {
+            this.managedTimeouts.forEach(id => clearTimeout(id));
+            this.managedTimeouts.clear();
+            this.managedIntervals.forEach(id => clearInterval(id));
+            this.managedIntervals.clear();
         }
-
-        this.managedTimeouts.forEach(id => {
-            clearTimeout(id);
-        });
-        this.managedTimeouts.clear();
-
-        this.managedIntervals.forEach(id => {
-            clearInterval(id);
-        });
-        this.managedIntervals.clear();
     }
 }

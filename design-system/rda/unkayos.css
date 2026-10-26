@@ -229,4 +229,36 @@
   .rda-unkay-window-progress { flex: none; }
   .rda-unkay-window-progress[hidden] { display: none; }
   .rda-progress.rda-unkay-window-progress[data-type="line"] .rda-progress__bar { height: var(--rda-border-width-2); border-radius: 0; }
+  /* Failure state composes EmptyState and Button; diagnostic data stays optional. */
+  .rda-unkay-app-error {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    margin: auto;
+    overflow-y: auto;
+    color: var(--rda-content-primary);
+    background: var(--rda-surface-primary);
+    justify-content: flex-start;
+  }
+  .rda-unkay-app-error > * { flex-shrink: 0; }
+  .rda-unkay-app-error > :first-child { margin-top: auto; }
+  .rda-unkay-app-error > :last-child { margin-bottom: auto; }
+  .rda-unkay-app-error .rda-empty-state__icon { color: var(--rda-status-error); background: var(--rda-surface-secondary); flex: none; }
+  .rda-unkay-app-error .rda-empty-state__title { max-width: calc(var(--rda-spacing-10) * 12); overflow-wrap: anywhere; outline: none; }
+  .rda-unkay-app-error__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--rda-spacing-3); }
+  .rda-unkay-app-error__details {
+    width: 100%;
+    max-width: calc(var(--rda-spacing-10) * 12);
+    padding: var(--rda-spacing-3) var(--rda-spacing-4);
+    border: var(--rda-border-width-default) solid var(--rda-border-subtle);
+    border-radius: var(--rda-border-radius-md);
+    text-align: start;
+    font-size: var(--rda-font-size-xs);
+  }
+  .rda-unkay-app-error__details summary { cursor: pointer; color: var(--rda-content-secondary); padding-block: var(--rda-spacing-1); }
+  .rda-unkay-app-error__details dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--rda-spacing-2) var(--rda-spacing-3); margin-block: var(--rda-spacing-4); }
+  .rda-unkay-app-error__details dt { color: var(--rda-content-muted); }
+  .rda-unkay-app-error__details dd { margin: 0; overflow-wrap: anywhere; color: var(--rda-content-secondary); font-family: var(--rda-font-family-mono); }
+  .rda-unkay-app-error__status { min-height: var(--rda-spacing-4); font-size: var(--rda-font-size-xs); color: var(--rda-content-secondary); }
 }

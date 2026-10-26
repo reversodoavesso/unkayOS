@@ -189,3 +189,9 @@ Use `orb-compact` para o The Orb em 16–32 px. `orb-icon` mantém a marca origi
 A distribuição é neutra por padrão. A flag de operador `UNKAYOS_BRANDING=rda` no container habilita a marca RDA no menu, setup e informações. Ela não aparece nas preferências pessoais nem concede autenticação. Em hospedagem estática, defina somente `{ branding: 'rda' }` em `deployment.js`; remova/defina `neutral` para uso genérico. Tokens e componentes continuam os mesmos nos dois modos.
 
 Versão e histórico têm fonte única em `releases.json`. Veja `docs/RELEASING.md` para preparar uma release sem divergência entre pacote, changelog e interface.
+
+### Falha de abertura e recuperação
+
+O shell compõe EmptyState e Button do DS em `rda-unkay-app-error`: tentar novamente, fechar e detalhes técnicos recolhidos. Recarregar o sistema é uma ação explícita. Não esconda falhas de `onRun`: deixe a Promise rejeitar para que o shell identifique a etapa. A limpeza de inicialização parcial é idempotente e deve desfazer eventos e recursos; timers gerenciados são liberados mesmo se `onCleanup` falhar. A repetição usa uma nova instância, preserva os parâmetros e renova a URL do módulo de entrada para recuperar falhas de importação em cache.
+
+Módulos `.mjs` precisam de MIME JavaScript no servidor de produção. Fetch de HTML ou um evento de janela criada não comprovam que o app inicializou; a validação também deve conferir a instância, os erros capturados e um fluxo funcional, como a prévia do OpenUI.

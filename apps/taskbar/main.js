@@ -16,10 +16,12 @@ export default class TaskbarApp extends BaseApp {
     this.controller = new AbortController();
     this.startMenuElement.addEventListener('click', () => eventBus.emit('menu:apps:toggle'), { signal: this.controller.signal });
     this.started = ({ instanceId }) => this.createAppIcon(instanceId);
+    this.failed = ({ instanceId }) => { if (instanceId) this.createAppIcon(instanceId); };
     this.stopped = ({ instanceId }) => this.appsOnToolbarElement.querySelector(`[data-instance-id="${instanceId}"]`)?.remove();
     this.changed = ({ instanceId, ...state }) => this.updateAppIcon(instanceId, state);
     this.preferencesChanged = () => this.renderPinned();
     eventBus.on('app:started', this.started);
+    eventBus.on('app:start:error', this.failed);
     eventBus.on('app:stopped', this.stopped);
     eventBus.on('app:icon:update', this.changed);
     eventBus.on('settings:updated', this.preferencesChanged);
@@ -51,6 +53,7 @@ export default class TaskbarApp extends BaseApp {
     const button = document.createElement('button'); button.type = 'button';
     button.className = 'taskbar__apps_on__app_icon'; button.dataset.instanceId = instanceId;
     button.title = app.CORE.app_name; button.setAttribute('aria-label', `Ativar ou minimizar ${app.CORE.app_name}`);
+    if (app.CORE.launchFailed) { button.dataset.state = 'failed'; button.title += ' · Falha ao abrir'; }
     button.innerHTML = iconMarkup(app.CORE.rawData.icon_name, { size: 20 });
     const name = document.createElement('span'); name.textContent = app.CORE.rawData.short_name || app.CORE.app_name; button.appendChild(name);
     button.addEventListener('click', () => eventBus.emit('window:toggle', { instanceId }));
@@ -81,6 +84,7 @@ export default class TaskbarApp extends BaseApp {
   async onCleanup() {
     this.controller?.abort(); this.clearInterval(this.timeTimer); this.menu?.remove();
     eventBus.off('app:started', this.started); eventBus.off('app:stopped', this.stopped);
+    eventBus.off('app:start:error', this.failed);
     eventBus.off('app:icon:update', this.changed); eventBus.off('settings:updated', this.preferencesChanged);
   }
   static runCli(args, writeLine) { window.appManager?.runApp('taskbar'); writeLine('Trilha de aplicativos disponível.'); }

@@ -19,3 +19,9 @@ Após o commit, o build registra a revisão Git e a data em `build-info.json`. E
 O container é neutro por padrão. Em implantação RDA, use `UNKAYOS_BRANDING=rda`; em outros ambientes omita a variável ou use `neutral`. A flag é aplicada no início do container, sem rebuild e sem inferir marca pelo domínio.
 
 Valide primeiro a imagem candidata em porta local temporária. Atualize somente o serviço unkayOS. Preserve a imagem e a configuração anteriores para rollback; valide /health, /release.json, /build-info.json e os fluxos básicos no domínio público após o deploy.
+
+## Verificação real do navegador
+
+Instale o Chromium de teste uma vez com `npx playwright install chromium`. Execute `npm run verify:browser -- --base=https://unkayos.reversodoavesso.com --expect-version=<versão> --expect-revision=<commit>`. A verificação exige instâncias reais de todos os apps incluídos, ausência de erros de módulo/recurso/onRun e conteúdo renderizado no sandbox do OpenUI. Verifica também o MIME do `.mjs`; HTTP 200 e criação da janela não bastam.
+
+Use `--exercise-failures` em uma sessão de teste descartável para provocar falha temporária de CSS e validar diagnóstico, retry, barra e layout mobile. `--output=<pasta>` grava resultado e capturas. Os dados do teste ficam no contexto isolado do Chromium, sem alterar a sessão do usuário.

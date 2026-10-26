@@ -1,3 +1,4 @@
+import { describeAppFailure, renderAppLoadError } from './ui/appLoadError.js';
 import { scopeAppCss } from './ui/scopeAppCss.js';
 // /core/AppWindowSystem.js - v2.1.2 (Com Sistema de Loading Integrado)
 
@@ -211,7 +212,7 @@ export class AppWindowSystem {
         // Carrega o conteúdo HTML e CSS do aplicativo DENTRO do elemento de conteúdo
         await Promise.all([this.loadAppContent(), this.core.moduleReady]);
         if (this.core.stopped) return;
-        if (this.loadError || this.core.moduleError) { this.showLoadError(); return; }
+        if (this.loadError || this.core.moduleError) { await this.core.cleanup(); this.showLoadError(); return; }
         
         // IMPORTANTE: Configura z-index dos botões APÓS tudo estar carregado
         windowLayerManager.setTopBarButtonsLayer(this.appWindowElement);
@@ -220,7 +221,15 @@ export class AppWindowSystem {
         // e o conteúdo HTML/CSS carregado.
         if (this.core.appInstance && typeof this.core.appInstance.onRun === "function") {
             this.core.appInstance.appContentRoot = this.appContentRoot;
-            await this.core.appInstance.onRun(null, this.core.lastAppParams);
+            try { await this.core.appInstance.onRun(null, this.core.lastAppParams); }
+            catch (error) {
+                if (this.core.stopped) return;
+                this.startError = error;
+                console.error(`[AppWindowSystem] Falha ao iniciar ${this.core.id}:`, error);
+                eventBus.emit('app:loading:error', { instanceId: this.instanceId, resourceType: 'boot', error });
+                await this.core.cleanup();
+                this.showLoadError();
+            }
         } else {
             console.warn(`[${this.appName} - ${this.instanceId}] Nenhuma instância de app ou método onRun encontrado para chamar após renderização.`);
         }
@@ -262,9 +271,12 @@ export class AppWindowSystem {
     async loadAppContent() {
         try {
             // Commit styled content together; a slow stylesheet must not expose raw controls.
+            const resource = (stage, url, load) => !url ? '' : load.call(lazyResourceLoader, url, this.instanceId).catch(cause => {
+                throw Object.assign(new Error(cause?.message || String(cause)), { stage, resource: url });
+            });
             const [html, styleText] = await Promise.all([
-                this.core.dirApp ? lazyResourceLoader.loadHTMLProgressively(this.core.dirApp, this.instanceId) : '',
-                this.core.styleFile ? lazyResourceLoader.loadCSSProgressively(this.core.styleFile, this.instanceId) : ''
+                resource('html', this.core.dirApp, lazyResourceLoader.loadHTMLProgressively),
+                resource('css', this.core.styleFile, lazyResourceLoader.loadCSSProgressively)
             ]);
             if (this.core.stopped) return;
             if (styleText) {
@@ -323,12 +335,21 @@ export class AppWindowSystem {
         }
     }
 
+    focusLoadError() { this.appContentRoot.querySelector('h2')?.focus({ preventScroll: true }); }
+
     showLoadError() {
-        this.appContentRoot.replaceChildren();
-        const alert = document.createElement('p');
-        alert.className = 'error-message'; alert.setAttribute('role', 'alert');
-        alert.textContent = 'Não foi possível abrir este aplicativo. Feche a janela e tente novamente.';
-        this.appContentRoot.appendChild(alert);
+        this.core.launchFailed = true;
+        loadingUI.remove(this.instanceId);
+        const error = this.core.moduleError || this.startError || this.loadError;
+        this.failure = describeAppFailure({
+            appId: this.core.id, appName: this.appName, error,
+            stage: this.core.moduleError ? 'module' : this.startError ? 'start' : this.loadError?.stage || 'resource',
+            resource: this.core.moduleError || this.startError ? this.core.jsFile : this.loadError?.resource
+        });
+        renderAppLoadError(this.appContentRoot, this.failure, {
+            onRetry: () => window.appManager.restartApp(this.instanceId),
+            onClose: () => window.appManager.stopApp(this.instanceId)
+        });
     }
 
     enableResizeRight(bord) {

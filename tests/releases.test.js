@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { nextRelease, validateReleases, releaseArtifacts } from '../scripts/release.mjs';
 import { currentRelease } from '../core/release-info.js';
+const nextParts = currentRelease.version.split('-')[0].split('.').map(Number);
+nextParts[2] += 1;
+const nextVersion = nextParts.join('.');
 const manifest = JSON.parse(readFileSync('releases.json', 'utf8'));
 describe('System release history', () => {
   it('increments the counter once per release and preserves the previous notes', () => {
-    const next = nextRelease(manifest, { version: '2.0.0-alpha.3', title: 'Próxima', changes: ['Ajuste'], date: '2026-10-27' });
+    const next = nextRelease(manifest, { version: nextVersion, title: 'Próxima', changes: ['Ajuste'], date: '2026-10-27' });
     expect(next.releases[0].number).toBe(currentRelease.number + 1);
     expect(next.releases.slice(1)).toEqual(manifest.releases);
     expect(() => nextRelease(manifest, { version: currentRelease.version, title: 'Duplicada', changes: ['Ajuste'] })).toThrow();

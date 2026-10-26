@@ -26,7 +26,7 @@ export class menuApps {
     this.toggleHandler = () => this.toggle(); this.closeHandler = () => this.close();
     this.updateHandler = () => { if (this.visibilityFlag) this.refresh(); };
     eventBus.on('menu:apps:toggle', this.toggleHandler); eventBus.on('menu:apps:close', this.closeHandler);
-    eventBus.on('settings:updated', this.updateHandler); eventBus.on('app:started', this.updateHandler); eventBus.on('app:stopped', this.updateHandler);
+    eventBus.on('settings:updated', this.updateHandler); eventBus.on('app:started', this.updateHandler); eventBus.on('app:stopped', this.updateHandler); eventBus.on('app:start:error', this.updateHandler);
     this.refresh();
   }
   refresh() {
@@ -44,7 +44,7 @@ export class menuApps {
   renderApps() {
     const query = this.searchInput.value.trim().toLocaleLowerCase('pt-BR');
     const pinned = getWorkspace()?.settings.shell.pinned || DEFAULT_SHELL.pinned;
-    const running = new Set([...(window.appManager?.runningApps.values() || [])].map(app => app.CORE.id));
+    const running = new Set([...(window.appManager?.runningApps.values() || [])].filter(app => !app.CORE.launchFailed).map(app => app.CORE.id));
     const apps = this.allApps.filter(app => (this.category === 'all' || (this.category === 'pinned' ? pinned.includes(app.id) : categories[app.id] === this.category)) && `${app.app_name} ${app.description || ''} ${descriptions[app.id] || ''}`.toLocaleLowerCase('pt-BR').includes(query));
     this.appsContainer.innerHTML = apps.length ? apps.map(app => `<article class="launcher-tile rda-unkay-app-card"><button type="button" class="menu_apps__app rda-action-card rda-unkay-app-card__launch" id="${escapeHtml(app.id)}-launcher" data-app="${escapeHtml(app.id)}" aria-label="Abrir ${escapeHtml(app.app_name)}"><span class="launcher-app-icon rda-unkay-app-card__icon">${iconMarkup(app.icon_name || 'package', { size: 30 })}</span><span class="launcher-app-copy rda-unkay-app-card__copy"><strong class="rda-action-card__title">${escapeHtml(app.app_name)}</strong><span class="rda-action-card__description">${escapeHtml(descriptions[app.id] || app.description || 'Um novo lugar para suas ideias')}</span>${running.has(app.id) ? '<small class="rda-unkay-app-card__state">Em curso</small>' : ''}</span></button><button type="button" class="launcher-pin rda-unkay-app-card__pin workspace-icon-button" data-pin="${escapeHtml(app.id)}" aria-pressed="${pinned.includes(app.id)}" aria-label="${pinned.includes(app.id) ? 'Desafixar' : 'Fixar'} ${escapeHtml(app.app_name)}" title="${pinned.includes(app.id) ? 'Desafixar da trilha' : 'Fixar na trilha'}">${iconMarkup('star', { size: 16 })}</button></article>`).join('') : '<p class="launcher-empty">Nenhum app por aqui. Experimente outra busca ou categoria.</p>';
     this.menuElement.querySelector('#launcherCount').textContent = `${apps.length} ${apps.length === 1 ? 'aplicativo' : 'aplicativos'}`;
@@ -93,6 +93,6 @@ export class menuApps {
   remove() {
     this.close(); this.controller?.abort(); this.menuElement?.remove();
     eventBus.off('menu:apps:toggle', this.toggleHandler); eventBus.off('menu:apps:close', this.closeHandler);
-    eventBus.off('settings:updated', this.updateHandler); eventBus.off('app:started', this.updateHandler); eventBus.off('app:stopped', this.updateHandler);
+    eventBus.off('settings:updated', this.updateHandler); eventBus.off('app:started', this.updateHandler); eventBus.off('app:stopped', this.updateHandler); eventBus.off('app:start:error', this.updateHandler);
   }
 }

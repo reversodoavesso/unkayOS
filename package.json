@@ -1,6 +1,6 @@
 {
   "name": "unkayos",
-  "version": "2.0.0-alpha.2",
+  "version": "2.0.0-alpha.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -30,9 +30,11 @@
     "release:prepare": "node scripts/release.mjs prepare",
     "release:sync": "node scripts/release.mjs sync",
     "release:check": "node scripts/release.mjs check",
-    "build:info": "node scripts/build-info.mjs"
+    "build:info": "node scripts/build-info.mjs",
+    "verify:browser": "node scripts/verify-browser.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^9.27.0",
     "fast-check": "^4.1.1",
