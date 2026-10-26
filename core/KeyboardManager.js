@@ -92,6 +92,8 @@ class KeyboardManager {
      * Manipula eventos keydown globais
      */
     handleGlobalKeydown(event) {
+        if (event.target instanceof Element && event.target.closest('dialog[open]')) return;
+        if (event.ctrlKey && event.code === 'Space') return;
         // Permite que eventos dentro de inputs/textareas sempre passem
         if (this.isInputElement(event.target)) {
             return;
@@ -120,6 +122,7 @@ class KeyboardManager {
      * Manipula eventos keyup globais
      */
     handleGlobalKeyup(event) {
+        if (event.target instanceof Element && event.target.closest('dialog[open]')) return;
         // Permite que eventos dentro de inputs/textareas sempre passem
         if (this.isInputElement(event.target)) {
             return;

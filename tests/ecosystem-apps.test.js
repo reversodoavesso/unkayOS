@@ -1,4 +1,4 @@
-// @vitest-environment happy-dom
+// @vitest-environment jsdom
 // tests/ecosystem-apps.test.js - unkayOS 2.0 OpenUI Generative Studio Test Suite
 // Verifies OpenUI Studio v2.0, RDA Design System snippets, presets, and VFS packaging
 
@@ -26,10 +26,30 @@ describe('unkayOS 2.0 OpenUI Generative Studio v2.0', () => {
 
         // Verify tokens usage
         expect(app.presets.dashboard.spec).toContain('var(--rda-surface-secondary');
-        expect(app.presets.dashboard.spec).toContain('var(--rda-color-primary-400');
+        expect(app.presets.dashboard.spec).toContain('var(--rda-content-brand');
         expect(app.presets.kanban.spec).toContain('Quadro Ágil unkayOS');
         expect(app.presets.form.spec).toContain('Chave de API');
         expect(app.presets['file-inspector'].spec).toContain('Explorador de Arquivos VFS');
+    });
+
+    it('initializes the actual Studio markup and opens a native preview through AppManager', async () => {
+        const { readFileSync } = await import('node:fs');
+        const { unkay } = await import('../core/sdk/unkay.js');
+        const root = document.createElement('div');
+        root.innerHTML = readFileSync('apps/openui/index.html', 'utf8');
+        const runApp = vi.fn().mockResolvedValue('preview-instance');
+        const app = new OpenUIStudioApp(mockCORE, { setTimeout: vi.fn(), appManager: { runApp } });
+        app.appContentRoot = root;
+        const mkdir = vi.spyOn(unkay.fs, 'mkdir').mockResolvedValue(undefined);
+        const write = vi.spyOn(unkay.fs, 'writeFile').mockResolvedValue(undefined);
+        try {
+            await app.onRun();
+            expect(root.querySelector('#sandboxHost').shadowRoot.textContent).toContain('Dashboard');
+            await app.launchInOsWindow();
+            expect(runApp).toHaveBeenCalledWith('openui', expect.objectContaining({ previewSpec: app.currentSpec }));
+            app.manifest.id = '../outside';
+            expect(await app.saveToVfs()).toBe(false);
+        } finally { mkdir.mockRestore(); write.mockRestore(); app.onCleanup(); }
     });
 
     it('should provide complete RDA DS component snippets', () => {
@@ -42,13 +62,35 @@ describe('unkayOS 2.0 OpenUI Generative Studio v2.0', () => {
         }
     });
 
+    it('supplies the canonical guide and real icon catalog to the OpenUI agent', async () => {
+        const { readFileSync } = await import('node:fs');
+        const { unkay } = await import('../core/sdk/unkay.js');
+        const root = document.createElement('div');
+        root.innerHTML = readFileSync('apps/openui/index.html', 'utf8');
+        const app = new OpenUIStudioApp(mockCORE, { setTimeout: vi.fn() });
+        app.appContentRoot = root;
+        root.querySelector('#promptInput').value = 'Uma tela de notas';
+        const prompt = vi.spyOn(unkay.ai, 'prompt').mockResolvedValue({ content: '<p>Notas</p>' });
+        vi.stubGlobal('fetch', vi.fn(async url => url.endsWith('.md')
+            ? { ok: true, text: async () => 'CANONICAL APP GUIDE' }
+            : { ok: true, json: async () => ({ icons: { save: {}, settings: {} } }) }));
+        try {
+            await app.generateWithAi();
+            const messages = prompt.mock.calls[0][0];
+            expect(messages[0].content).toContain('CANONICAL APP GUIDE');
+            expect(messages[0].content).toContain('save, settings');
+            expect(messages[0].content).toContain('<rda-icon>');
+        } finally { prompt.mockRestore(); vi.unstubAllGlobals(); app.onCleanup(); }
+    });
+
     it('should insert component snippets and update spec dynamically', () => {
         const app = new OpenUIStudioApp(mockCORE, mockStandardAPIs);
         app.currentSpec = '<div>Init</div>';
         app.insertSnippet('button-primary');
 
-        expect(app.currentSpec).toContain('Ação Primária Cyan');
-        expect(app.currentSpec).toContain('rda-btn-primary');
+        expect(app.currentSpec).toContain('data-color="primary"');
+        expect(app.currentSpec).toContain('class="rda-button rda-button--md"');
+        expect(app.currentSpec).toContain('<rda-icon name="save">');
     });
 
     it('should package generated OpenUI spec and install to VFS with desktop launcher', async () => {

@@ -4,7 +4,6 @@ import { AppCore } from './AppCore.js';
 import eventBus from './eventBus.js'; // Importa o eventBus para Pub/Sub
 import { windowLayerManager } from './WindowLayerManager.js'; // Gerenciador de z-index dinâmico
 import { loadingManager } from './LoadingManager.js'; // Sistema de loading
-import { loadingUI } from './LoadingUI.js'; // Interface de loading
 
 
 export class AppManager {
@@ -163,19 +162,21 @@ export class AppManager {
         });
     }
 
-    initAutorunApps() {
+    async initAutorunApps() {
         console.log('[AppManager] Iniciando apps com autorun...');
+        const starts = [];
         this.loadedAppDetails.forEach(appData => {
-            if (appData.autorun) {
+            if (appData.autorun && appData.widget !== true) {
                 console.log(`[AppManager] Iniciando app com autorun: ${appData.app_name} (${appData.mode})`);
-                this.runApp(appData.id);
+                starts.push(this.runApp(appData.id));
             }
         });
+        await Promise.all(starts);
         console.log('[AppManager] Apps com autorun iniciados.');
     }
 
 
-    async runApp(appId, appParams = []) {
+    async runApp(appId, appParams = {}) {
 
         eventBus.emit('app:starting', { appId, params: appParams });
 
@@ -198,16 +199,8 @@ export class AppManager {
 
         const CORE = new AppCore(appData);
 
-        // Inicia o sistema de loading para apps system_window
         if (appData.mode === 'system_window') {
-            // Inicia loading para JS se existir
-            if (appData.jsFile) {
-                eventBus.emit('app:loading:start', {
-                    instanceId: CORE.instanceId,
-                    resourceType: 'js',
-                    resourceUrl: appData.jsFile
-                });
-            }
+            eventBus.emit('app:loading:start', { instanceId: CORE.instanceId, resourceType: 'boot' });
         }
 
         try {
@@ -219,6 +212,10 @@ export class AppManager {
                 UI: UI,
                 ICON: null
             });
+
+            if (UI && 'ready' in UI) await UI.ready;
+            if (CORE.stopped) return null;
+            eventBus.emit('app:loading:complete', { instanceId: CORE.instanceId, resourceType: 'boot' });
 
             console.log(`Aplicativo '${appData.app_name}' (instanceId: ${CORE.instanceId}) iniciado no modo: ${appData.mode}`);
             eventBus.emit('app:started', { appId, instanceId: CORE.instanceId });
@@ -238,6 +235,9 @@ export class AppManager {
         catch (error) {
             console.error(`Erro ao iniciar o aplicativo '${appData.app_name}' (ID: ${appId}):`, error);
             eventBus.emit('app:start:error', { appId, reason: 'error' });
+            this.runningApps.get(CORE.instanceId)?.UI?.remove?.();
+            await CORE.stop();
+            loadingManager.clearInstance(CORE.instanceId);
             this.runningApps.delete(CORE.instanceId);
             return null;
         }
@@ -292,7 +292,7 @@ export class AppManager {
         }
 
         // Apps custom_ui e desktop_ui (apps de sistema) não podem ser fechados pelo usuário
-        if (appInfo.CORE.mode === "custom_ui" || appInfo.CORE.mode === "desktop_ui") {
+        if (appInfo.CORE.mode === "custom_ui" || (appInfo.CORE.mode === "desktop_ui" && appInfo.CORE.rawData.widget !== true)) {
             console.warn(`[AppManager] Tentativa de remover aplicativo de sistema (${appInfo.CORE.mode}) '${appInfo.CORE.app_name}' (ID: ${instanceId}). Não permitido.`);
             eventBus.emit('app:stop:error', { instanceId, reason: 'system_app' });
             return;

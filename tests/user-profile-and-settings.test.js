@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // tests/user-profile-and-settings.test.js - unkayOS 2.0 User Profile & Settings Test Suite
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import UserProfileApp from '../apps/user-profile/main.js';
 import SettingsApp from '../apps/settings/main.js';
 import eventBus from '../core/eventBus.js';
@@ -50,10 +50,13 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
       }
     };
 
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
     localStorage.clear();
     sessionStorage.clear();
     document.body.innerHTML = '';
   });
+
+  afterEach(() => { vi.unstubAllGlobals(); });
 
   describe('User Profile Panel (apps/user-profile)', () => {
     let profileRoot;
@@ -108,9 +111,9 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
       document.body.appendChild(profileRoot);
     });
 
-    it('should initialize with default Guest state and render headers', () => {
+    it('should initialize with default Guest state and render headers', async () => {
       const app = new UserProfileApp(mockCORE, mockStandardAPIs, profileRoot);
-      app.onRun();
+      await app.onRun();
 
       expect(app.userData.tier).toBe('guest');
       expect(app.userData.displayName).toBe('Convidado');
@@ -118,15 +121,15 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
       expect(profileRoot.querySelector('#headerTierBadge').textContent).toBe('GUEST');
     });
 
-    it('should save identity changes to VFS and localStorage', () => {
+    it('should save identity changes to VFS and localStorage', async () => {
       const app = new UserProfileApp(mockCORE, mockStandardAPIs, profileRoot);
-      app.onRun();
+      await app.onRun();
 
       profileRoot.querySelector('#inputDisplayName').value = 'Arquiteto Demiurgo';
       profileRoot.querySelector('#inputUsername').value = 'arquiteto';
       profileRoot.querySelector('#inputEmail').value = 'arquiteto@reversodoavesso.com';
 
-      app.handleSaveIdentity();
+      await app.handleSaveIdentity();
 
       expect(app.userData.displayName).toBe('Arquiteto Demiurgo');
       expect(app.userData.username).toBe('arquiteto');
@@ -137,14 +140,14 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
       expect(localStorage.getItem('unkayos_user_profile')).toContain('Arquiteto Demiurgo');
     });
 
-    it('should simulate SSO dev profiles (Guest, Acolyte, Member, Sysadmin) and emit events', () => {
+    it('should simulate SSO dev profiles (Guest, Acolyte, Member, Sysadmin) and emit events', async () => {
       const app = new UserProfileApp(mockCORE, mockStandardAPIs, profileRoot);
-      app.onRun();
+      await app.onRun();
 
       const profileUpdatedSpy = vi.fn();
       eventBus.on('user:profile_updated', profileUpdatedSpy);
 
-      app.handleDevProfileClick('sysadmin', 'sysadmin', 'Demiurgo Supremo');
+      await app.handleDevProfileClick('sysadmin', 'sysadmin', 'Demiurgo Supremo');
 
       expect(app.userData.tier).toBe('sysadmin');
       expect(app.userData.role).toBe('sysadmin');
@@ -153,14 +156,47 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
       expect(profileUpdatedSpy).toHaveBeenCalled();
     });
 
-    it('should logout cleanly and reset user identity to Guest', () => {
+    it('loads async VFS preferences without trusting a cached tier', async () => {
+      mockStandardAPIs.fileSystem.readFile.mockResolvedValue(JSON.stringify({ displayName: 'Persistido', tier: 'sysadmin', preferences: { autoSaveClips: false } }));
       const app = new UserProfileApp(mockCORE, mockStandardAPIs, profileRoot);
-      app.onRun();
+      await app.onRun();
+      expect(app.userData.displayName).toBe('Persistido');
+      expect(app.userData.tier).toBe('guest');
+      expect(app.userData.preferences.autoSaveClips).toBe(false);
+    });
 
-      app.handleDevProfileClick('standard', 'member', 'Membro Ativo');
+    it('uses the actual SSO identity before a cached guest profile', async () => {
+      localStorage.setItem('unkayos_user_profile', JSON.stringify({ username: 'guest', tier: 'guest' }));
+      mockStandardAPIs.auth.getCurrentUser.mockReturnValue({ name: 'SSO User', email: 'user@example.org', roles: { sysadmin: {} } });
+      const app = new UserProfileApp(mockCORE, mockStandardAPIs, profileRoot);
+      await app.onRun();
+      expect(app.userData.displayName).toBe('SSO User');
+      expect(app.userData.tier).toBe('sysadmin');
+      await app.handleLogout();
+      expect(mockStandardAPIs.auth.logout).toHaveBeenCalledOnce();
+    });
+
+    it('never simulates a successful session after SSO failure', async () => {
+      mockStandardAPIs.auth.login.mockRejectedValue(new Error('SSO offline'));
+      const app = new UserProfileApp(mockCORE, mockStandardAPIs, profileRoot);
+      await app.onRun();
+      await app.handleLoginZitadel();
+      expect(app.userData.tier).toBe('guest');
+      expect(localStorage.getItem('unkay_auth_token')).toBeNull();
+      expect(profileRoot.querySelector('.profile-toast').textContent).toContain('SSO offline');
+      app.isDev = false;
+      await app.handleDevProfileClick('sysadmin', 'sysadmin', 'Fake');
+      expect(app.userData.tier).toBe('guest');
+    });
+
+    it('should logout cleanly and reset user identity to Guest', async () => {
+      const app = new UserProfileApp(mockCORE, mockStandardAPIs, profileRoot);
+      await app.onRun();
+
+      await app.handleDevProfileClick('standard', 'member', 'Membro Ativo');
       expect(app.userData.tier).toBe('standard');
 
-      app.handleLogout();
+      await app.handleLogout();
       expect(app.userData.tier).toBe('guest');
       expect(app.userData.displayName).toBe('Convidado');
       expect(localStorage.getItem('unkay_tier')).toBeNull();
@@ -193,8 +229,6 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
             <div id="panelAppearance" class="settings-panel active">
               <label class="theme-option active" data-theme="dark"></label>
               <label class="theme-option" data-theme="light"></label>
-              <button class="accent-dot active" data-color="#22d3ee"></button>
-              <button class="accent-dot" data-color="#a855f7"></button>
               <button class="wallpaper-thumb active" data-wp="/assets/images/wallpaper_01.jpg"></button>
               <input type="text" id="customWallpaperUrl" />
               <button id="applyCustomWallpaperBtn"></button>
@@ -237,55 +271,60 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
       document.body.appendChild(settingsRoot);
     });
 
-    it('should initialize and apply default accent color and theme in realtime', () => {
+    it('should initialize with the canonical identity and apply the selected theme', async () => {
       const app = new SettingsApp(mockCORE, mockStandardAPIs, settingsRoot, desktopElement);
-      app.onRun();
+      await app.onRun();
 
       expect(app.systemSettings.appearance.theme).toBe('dark');
-      expect(app.systemSettings.appearance.accentColor).toBe('#22d3ee');
-      expect(document.documentElement.style.getPropertyValue('--rda-color-primary-400')).toBe('#22d3ee');
+      expect(app.systemSettings.appearance).not.toHaveProperty('accentColor');
+      expect(document.documentElement.style.getPropertyValue('--rda-color-primary-400')).toBe('');
     });
 
-    it('should change accent color and update root CSS variables', () => {
+    it('should migrate a saved accent without losing other appearance preferences', async () => {
+      localStorage.setItem('unkayos_system_settings', JSON.stringify({ appearance: {
+        theme: 'light', accentColor: '#a855f7', wallpaper: '#0a0a0a', fontScale: 'large'
+      } }));
       const app = new SettingsApp(mockCORE, mockStandardAPIs, settingsRoot, desktopElement);
-      app.onRun();
-
-      app.handleAccentClick('#a855f7');
-
-      expect(app.systemSettings.appearance.accentColor).toBe('#a855f7');
-      expect(document.documentElement.style.getPropertyValue('--rda-color-primary-400')).toBe('#a855f7');
+      await app.onRun();
+      await app.saveSettings();
+      const persisted = JSON.parse(localStorage.getItem('unkayos_system_settings'));
+      expect(persisted.appearance).not.toHaveProperty('accentColor');
+      expect(persisted.appearance.theme).toBe('light');
+      expect(persisted.appearance.wallpaper).toBe('#0a0a0a');
+      expect(persisted.appearance.fontScale).toBe('large');
+      expect(document.documentElement.style.getPropertyValue('--rda-color-primary-400')).toBe('');
       expect(mockStandardAPIs.fileSystem.writeFile).toHaveBeenCalledWith(
         '/etc/unkay-settings.json',
-        expect.stringContaining('#a855f7')
+        expect.not.stringContaining('accentColor')
       );
     });
 
-    it('should update wallpaper and apply immediately to desktop element', () => {
+    it('should update wallpaper and apply immediately to desktop element', async () => {
       const app = new SettingsApp(mockCORE, mockStandardAPIs, settingsRoot, desktopElement);
-      app.onRun();
+      await app.onRun();
 
-      app.handleWallpaperClick('radial-gradient(circle, #164e63, #0a0a0a)');
+      await app.handleWallpaperClick('radial-gradient(circle, #164e63, #0a0a0a)');
 
       expect(app.systemSettings.appearance.wallpaper).toContain('radial-gradient');
       expect(desktopElement.style.backgroundImage).toContain('radial-gradient');
     });
 
-    it('should export full VFS backup to /home/user/documents/unkayos-backup-*.json', () => {
+    it('should export full VFS backup to /home/user/documents/unkayos-backup-*.json', async () => {
       const app = new SettingsApp(mockCORE, mockStandardAPIs, settingsRoot, desktopElement);
-      app.onRun();
+      await app.onRun();
 
-      app.exportVfsBackup();
+      await app.exportVfsBackup();
 
       expect(mockStandardAPIs.fileSystem.mkdir).toHaveBeenCalledWith('/home/user/documents', { recursive: true });
       expect(mockStandardAPIs.fileSystem.writeFile).toHaveBeenCalledWith(
         expect.stringMatching(/\/home\/user\/documents\/unkayos-backup-\d+\.json/),
-        expect.stringContaining('"version": "2.0.0-alpha.1"')
+        expect.stringContaining('"version": "2.0.0-alpha.2"')
       );
     });
   });
 
   describe('Apps Registration in apps.json', () => {
-    it('should contain both user-profile and settings in apps.json', () => {
+    it('should contain both user-profile and settings in apps.json', async () => {
       const appsJsonPath = path.resolve('apps/apps.json');
       const appsJson = JSON.parse(fs.readFileSync(appsJsonPath, 'utf8'));
 

@@ -1,0 +1,232 @@
+/* Generated from the official Unkayos presets. Product axis is opt-in. */
+@layer rda.overrides {
+:where([data-rda-product="unkayos"]) {
+  --unkay-accent-solid: #06b6d4;
+  --unkay-accent-on-solid: #0a0a0a;
+  --unkay-accent-hover: #22d3ee;
+  --unkay-accent-active: #0891b2;
+  --unkay-accent-subtle: #083344;
+  --unkay-accent-on-subtle: #a5f3fc;
+  --unkay-accent-text: #67e8f9;
+  --unkay-accent-border: #22d3ee;
+  --unkay-accent-focus: #22d3ee;
+}
+:where([data-theme="light"] [data-rda-product="unkayos"], [data-rda-product="unkayos"][data-theme="light"]) {
+  --unkay-accent-solid: #0e7490;
+  --unkay-accent-on-solid: #ffffff;
+  --unkay-accent-hover: #155e75;
+  --unkay-accent-active: #164e63;
+  --unkay-accent-subtle: #ecfeff;
+  --unkay-accent-on-subtle: #155e75;
+  --unkay-accent-text: #0e7490;
+  --unkay-accent-border: #0e7490;
+  --unkay-accent-focus: #0e7490;
+}
+:where([data-rda-product="unkayos"][data-unkay-accent="violet"]) {
+  --unkay-accent-solid: #a78bfa;
+  --unkay-accent-on-solid: #0a0a0a;
+  --unkay-accent-hover: #c4b5fd;
+  --unkay-accent-active: #8b5cf6;
+  --unkay-accent-subtle: #2e1065;
+  --unkay-accent-on-subtle: #ddd6fe;
+  --unkay-accent-text: #c4b5fd;
+  --unkay-accent-border: #a78bfa;
+  --unkay-accent-focus: #a78bfa;
+}
+:where([data-theme="light"] [data-rda-product="unkayos"][data-unkay-accent="violet"], [data-rda-product="unkayos"][data-unkay-accent="violet"][data-theme="light"]) {
+  --unkay-accent-solid: #6d28d9;
+  --unkay-accent-on-solid: #ffffff;
+  --unkay-accent-hover: #5b21b6;
+  --unkay-accent-active: #4c1d95;
+  --unkay-accent-subtle: #f5f3ff;
+  --unkay-accent-on-subtle: #5b21b6;
+  --unkay-accent-text: #6d28d9;
+  --unkay-accent-border: #6d28d9;
+  --unkay-accent-focus: #6d28d9;
+}
+:where([data-rda-product="unkayos"][data-unkay-accent="blue"]) {
+  --unkay-accent-solid: #60a5fa;
+  --unkay-accent-on-solid: #0a0a0a;
+  --unkay-accent-hover: #93c5fd;
+  --unkay-accent-active: #3b82f6;
+  --unkay-accent-subtle: #172554;
+  --unkay-accent-on-subtle: #bfdbfe;
+  --unkay-accent-text: #93c5fd;
+  --unkay-accent-border: #60a5fa;
+  --unkay-accent-focus: #60a5fa;
+}
+:where([data-theme="light"] [data-rda-product="unkayos"][data-unkay-accent="blue"], [data-rda-product="unkayos"][data-unkay-accent="blue"][data-theme="light"]) {
+  --unkay-accent-solid: #1d4ed8;
+  --unkay-accent-on-solid: #ffffff;
+  --unkay-accent-hover: #1e40af;
+  --unkay-accent-active: #1e3a8a;
+  --unkay-accent-subtle: #eff6ff;
+  --unkay-accent-on-subtle: #1e40af;
+  --unkay-accent-text: #1d4ed8;
+  --unkay-accent-border: #1d4ed8;
+  --unkay-accent-focus: #1d4ed8;
+}
+:where([data-rda-product="unkayos"][data-unkay-accent="rose"]) {
+  --unkay-accent-solid: #fb7185;
+  --unkay-accent-on-solid: #0a0a0a;
+  --unkay-accent-hover: #fda4af;
+  --unkay-accent-active: #f43f5e;
+  --unkay-accent-subtle: #4c0519;
+  --unkay-accent-on-subtle: #fecdd3;
+  --unkay-accent-text: #fda4af;
+  --unkay-accent-border: #fb7185;
+  --unkay-accent-focus: #fb7185;
+}
+:where([data-theme="light"] [data-rda-product="unkayos"][data-unkay-accent="rose"], [data-rda-product="unkayos"][data-unkay-accent="rose"][data-theme="light"]) {
+  --unkay-accent-solid: #be123c;
+  --unkay-accent-on-solid: #ffffff;
+  --unkay-accent-hover: #9f1239;
+  --unkay-accent-active: #881337;
+  --unkay-accent-subtle: #fff1f2;
+  --unkay-accent-on-subtle: #9f1239;
+  --unkay-accent-text: #be123c;
+  --unkay-accent-border: #be123c;
+  --unkay-accent-focus: #be123c;
+}
+:where([data-rda-product="unkayos"][data-unkay-accent="fuchsia"]) {
+  --unkay-accent-solid: #e879f9;
+  --unkay-accent-on-solid: #0a0a0a;
+  --unkay-accent-hover: #f0abfc;
+  --unkay-accent-active: #d946ef;
+  --unkay-accent-subtle: #4a044e;
+  --unkay-accent-on-subtle: #f5d0fe;
+  --unkay-accent-text: #f0abfc;
+  --unkay-accent-border: #e879f9;
+  --unkay-accent-focus: #e879f9;
+}
+:where([data-theme="light"] [data-rda-product="unkayos"][data-unkay-accent="fuchsia"], [data-rda-product="unkayos"][data-unkay-accent="fuchsia"][data-theme="light"]) {
+  --unkay-accent-solid: #a21caf;
+  --unkay-accent-on-solid: #ffffff;
+  --unkay-accent-hover: #86198f;
+  --unkay-accent-active: #701a75;
+  --unkay-accent-subtle: #fdf4ff;
+  --unkay-accent-on-subtle: #86198f;
+  --unkay-accent-text: #a21caf;
+  --unkay-accent-border: #a21caf;
+  --unkay-accent-focus: #a21caf;
+}
+:where([data-rda-product="unkayos"][data-unkay-accent="teal"]) {
+  --unkay-accent-solid: #2dd4bf;
+  --unkay-accent-on-solid: #0a0a0a;
+  --unkay-accent-hover: #5eead4;
+  --unkay-accent-active: #14b8a6;
+  --unkay-accent-subtle: #042f2e;
+  --unkay-accent-on-subtle: #99f6e4;
+  --unkay-accent-text: #5eead4;
+  --unkay-accent-border: #2dd4bf;
+  --unkay-accent-focus: #2dd4bf;
+}
+:where([data-theme="light"] [data-rda-product="unkayos"][data-unkay-accent="teal"], [data-rda-product="unkayos"][data-unkay-accent="teal"][data-theme="light"]) {
+  --unkay-accent-solid: #0f766e;
+  --unkay-accent-on-solid: #ffffff;
+  --unkay-accent-hover: #115e59;
+  --unkay-accent-active: #134e4a;
+  --unkay-accent-subtle: #f0fdfa;
+  --unkay-accent-on-subtle: #115e59;
+  --unkay-accent-text: #0f766e;
+  --unkay-accent-border: #0f766e;
+  --unkay-accent-focus: #0f766e;
+}
+:where([data-rda-product="unkayos"][data-unkay-accent="indigo"]) {
+  --unkay-accent-solid: #818cf8;
+  --unkay-accent-on-solid: #000000;
+  --unkay-accent-hover: #a5b4fc;
+  --unkay-accent-active: #6366f1;
+  --unkay-accent-subtle: #1e1b4b;
+  --unkay-accent-on-subtle: #c7d2fe;
+  --unkay-accent-text: #a5b4fc;
+  --unkay-accent-border: #818cf8;
+  --unkay-accent-focus: #818cf8;
+}
+:where([data-theme="light"] [data-rda-product="unkayos"][data-unkay-accent="indigo"], [data-rda-product="unkayos"][data-unkay-accent="indigo"][data-theme="light"]) {
+  --unkay-accent-solid: #4338ca;
+  --unkay-accent-on-solid: #ffffff;
+  --unkay-accent-hover: #3730a3;
+  --unkay-accent-active: #312e81;
+  --unkay-accent-subtle: #eef2ff;
+  --unkay-accent-on-subtle: #3730a3;
+  --unkay-accent-text: #4338ca;
+  --unkay-accent-border: #4338ca;
+  --unkay-accent-focus: #4338ca;
+}
+[data-rda-product="unkayos"] {
+  --rda-action-primary-bg: var(--unkay-accent-solid);
+  --rda-action-primary-fg: var(--unkay-accent-on-solid);
+  --rda-action-primary-bg-hover: var(--unkay-accent-hover);
+  --rda-action-primary-bg-active: var(--unkay-accent-active);
+  --rda-action-primary-border: var(--unkay-accent-border);
+  --rda-border-focus: var(--unkay-accent-focus);
+}
+[data-rda-product="unkayos"] .rda-button[data-color="primary"]:hover:not(:disabled) {
+  --_base: var(--rda-action-primary-bg-hover);
+  filter: none;
+}
+[data-rda-product="unkayos"] .rda-button[data-color="primary"]:active:not(:disabled) {
+  --_base: var(--rda-action-primary-bg-active);
+}
+/* An embedded app can explicitly retain the canonical primary identity. */
+[data-rda-product="base"] {
+  --rda-action-primary-bg: #06b6d4;
+  --rda-action-primary-fg: #0a0a0a;
+  --rda-action-primary-bg-hover: #22d3ee;
+  --rda-action-primary-bg-active: #0891b2;
+  --rda-action-primary-border: #22d3ee;
+  --rda-border-focus: var(--rda-content-brand);
+}
+}
+
+/* Product patterns compose with ActionCard and Progress; no new color axis. */
+@layer rda.components {
+  .rda-unkay-app-card {
+    position: relative;
+    min-width: 0;
+    border: var(--rda-border-width-default) solid var(--rda-border-subtle);
+    border-radius: var(--rda-border-radius-md);
+    overflow: hidden;
+  }
+  .rda-unkay-app-card__launch {
+    height: 100%;
+    min-height: calc(var(--rda-spacing-8) * 3);
+    justify-content: flex-start;
+    align-items: center;
+    padding: var(--rda-spacing-4);
+    padding-inline-end: var(--rda-spacing-8);
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+  }
+  .rda-unkay-app-card__launch:focus-visible { outline-offset: calc(-1 * var(--rda-border-width-2)); }
+  .rda-unkay-app-card__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 var(--rda-spacing-8);
+    color: var(--rda-action-primary-bg);
+  }
+  .rda-unkay-app-card__copy { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; text-align: start; }
+  .rda-unkay-app-card__copy .rda-action-card__title { font-size: var(--rda-font-size-sm); }
+  .rda-unkay-app-card__copy .rda-action-card__description { font-size: var(--rda-font-size-xs); }
+  .rda-unkay-app-card__state { margin-top: var(--rda-spacing-1); font-size: var(--rda-font-size-xs); color: var(--rda-content-secondary); }
+  .rda-unkay-app-card__pin { position: absolute; inset-block-start: var(--rda-spacing-1); inset-inline-end: var(--rda-spacing-1); }
+  .rda-unkay-scroll-region {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rda-border-primary) transparent;
+    scrollbar-gutter: stable;
+    padding-inline-end: var(--rda-spacing-2);
+  }
+  .rda-unkay-scroll-region::-webkit-scrollbar { width: var(--rda-spacing-2); }
+  .rda-unkay-scroll-region::-webkit-scrollbar-track { background: transparent; }
+  .rda-unkay-scroll-region::-webkit-scrollbar-thumb { background: var(--rda-border-primary); border-radius: var(--rda-border-radius-full); }
+  .rda-unkay-scroll-region::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+  .rda-unkay-window-progress { flex: none; }
+  .rda-unkay-window-progress[hidden] { display: none; }
+  .rda-progress.rda-unkay-window-progress[data-type="line"] .rda-progress__bar { height: var(--rda-border-width-2); border-radius: 0; }
+}

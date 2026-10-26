@@ -157,7 +157,7 @@ export const commands = {
             
             if (authSystem.isAuthenticated()) {
                 const user = authSystem.getCurrentUser();
-                output += `<span class="green">✓ Autenticado</span><br>`;
+                output += `<span class="green"><rda-icon name="check"></rda-icon> Autenticado</span><br>`;
                 output += `<span class="cyan">Usuário:</span> ${user.name || user.username || 'N/A'}<br>`;
                 output += `<span class="cyan">Email:</span> ${user.email || 'N/A'}<br>`;
                 output += `<span class="cyan">ID:</span> ${user.sub || user.id || 'N/A'}<br>`;
@@ -170,7 +170,7 @@ export const commands = {
                     output += `<span class="cyan">Roles:</span> ${user.roles.join(', ')}<br>`;
                 }
             } else {
-                output += `<span class="red">✗ Não autenticado</span><br>`;
+                output += `<span class="red"><rda-icon name="x"></rda-icon> Não autenticado</span><br>`;
                 output += 'Use o comando <span class="green">login</span> para autenticar.<br>';
             }
             

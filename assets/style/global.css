@@ -1,19 +1,6 @@
 /* Importa os tokens e estilos base do Design System */
 @import url("/design-system/styles/main.css");
-
-/* Font Awesome (mantido como está) */
-@font-face {
-  font-family: "Font-Awesome-5-Free-Regular-400";
-  src: url("../fonts/Font-Awesome-5-Free-Regular-400.otf");
-}
-@font-face {
-  font-family: "Font-Awesome-5-Free-Solid-900";
-  src: url("../fonts/Font-Awesome-5-Free-Solid-900.otf");
-}
-@font-face {
-  font-family: "Font-Awesome-5-Brands-Regular-400";
-  src: url("../fonts/Font-Awesome-5-Brands-Regular-400.otf");
-}
+@import url("/assets/style/workspace.css");
 
 /* Base */
 * {
@@ -35,7 +22,7 @@ body {
 
 /* Desktop background */
 #desktop {
-  background-image: url('/assets/images/wallpaper_01.jpg');
+  background-image: none;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -106,7 +93,10 @@ body {
   backdrop-filter: blur(var(--blur-intensity));
   -webkit-backdrop-filter: blur(var(--blur-intensity));
   border-top-right-radius: var(--border-radius-md);
-  box-shadow: var(--spacing-sm) var(--spacing-sm) var(--spacing-xs) var(--shadow-color);
+  box-shadow: none;
+  border: 1px solid var(--rda-border-primary);
+  border-left: 0;
+  border-bottom: 0;
   padding: var(--spacing-sm);
   overflow-y: auto;
   
@@ -186,7 +176,7 @@ body {
   align-content: start;
 }
 
-.menu_apps__app {
+.menu_apps__legacy_app {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -207,36 +197,36 @@ body {
   outline: none;
 }
 
-.menu_apps__app:hover,
-.menu_apps__app:focus {
+.menu_apps__legacy_app:hover,
+.menu_apps__legacy_app:focus {
   background-color: var(--color-dark-primary-high-opacity);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px var(--shadow-color);
 }
 
-.menu_apps__app:focus {
+.menu_apps__legacy_app:focus {
   box-shadow: 0 0 0 2px var(--color-primary-base);
 }
 
-.menu_apps__app:active,
-.menu_apps__app.touch-active {
+.menu_apps__legacy_app:active,
+.menu_apps__legacy_app.touch-active {
   transform: translateY(0);
   transition-duration: 0.1s;
   background-color: var(--color-primary-base);
   color: var(--color-dark-primary);
 }
-.menu_apps__app__icon {
+.menu_apps__legacy_app__icon {
   width: 48px;
   height: 48px;
   margin-bottom: var(--spacing-xs);
   transition: var(--transition-ease);
 }
 
-.menu_apps__app:hover .menu_apps__app__icon {
+.menu_apps__legacy_app:hover .menu_apps__legacy_app__icon {
   transform: scale(1.1);
 }
 
-.menu_apps__app__name {
+.menu_apps__legacy_app__name {
   font-size: var(--font-size-sm);
   font-weight: 500;
   line-height: 1.2;
@@ -272,17 +262,17 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
   
-  .menu_apps__app {
+  .menu_apps__legacy_app {
     min-height: 90px;
     min-width: 90px;
   }
   
-  .menu_apps__app__icon {
+  .menu_apps__legacy_app__icon {
     width: 40px;
     height: 40px;
   }
   
-  .menu_apps__app__name {
+  .menu_apps__legacy_app__name {
     font-size: var(--font-size-xs);
   }
 }
@@ -298,13 +288,13 @@ body {
     gap: var(--spacing-xs);
   }
   
-  .menu_apps__app {
+  .menu_apps__legacy_app {
     min-height: 80px;
     min-width: 80px;
     padding: var(--spacing-xs);
   }
   
-  .menu_apps__app__icon {
+  .menu_apps__legacy_app__icon {
     width: 32px;
     height: 32px;
   }
@@ -312,16 +302,16 @@ body {
 
 /* Detecção de dispositivos touch */
 @media (hover: none) and (pointer: coarse) {
-  .menu_apps__app {
+  .menu_apps__legacy_app {
     min-height: 100px;
     min-width: 100px;
   }
   
-  .menu_apps__app:hover {
+  .menu_apps__legacy_app:hover {
     transform: none;
   }
   
-  .menu_apps__app:active {
+  .menu_apps__legacy_app:active {
     background-color: var(--color-primary-base);
     color: var(--color-dark-primary);
   }
@@ -481,10 +471,18 @@ body {
 .app__top_bar__close_button,
 .app__top_bar__min_button,
 .app__top_bar__max_button {
-  width: var(--size-button, 13px);
-  height: var(--size-button, 13px);
-  min-width: var(--size-button, 13px);
-  min-height: var(--size-button, 13px);
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #171717;
+  font-size: 16px;
+  line-height: 1;
   border-radius: var(--border-radius-circle, 50%);
   margin-right: var(--spacing-sm, 8px);
   cursor: pointer;
@@ -501,6 +499,10 @@ body {
 }
 .app__top_bar__max_button {
   background-color: var(--color-window-maximize, #27c93f);
+}
+.app__top_bar button:focus-visible {
+  outline: 2px solid var(--rda-border-focus);
+  outline-offset: 2px;
 }
 .app__top_bar__close_button:hover {
   filter: brightness(1.25);
@@ -532,99 +534,7 @@ body {
    LOADING SYSTEM STYLES
    ================================================== */
 
-.unkay-loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--color-dark-primary-high-opacity);
-  backdrop-filter: blur(var(--blur-intensity));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  opacity: 1;
-  transition: var(--transition-ease);
-}
 
-.unkay-loading-overlay.fade-out {
-  opacity: 0;
-}
-
-.unkay-loading-overlay.completed .unkay-loading-fill {
-  background: linear-gradient(90deg, var(--color-primary-base), var(--color-success)) !important;
-}
-
-.unkay-loading-overlay.error .unkay-loading-fill {
-  background: linear-gradient(90deg, var(--color-error), var(--color-accent-highlight)) !important;
-}
-
-.unkay-loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-xl);
-  max-width: var(--size-content-max-width);
-  width: 90%;
-}
-
-.unkay-loading-bar {
-  position: relative;
-  width: 100%;
-  height: var(--spacing-xs);
-  background: var(--color-dark-primary-middle-opacity);
-  border-radius: var(--border-radius-sm);
-  overflow: hidden;
-}
-
-.unkay-loading-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-primary-base), var(--color-info));
-  border-radius: var(--border-radius-sm);
-  transition: width 0.3s ease;
-  position: relative;
-}
-
-.unkay-loading-fill.completed {
-  background: linear-gradient(90deg, var(--color-primary-base), var(--color-success));
-}
-
-.unkay-loading-fill.error {
-  background: linear-gradient(90deg, var(--color-error), #dc2626);
-}
-
-.unkay-loading-glow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: unkay-shimmer 2s infinite;
-}
-
-@keyframes unkay-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.unkay-loading-text {
-  color: var(--color-text-on-dark);
-  font-size: var(--font-size-sm);
-  font-family: var(--font-family-base);
-  text-align: center;
-  opacity: var(--opacity-medium);
-}
-
-.unkay-loading-overlay.error .unkay-loading-text {
-  color: var(--color-error);
-}
-
-.unkay-loading-overlay.completed .unkay-loading-text {
-  color: var(--color-success);
-}
 
 /* ==================================================
    LAZY LOADING STYLES

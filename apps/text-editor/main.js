@@ -352,9 +352,9 @@ export default class TextEditorApp extends BaseApp {
         const item = document.createElement('div');
         item.className = `file-item ${type}`;
         
-        const icon = document.createElement('span');
-        icon.className = 'material-icons-outlined';
-        icon.textContent = isParent ? 'keyboard_arrow_up' : (type === 'directory' ? 'folder' : 'description');
+        const icon = document.createElement('rda-icon');
+        icon.setAttribute('size', '20');
+        icon.setAttribute('name', isParent ? 'chevron-up' : (type === 'directory' ? 'folder' : 'file-text'));
         
         const nameSpan = document.createElement('span');
         nameSpan.className = 'file-name';
@@ -712,9 +712,9 @@ export default class TextEditorApp extends BaseApp {
         item.className = 'file-tree-item';
         item.style.paddingLeft = `${8 + (level * 16)}px`;
         
-        const icon = document.createElement('span');
-        icon.className = 'material-icons-outlined';
-        icon.textContent = type === 'directory' ? 'folder' : 'description';
+        const icon = document.createElement('rda-icon');
+        icon.setAttribute('size', '20');
+        icon.setAttribute('name', type === 'directory' ? 'folder' : 'file-text');
         
         const nameSpan = document.createElement('span');
         nameSpan.textContent = name;

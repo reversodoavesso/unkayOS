@@ -36,14 +36,16 @@ export class AppCore {
         // Prepara as APIs padrão que serão passadas para o construtor da BaseApp
         const standardAPIs = {
             setTimeout: (callback, delay, ...args) => {
-                const id = this.managedTimeouts.add(setTimeout(() => {
+                const id = setTimeout(() => {
                     this.managedTimeouts.delete(id);
                     callback(...args);
-                }, delay));
+                }, delay);
+                this.managedTimeouts.add(id);
                 return id;
             },
             setInterval: (callback, delay, ...args) => {
-                const id = this.managedIntervals.add(setInterval(callback, delay, ...args));
+                const id = setInterval(callback, delay, ...args);
+                this.managedIntervals.add(id);
                 return id;
             },
             clearTimeout: (id) => {
@@ -52,6 +54,7 @@ export class AppCore {
             },
             clearInterval: (id) => {
                 clearInterval(id);
+                this.managedIntervals.delete(id);
             },
             appManager: window.systemManager?.getSystem('appManager') || window.appManager,
             // Sistema de arquivos disponível para todos os apps
@@ -59,13 +62,15 @@ export class AppCore {
             fs: window.systemManager?.getSystem('fs') || window.unkayFileSystem?.fs,
             wasmFileSystem: window.systemManager?.getSystem('wasmFileSystem') || window.wasmFileSystem,
             wasmFs: window.systemManager?.getSystem('wasmFs') || window.wasmFs,
-            unkaySDK: window.systemManager?.getSystem('unkaySDK') || window.unkay
+            unkaySDK: window.systemManager?.getSystem('unkaySDK') || window.unkay,
+            auth: (window.systemManager?.getSystem('authSystem') || window.authSystem)?.getAPI()
         };
         this.standardAPIs = standardAPIs;
 
         // Carrega o módulo JS do aplicativo e instancia a classe BaseApp (ou sua extensão)
         // A referência ao appContentRoot será definida pelo AppWindowSystem
         // antes de chamar o onRun() do appInstance.
+        this.moduleReady = (async () => {
         if (this.jsFile) {
             try {
                 console.log(`[AppCore] Carregando módulo JS: ${this.jsFile}`);
@@ -78,6 +83,7 @@ export class AppCore {
                 });
 
                 const module = await import(this.jsFile);
+                if (this.stopped) return;
                 
                 eventBus.emit('app:loading:progress', { 
                     instanceId: this.instanceId, 
@@ -121,6 +127,7 @@ export class AppCore {
                     });
                 }
             } catch (e) {
+                this.moduleError = e;
                 console.error(`Erro ao carregar jsFile do app ${this.app_name}:`, e);
                 
                 eventBus.emit('app:loading:error', { 
@@ -136,6 +143,9 @@ export class AppCore {
                 resourceType: 'js' 
             });
         }
+
+        })();
+        if (this.mode !== 'system_window') await this.moduleReady;
 
         switch (this.mode) {
             case "system_window": {
@@ -184,6 +194,7 @@ export class AppCore {
     }
 
     async stop() {
+        this.stopped = true;
         if (this.appInstance && typeof this.appInstance.onCleanup === "function") {
             // Suporta tanto onCleanup async quanto sync
             const result = this.appInstance.onCleanup();

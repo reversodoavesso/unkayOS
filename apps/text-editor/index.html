@@ -13,19 +13,19 @@
         <div class="toolbar">
             <div class="toolbar-section">
                 <button id="btn-new" class="toolbar-btn" title="Novo arquivo (Ctrl+N)">
-                    <span class="material-icons-outlined">description</span>
+                    <rda-icon name="file-text" size="20"></rda-icon>
                     <span>Novo</span>
                 </button>
                 <button id="btn-open" class="toolbar-btn" title="Abrir arquivo (Ctrl+O)">
-                    <span class="material-icons-outlined">folder_open</span>
+                    <rda-icon name="folder-open" size="20"></rda-icon>
                     <span>Abrir</span>
                 </button>
                 <button id="btn-save" class="toolbar-btn" title="Salvar (Ctrl+S)">
-                    <span class="material-icons-outlined">save</span>
+                    <rda-icon name="save" size="20"></rda-icon>
                     <span>Salvar</span>
                 </button>
                 <button id="btn-save-as" class="toolbar-btn" title="Salvar como (Ctrl+Shift+S)">
-                    <span class="material-icons-outlined">save_as</span>
+                    <rda-icon name="pencil" size="20"></rda-icon>
                     <span>Salvar como</span>
                 </button>
             </div>
@@ -34,10 +34,10 @@
             
             <div class="toolbar-section">
                 <button id="btn-undo" class="toolbar-btn" title="Desfazer (Ctrl+Z)">
-                    <span class="material-icons-outlined">undo</span>
+                    <rda-icon name="undo-2" size="20"></rda-icon>
                 </button>
                 <button id="btn-redo" class="toolbar-btn" title="Refazer (Ctrl+Y)">
-                    <span class="material-icons-outlined">redo</span>
+                    <rda-icon name="redo-2" size="20"></rda-icon>
                 </button>
             </div>
             
@@ -45,10 +45,10 @@
             
             <div class="toolbar-section">
                 <button id="btn-find" class="toolbar-btn" title="Buscar (Ctrl+F)">
-                    <span class="material-icons-outlined">search</span>
+                    <rda-icon name="search" size="20"></rda-icon>
                 </button>
                 <button id="btn-replace" class="toolbar-btn" title="Substituir (Ctrl+H)">
-                    <span class="material-icons-outlined">find_replace</span>
+                    <rda-icon name="replace" size="20"></rda-icon>
                 </button>
             </div>
         </div>
@@ -69,19 +69,19 @@
         <!-- Área de busca -->
         <div class="search-panel" id="search-panel" style="display: none;">
             <div class="search-row">
-                <input type="text" id="search-input" placeholder="Buscar..." />
+                <input type="text" id="search-input" placeholder="Buscar..." / class="rda-input rda-input--md">
                 <button id="search-prev" class="search-btn" title="Anterior">
-                    <span class="material-icons-outlined">keyboard_arrow_up</span>
+                    <rda-icon name="chevron-up" size="20"></rda-icon>
                 </button>
                 <button id="search-next" class="search-btn" title="Próximo">
-                    <span class="material-icons-outlined">keyboard_arrow_down</span>
+                    <rda-icon name="chevron-down" size="20"></rda-icon>
                 </button>
                 <button id="search-close" class="search-btn" title="Fechar">
-                    <span class="material-icons-outlined">close</span>
+                    <rda-icon name="x" size="20"></rda-icon>
                 </button>
             </div>
             <div class="search-row" id="replace-row" style="display: none;">
-                <input type="text" id="replace-input" placeholder="Substituir por..." />
+                <input type="text" id="replace-input" placeholder="Substituir por..." / class="rda-input rda-input--md">
                 <button id="replace-one" class="search-btn">Substituir</button>
                 <button id="replace-all" class="search-btn">Substituir Todos</button>
             </div>
@@ -105,7 +105,7 @@
                 </div>
                 <textarea 
                     id="text-editor" 
-                    class="text-area"
+                    class="rda-textarea__field rda-textarea__field--md text-area"
                     placeholder="Digite seu texto aqui..."
                     spellcheck="false"
                     autocomplete="off"
@@ -122,7 +122,7 @@
             <div class="modal-header">
                 <h3>Abrir Arquivo</h3>
                 <button class="modal-close" id="open-modal-close">
-                    <span class="material-icons-outlined">close</span>
+                    <rda-icon name="x" size="20"></rda-icon>
                 </button>
             </div>
             <div class="modal-body">
@@ -137,7 +137,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <input type="text" id="file-name-input" placeholder="Nome do arquivo..." />
+                <input type="text" id="file-name-input" placeholder="Nome do arquivo..." / class="rda-input rda-input--md">
                 <button id="open-confirm" class="btn-primary">Abrir</button>
                 <button id="open-cancel" class="btn-secondary">Cancelar</button>
             </div>
@@ -150,7 +150,7 @@
             <div class="modal-header">
                 <h3>Salvar Como</h3>
                 <button class="modal-close" id="save-as-modal-close">
-                    <span class="material-icons-outlined">close</span>
+                    <rda-icon name="x" size="20"></rda-icon>
                 </button>
             </div>
             <div class="modal-body">
@@ -165,7 +165,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <input type="text" id="save-file-name-input" placeholder="Nome do arquivo..." />
+                <input type="text" id="save-file-name-input" placeholder="Nome do arquivo..." / class="rda-input rda-input--md">
                 <button id="save-as-confirm" class="btn-primary">Salvar</button>
                 <button id="save-as-cancel" class="btn-secondary">Cancelar</button>
             </div>

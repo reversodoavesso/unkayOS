@@ -932,7 +932,7 @@ export const filesystemCommands = {
                         if (failed.length > 0) {
                             output += 'Arquivos que falharam:\n';
                             failed.forEach(f => {
-                                output += `  ❌ ${f.path}: ${f.error}\n`;
+                                output += `   ${f.path}: ${f.error}\n`;
                             });
                         }
                     }
@@ -948,9 +948,9 @@ export const filesystemCommands = {
                     const result = await mapper.syncFile(filePath);
                     
                     if (result.success) {
-                        return `✅ ${result.message}`;
+                        return ` ${result.message}`;
                     } else {
-                        return `❌ Erro: ${result.error}`;
+                        return ` Erro: ${result.error}`;
                     }
                 } catch (error) {
                     return `Erro: ${error.message}`;
@@ -988,9 +988,9 @@ export const filesystemCommands = {
                 });
                 
                 Object.keys(groups).sort().forEach(dir => {
-                    output += `📁 ${dir}\n`;
+                    output += ` ${dir}\n`;
                     groups[dir].forEach(file => {
-                        output += `  📄 ${file}\n`;
+                        output += `   ${file}\n`;
                     });
                     output += '\n';
                 });

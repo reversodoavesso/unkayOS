@@ -45,9 +45,12 @@ export default class TheOrbApp extends BaseApp {
     this.currentTier = 'guest';
 
     // Endpoints de computação
-    this.proxyServiceUrl = 'http://localhost:3005/api/proxy';
-    this.rbiWsUrl = 'ws://localhost:3005/ws/browser';
+    this.proxyServiceUrl = new URL('/api/proxy', window.location.origin).href;
+    const socketUrl = new URL('/ws/browser', window.location.origin);
+    socketUrl.protocol = socketUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    this.rbiWsUrl = socketUrl.href;
     this.rbiSocket = null;
+    this.fileSystem = this.wasmFileSystem || this.fileSystem;
 
     // Domínios conhecidos com proteção anti-framing estrita (X-Frame-Options)
     this.antiFramingDomains = [
@@ -120,6 +123,12 @@ export default class TheOrbApp extends BaseApp {
 
     // Detecta o nível de acesso do usuário (Guest / Standard / Sysadmin)
     this.detectUserTier();
+    this.authChanged = () => {
+      this.detectUserTier();
+      const tab = this.getActiveTab();
+      if (tab?.url) this.routeByTier(tab.url);
+    };
+    this.standardAPIs.auth?.on?.('change', this.authChanged);
 
     // Registra listeners de controle
     this.registerEventListeners();
@@ -145,6 +154,8 @@ export default class TheOrbApp extends BaseApp {
       // 1. Tenta API do SDK unkay
       if (this.standardAPIs?.auth?.getTier) {
         tier = this.standardAPIs.auth.getTier();
+      } else if (this.unkay?.auth?.getTier) {
+        tier = this.unkay.auth.getTier();
       } else if (window.unkay?.auth?.getTier) {
         tier = window.unkay.auth.getTier();
       } else if (window.unkay?.auth?.getCurrentUser) {
@@ -156,24 +167,12 @@ export default class TheOrbApp extends BaseApp {
         }
       }
 
-      // 2. Fallback por storage local
-      if (tier === 'guest') {
-        const storedTier = localStorage.getItem('unkay_tier') || sessionStorage.getItem('unkay_tier');
-        if (storedTier) {
-          tier = storedTier;
-        } else {
-          const token = localStorage.getItem('unkay_auth_token') || sessionStorage.getItem('unkay_auth_token');
-          if (token) {
-            tier = 'standard';
-          }
-        }
-      }
     } catch (e) {
       console.warn(`[TheOrbApp] Erro ao detectar tier do usuário:`, e);
       tier = 'guest';
     }
 
-    this.currentTier = tier;
+    this.currentTier = ['demiurge', 'sysadmin', 'curator'].includes(tier) ? 'sysadmin' : tier === 'standard' ? 'standard' : 'guest';
     this.updateTierBadgeUI();
   }
 
@@ -253,7 +252,7 @@ export default class TheOrbApp extends BaseApp {
 
     if (this.loginToProxyBtn) {
       this.loginToProxyBtn.addEventListener('click', () => {
-        eventBus.emit('auth:request_login', { source: 'orb_browser' });
+        eventBus.emit('app:start', { appId: 'user-profile', params: { tab: 'sso' } });
         this.showToast('Faça login no unkayOS para liberar o modo Streaming Proxy sem limites.');
       });
     }
@@ -302,11 +301,11 @@ export default class TheOrbApp extends BaseApp {
     const tabId = `orb-tab-${this.tabCounter++}`;
     const newTab = {
       id: tabId,
-      url: url || '',
-      title: url ? this.getHostname(url) : 'Nova Aba',
-      view: url ? 'proxy' : 'welcome',
-      history: url ? [url] : [],
-      historyIndex: url ? 0 : -1,
+      url: '',
+      title: 'Nova Aba',
+      view: 'welcome',
+      history: [],
+      historyIndex: -1,
       readerData: null
     };
 
@@ -318,10 +317,11 @@ export default class TheOrbApp extends BaseApp {
       tabEl.className = 'tab';
       tabEl.dataset.tabId = tabId;
       tabEl.innerHTML = `
-        <span class="tab-title">${newTab.title}</span>
-        <button class="tab-close" title="Fechar aba">✕</button>
+        <span class="tab-title"></span>
+        <button class="tab-close" title="Fechar aba"><rda-icon name="x"></rda-icon></button>
       `;
 
+      tabEl.querySelector('.tab-title').textContent = newTab.title;
       tabEl.addEventListener('click', (e) => {
         if (!e.target.classList.contains('tab-close')) {
           this.setActiveTab(tabId);
@@ -340,6 +340,7 @@ export default class TheOrbApp extends BaseApp {
     }
 
     this.setActiveTab(tabId);
+    if (url) this.navigateToUrl(url);
     return tabId;
   }
 
@@ -350,6 +351,7 @@ export default class TheOrbApp extends BaseApp {
     const tab = this.tabs.find(t => t.id === tabId);
     if (!tab) return;
 
+    this.readerController?.abort();
     this.activeTabId = tabId;
 
     // Atualiza classes CSS nas abas
@@ -374,12 +376,9 @@ export default class TheOrbApp extends BaseApp {
     // Restaura a visualização da aba
     this.switchView(tab.view);
 
-    // Se estiver em modo proxy e o iframe não estiver com a URL correta
-    if (tab.view === 'proxy' && tab.url && this.browserProxyIframe) {
-      const proxyTarget = `${this.proxyServiceUrl}?url=${encodeURIComponent(tab.url)}`;
-      if (this.browserProxyIframe.src !== proxyTarget) {
-        this.browserProxyIframe.src = proxyTarget;
-      }
+    if (tab.url) {
+      if (tab.view === 'reader') void this.loadReaderMode(tab.url);
+      else this.routeByTier(tab.url);
     }
   }
 
@@ -444,13 +443,17 @@ export default class TheOrbApp extends BaseApp {
   /**
    * Navega para a URL digitada ou pesquisada
    */
-  navigateToUrl(input) {
+  navigateToUrl(input, { recordHistory = true } = {}) {
     if (!input || !input.trim()) {
       this.switchView('welcome');
       return;
     }
 
     let url = input.trim();
+    if (/^[a-z][a-z\d+.-]*:/i.test(url) && !/^https?:\/\//i.test(url)) {
+      this.showToast('Use um endereço HTTP ou HTTPS.');
+      return;
+    }
 
     // Se não contiver protocolo e não tiver espaços, trata como URL
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -462,14 +465,20 @@ export default class TheOrbApp extends BaseApp {
       }
     }
 
+    try {
+      const parsed = new URL(url);
+      if (!['http:', 'https:'].includes(parsed.protocol)) return;
+    } catch (_) { this.showToast('Endereço inválido.'); return; }
     const activeTab = this.getActiveTab();
     if (!activeTab) return;
-
+    this.readerController?.abort();
+    activeTab.readerData = null;
     activeTab.url = url;
     activeTab.title = this.getHostname(url);
 
     // Atualiza histórico
-    if (activeTab.historyIndex === -1 || activeTab.history[activeTab.historyIndex] !== url) {
+    if (recordHistory && (activeTab.historyIndex === -1 || activeTab.history[activeTab.historyIndex] !== url)) {
+      activeTab.history = activeTab.history.slice(0, activeTab.historyIndex + 1);
       activeTab.history.push(url);
       activeTab.historyIndex = activeTab.history.length - 1;
     }
@@ -494,7 +503,7 @@ export default class TheOrbApp extends BaseApp {
 
     // 1. GUEST TIER: Verifica se o domínio possui proteção de frame
     if (this.currentTier === 'guest') {
-      const isRestricted = this.antiFramingDomains.some(d => hostname.endsWith(d));
+      const isRestricted = this.antiFramingDomains.some(d => hostname === d || hostname.endsWith('.' + d));
 
       if (isRestricted) {
         // Exibe o painel de fallback limpo para convidados
@@ -529,86 +538,55 @@ export default class TheOrbApp extends BaseApp {
    * Extrai e renderiza o conteúdo no Modo Leitor RDA
    */
   async loadReaderMode(url) {
+    this.readerController?.abort();
+    const controller = new AbortController();
+    this.readerController = controller;
+    const tab = this.getActiveTab();
     this.switchView('reader');
-
     if (this.readerArticleTitle) this.readerArticleTitle.textContent = 'Carregando modo leitor...';
-    if (this.readerArticleBody) this.readerArticleBody.innerHTML = '<p>Extraindo tipografia e limpando elementos desnecessários...</p>';
-
+    if (this.readerArticleBody) this.readerArticleBody.textContent = 'Extraindo conteúdo...';
     try {
-      const proxyUrl = `${this.proxyServiceUrl}?url=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl);
-      const htmlText = await res.text();
-
-      // Analisa o DOM da página
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlText, 'text/html');
-
-      // Extrai metadados
-      const title = doc.querySelector('title')?.innerText || doc.querySelector('h1')?.innerText || this.getHostname(url);
-      const hostname = this.getHostname(url);
-      const dateStr = new Date().toLocaleDateString('pt-BR');
-
-      // Limpeza de tags desnecessárias
-      const tagsToRemove = ['script', 'style', 'nav', 'header', 'footer', 'aside', 'iframe', 'svg', 'noscript', 'button'];
-      tagsToRemove.forEach(tag => {
-        doc.querySelectorAll(tag).forEach(el => el.remove());
-      });
-
-      // Extrai parágrafos e títulos principais
-      const contentNodes = doc.querySelectorAll('p, h2, h3, h4, blockquote, pre, img');
-      let cleanHtml = '';
-      let markdownLines = [];
-
-      contentNodes.forEach(node => {
+      const res = await fetch(`${this.proxyServiceUrl}?url=${encodeURIComponent(url)}`, { signal: controller.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+      if (controller.signal.aborted || this.getActiveTab() !== tab || tab?.url !== url || tab.view !== 'reader') return;
+      const title = doc.querySelector('title, h1')?.textContent || this.getHostname(url);
+      doc.querySelectorAll('script, style, nav, header, footer, aside, iframe, svg, noscript, button').forEach(node => node.remove());
+      const fragment = document.createDocumentFragment();
+      const markdown = [];
+      doc.querySelectorAll('p, h2, h3, h4, blockquote, pre, img').forEach(node => {
         if (node.tagName === 'IMG') {
-          const src = node.getAttribute('src');
-          if (src && !src.startsWith('data:')) {
-            cleanHtml += `<p><img src="${src}" alt="Imagem do artigo" /></p>`;
-            markdownLines.push(`![Imagem](${src})\n`);
-          }
+          try {
+            const src = new URL(node.getAttribute('src') || '', url);
+            if (!['http:', 'https:'].includes(src.protocol)) return;
+            const image = document.createElement('img');
+            image.src = src.href;
+            image.alt = node.getAttribute('alt') || 'Imagem do artigo';
+            image.loading = 'lazy';
+            fragment.appendChild(image);
+            markdown.push(`![Imagem](${src.href})`);
+          } catch (_) { /* Invalid image URL. */ }
         } else {
-          const text = node.innerText.trim();
-          if (text.length > 20) {
-            cleanHtml += `<p>${text}</p>`;
-            if (node.tagName.startsWith('H')) {
-              markdownLines.push(`\n## ${text}\n`);
-            } else {
-              markdownLines.push(`${text}\n`);
-            }
-          }
+          const text = node.textContent.trim();
+          if (text.length <= 20) return;
+          const paragraph = document.createElement(node.tagName.toLowerCase());
+          paragraph.textContent = text;
+          fragment.appendChild(paragraph);
+          markdown.push(`${node.tagName.startsWith('H') ? '## ' : ''}${text}`);
         }
       });
-
-      if (!cleanHtml) {
-        cleanHtml = `<p>Conteúdo simplificado para ${hostname}. Para visualizar a experiência interativa original completa, acesse pelo modo Streaming Proxy ou abra em uma aba externa.</p>`;
-        markdownLines.push(`Conteúdo de ${url}`);
-      }
-
-      // Atualiza visualização do leitor
       if (this.readerArticleTitle) this.readerArticleTitle.textContent = title;
-      if (this.readerArticleSource) this.readerArticleSource.textContent = `Fonte: ${hostname}`;
-      if (this.readerArticleDate) this.readerArticleDate.textContent = `Data: ${dateStr}`;
-      if (this.readerArticleBody) this.readerArticleBody.innerHTML = cleanHtml;
-
-      // Armazena na aba ativa para exportação VFS
-      const activeTab = this.getActiveTab();
-      if (activeTab) {
-        activeTab.readerData = {
-          title,
-          source: url,
-          date: new Date().toISOString(),
-          markdown: markdownLines.join('\n')
-        };
-      }
-    } catch (err) {
-      console.error(`[TheOrbApp] Erro ao carregar modo leitor:`, err);
-      if (this.readerArticleTitle) this.readerArticleTitle.textContent = this.getHostname(url);
+      if (this.readerArticleSource) this.readerArticleSource.textContent = `Fonte: ${this.getHostname(url)}`;
+      if (this.readerArticleDate) this.readerArticleDate.textContent = new Date().toLocaleDateString('pt-BR');
       if (this.readerArticleBody) {
-        this.readerArticleBody.innerHTML = `
-          <p>Não foi possível carregar a visualização leitor deste site diretamente.</p>
-          <p>Você pode tentar recarregar via streaming proxy ou abrir o site externamente.</p>
-        `;
+        this.readerArticleBody.replaceChildren(fragment);
+        if (!this.readerArticleBody.childNodes.length) this.readerArticleBody.textContent = 'Sem conteúdo de leitura disponível. Abra o site em uma aba externa.';
       }
+      tab.readerData = { title, source: url, date: new Date().toISOString(), markdown: markdown.join('\n\n') };
+    } catch (error) {
+      if (controller.signal.aborted || this.getActiveTab() !== tab) return;
+      if (this.readerArticleBody) this.readerArticleBody.textContent = 'Não foi possível carregar o modo leitor. Tente novamente ou abra o site externamente.';
+      console.warn('[TheOrbApp] Reader unavailable:', error);
     }
   }
 
@@ -629,8 +607,8 @@ export default class TheOrbApp extends BaseApp {
 
     // Monta o arquivo Markdown com Frontmatter YAML
     const markdownDocument = `---
-title: "${title.replace(/"/g, '\\"')}"
-source: "${sourceUrl}"
+title: ${JSON.stringify(title)}
+source: ${JSON.stringify(sourceUrl)}
 saved_at: "${dateIso}"
 clipped_by: "The Orb Browser v2.0"
 tier: "${this.currentTier}"
@@ -658,21 +636,21 @@ ${content}
       // 1. Cria o diretório de destino se não existir
       if (this.fileSystem && typeof this.fileSystem.mkdir === 'function') {
         try {
-          this.fileSystem.mkdir(targetDir, { recursive: true });
+          await this.fileSystem.mkdir(targetDir, { recursive: true });
         } catch (_) {}
       }
 
       // 2. Grava o arquivo Markdown
       if (this.fileSystem && typeof this.fileSystem.writeFile === 'function') {
-        this.fileSystem.writeFile(targetFile, markdownDocument);
+        await this.fileSystem.writeFile(targetFile, markdownDocument);
       } else if (this.fs && typeof this.fs.writeFile === 'function') {
-        this.fs.writeFile(targetFile, markdownDocument);
-      } else if (this.unkay?.vfs && typeof this.unkay.vfs.writeFile === 'function') {
-        await this.unkay.vfs.writeFile(targetFile, markdownDocument);
-      } else if (window.unkay?.vfs && typeof window.unkay.vfs.writeFile === 'function') {
-        await window.unkay.vfs.writeFile(targetFile, markdownDocument);
+        await this.fs.writeFile(targetFile, markdownDocument);
+      } else if (this.unkay?.fs && typeof this.unkay.fs.writeFile === 'function') {
+        await this.unkay.fs.writeFile(targetFile, markdownDocument);
+      } else if (window.unkay?.fs && typeof window.unkay.fs.writeFile === 'function') {
+        await window.unkay.fs.writeFile(targetFile, markdownDocument);
       } else {
-        console.warn(`[TheOrbApp] VFS não disponível para escrita direta. Salvando em memória.`);
+        throw new Error('Sistema de arquivos indisponível.');
       }
 
       this.showToast(`Clip salvo com sucesso em: ${targetFile}`);
@@ -730,7 +708,7 @@ ${content}
 
     const toast = document.createElement('div');
     toast.className = 'browser-toast';
-    toast.innerHTML = `<span>💾</span> <span>${message}</span>`;
+    toast.textContent = ` ${message}`;
 
     if (this.appContentRoot) {
       this.appContentRoot.appendChild(toast);
@@ -753,7 +731,7 @@ ${content}
     if (activeTab && activeTab.historyIndex > 0) {
       activeTab.historyIndex--;
       const prevUrl = activeTab.history[activeTab.historyIndex];
-      this.navigateToUrl(prevUrl);
+      this.navigateToUrl(prevUrl, { recordHistory: false });
     }
   }
 
@@ -762,7 +740,7 @@ ${content}
     if (activeTab && activeTab.historyIndex < activeTab.history.length - 1) {
       activeTab.historyIndex++;
       const nextUrl = activeTab.history[activeTab.historyIndex];
-      this.navigateToUrl(nextUrl);
+      this.navigateToUrl(nextUrl, { recordHistory: false });
     }
   }
 
@@ -858,6 +836,8 @@ ${content}
    * Limpeza de recursos ao fechar o app
    */
   async onCleanup() {
+    this.standardAPIs.auth?.off?.('change', this.authChanged);
+    this.readerController?.abort();
     if (this.rbiSocket) {
       try {
         this.rbiSocket.close();

@@ -10,5 +10,8 @@
   "right": "20px",
   "top": "150px",
   "width": "250px",
-  "height": "120px"
-} 
+  "height": "120px",
+  "icon_name": "clock",
+  "widget": true,
+  "description": "Hora e data em um olhar."
+}

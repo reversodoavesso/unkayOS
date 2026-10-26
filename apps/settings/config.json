@@ -12,5 +12,6 @@
   "minWidth": 720,
   "minHeight": 500,
   "autorun": false,
-  "hidden": false
+  "hidden": false,
+  "icon_name": "settings"
 }

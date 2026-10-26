@@ -2,7 +2,7 @@
 // tests/orb-browser-tiered.test.js - unkayOS 2.0 Tiered Orb Browser Test Suite
 // Verifies multi-tier engine, streaming proxy routing, guest fallback, tabs, and VFS web clip export
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import TheOrbApp from '../apps/browser/main.js';
 
 describe('The Orb Browser v2.0 - Adaptive Tiered Engine', () => {
@@ -129,7 +129,7 @@ describe('The Orb Browser v2.0 - Adaptive Tiered Engine', () => {
     app.navigateToUrl('https://github.com/trending');
 
     expect(app.proxyView.style.display).toBe('flex');
-    expect(app.browserProxyIframe.src).toBe('http://localhost:3005/api/proxy?url=https%3A%2F%2Fgithub.com%2Ftrending');
+    expect(app.browserProxyIframe.src).toBe(new URL('/api/proxy?url=https%3A%2F%2Fgithub.com%2Ftrending', window.location.origin).href);
   });
 
   it('should manage multiple tabs (create, switch, close)', () => {
@@ -182,4 +182,72 @@ describe('The Orb Browser v2.0 - Adaptive Tiered Engine', () => {
     expect(savedContent).toContain('tier: "standard"');
     expect(savedContent).toContain('unkayOS 2.0 is a complete WebAssembly-powered');
   });
+  afterEach(() => { vi.unstubAllGlobals(); localStorage.clear(); });
+
+  it('preserves history when going back and drops only the forward branch on new navigation', () => {
+    const app = new TheOrbApp(mockCORE, mockStandardAPIs, rootElement);
+    app.onRun();
+    app.navigateToUrl('https://example.org/a');
+    app.navigateToUrl('https://example.org/b');
+    app.navigateToUrl('https://example.org/c');
+    app.handleBackClick();
+    expect(app.getActiveTab().historyIndex).toBe(1);
+    app.handleForwardClick();
+    expect(app.getActiveTab().historyIndex).toBe(2);
+    app.handleBackClick();
+    app.navigateToUrl('https://example.org/d');
+    expect(app.getActiveTab().history).toEqual(['https://example.org/a', 'https://example.org/b', 'https://example.org/d']);
+  });
+
+  it('routes new guest tabs consistently and ignores locally forged tiers', () => {
+    localStorage.setItem('unkay_tier', 'sysadmin');
+    localStorage.setItem('unkay_auth_token', 'fake');
+    mockStandardAPIs.auth.getTier.mockReturnValue('guest');
+    const app = new TheOrbApp(mockCORE, mockStandardAPIs, rootElement);
+    app.onRun();
+    app.createTab('https://github.com/trending');
+    expect(app.currentTier).toBe('guest');
+    expect(app.getActiveTab().view).toBe('fallback');
+    app.navigateToUrl('javascript:alert(1)');
+    expect(app.getActiveTab().url).toBe('https://github.com/trending');
+  });
+
+  it('renders reader text without interpreting HTML and resolves article images safely', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, text: async () => '<title>Artigo</title><p>&lt;img src=x onerror=alert(1)&gt; texto suficiente para o artigo</p><img src="/safe.jpg" onerror="alert(1)"><img src="javascript:alert(2)">' }));
+    const app = new TheOrbApp(mockCORE, mockStandardAPIs, rootElement);
+    app.onRun();
+    app.navigateToUrl('https://example.org/article');
+    await app.loadReaderMode('https://example.org/article');
+    expect(app.readerArticleBody.querySelectorAll('img')).toHaveLength(1);
+    expect(app.readerArticleBody.querySelector('img').src).toBe('https://example.org/safe.jpg');
+    expect(app.readerArticleBody.querySelector('[onerror]')).toBeNull();
+    expect(app.readerArticleBody.textContent).toContain('<img src=x onerror=alert(1)>');
+    expect(app.getActiveTab().readerData.title).toBe('Artigo');
+  });
+
+  it('discards a stale reader response after changing tabs', async () => {
+    let complete;
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(resolve => { complete = resolve; })));
+    const app = new TheOrbApp(mockCORE, mockStandardAPIs, rootElement);
+    app.onRun();
+    app.navigateToUrl('https://example.org/article');
+    const pending = app.loadReaderMode('https://example.org/article');
+    const original = app.getActiveTab();
+    app.createTab();
+    complete({ ok: true, text: async () => '<title>Stale</title><p>Stale article with enough characters</p>' });
+    await pending;
+    expect(original.readerData).toBeNull();
+    expect(app.getActiveTab().readerData).toBeNull();
+  });
+
+  it('reports async VFS clip errors instead of claiming a successful save', async () => {
+    mockStandardAPIs.fileSystem.writeFile.mockRejectedValue(new Error('Disco indisponível'));
+    const app = new TheOrbApp(mockCORE, mockStandardAPIs, rootElement);
+    app.onRun();
+    app.navigateToUrl('https://example.org/article');
+    await app.handleSaveClip();
+    expect(rootElement.querySelector('.browser-toast').textContent).toContain('Erro ao salvar');
+    expect(rootElement.querySelector('.browser-toast').textContent).not.toContain('sucesso');
+  });
+
 });

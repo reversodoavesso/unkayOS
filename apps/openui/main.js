@@ -4,6 +4,7 @@
 import { BaseApp } from '../../core/BaseApp.js';
 import { unkay } from '../../core/sdk/unkay.js';
 import { AppSandbox } from '../../core/sdk/AppSandbox.js';
+import { AppPackageLoader } from '../../core/sdk/AppPackageLoader.js';
 
 export default class OpenUIStudioApp extends BaseApp {
     constructor(CORE, standardAPIs) {
@@ -44,7 +45,7 @@ export default class OpenUIStudioApp extends BaseApp {
   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
     <div style="background: var(--rda-surface-secondary, #141414); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: var(--rda-radius-lg, 8px); padding: 14px; text-align: center;">
       <div style="font-size: 11px; color: var(--rda-content-muted, #737373); text-transform: uppercase;">CPU Worker</div>
-      <div style="font-size: 22px; font-weight: 800; color: var(--rda-color-primary-400, #22d3ee); margin: 6px 0;">18.4%</div>
+      <div style="font-size: 22px; font-weight: 800; color: var(--rda-content-brand, #22d3ee); margin: 6px 0;">18.4%</div>
       <div style="font-size: 10px; color: #10b981;">● 4 Threads Wasm</div>
     </div>
     <div style="background: var(--rda-surface-secondary, #141414); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: var(--rda-radius-lg, 8px); padding: 14px; text-align: center;">
@@ -63,7 +64,7 @@ export default class OpenUIStudioApp extends BaseApp {
   <div style="background: var(--rda-surface-secondary, #141414); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: var(--rda-radius-lg, 8px); padding: 14px;">
     <div style="font-size: 12px; font-weight: 600; color: var(--rda-content-secondary, #e5e5e5); margin-bottom: 8px;">Log de Atividade Wasm:</div>
     <div style="background: #000000; border-radius: var(--rda-radius-md, 6px); padding: 10px; font-family: var(--rda-font-family-mono, monospace); font-size: 11px; color: var(--rda-content-muted, #737373); line-height: 1.6;">
-      <span style="color: var(--rda-color-primary-400, #22d3ee);">[kernel]</span> OPFS driver mounted at /home/user/data<br/>
+      <span style="color: var(--rda-content-brand, #22d3ee);">[kernel]</span> OPFS driver mounted at /home/user/data<br/>
       <span style="color: #10b981;">[compute]</span> Local WASI runner ready for background tasks<br/>
       <span style="color: #a855f7;">[security]</span> Sandbox active with scoped VFS permissions
     </div>
@@ -77,7 +78,7 @@ export default class OpenUIStudioApp extends BaseApp {
                 spec: `<div style="display: flex; flex-direction: column; gap: var(--rda-spacing-3, 12px);">
   <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--rda-border-primary, #2d2d2d); padding-bottom: 8px;">
     <h3 style="margin: 0; font-size: 15px; font-family: var(--rda-font-family-heading, 'Archivo', sans-serif); color: var(--rda-content-primary, #fafafa);">Quadro Ágil unkayOS</h3>
-    <button style="background: var(--rda-color-primary-500, #06b6d4); color: #021a1a; border: none; border-radius: 4px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;">+ Nova Tarefa</button>
+    <button type="button" class="rda-button rda-button--sm" data-color="primary">+ Nova Tarefa</button>
   </div>
   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
     <!-- Coluna 1 -->
@@ -85,12 +86,12 @@ export default class OpenUIStudioApp extends BaseApp {
       <div style="font-size: 11px; font-weight: 700; color: var(--rda-content-muted, #737373); margin-bottom: 8px; text-transform: uppercase;">A Fazer (1)</div>
       <div style="background: var(--rda-surface-tertiary, #1e1e1e); border: 1px solid var(--rda-border-subtle, #262626); border-radius: 6px; padding: 10px;">
         <div style="font-size: 12px; font-weight: 600; color: var(--rda-content-primary, #fafafa);">Escrever docs de release</div>
-        <span style="display: inline-block; font-size: 10px; color: var(--rda-color-primary-400, #22d3ee); background: rgba(6,182,212,0.1); padding: 1px 6px; border-radius: 4px; margin-top: 6px;">Docs</span>
+        <span style="display: inline-block; font-size: 10px; color: var(--rda-content-brand, #22d3ee); background: rgba(6,182,212,0.1); padding: 1px 6px; border-radius: 4px; margin-top: 6px;">Docs</span>
       </div>
     </div>
     <!-- Coluna 2 -->
     <div style="background: var(--rda-surface-secondary, #141414); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: 6px; padding: 10px;">
-      <div style="font-size: 11px; font-weight: 700; color: var(--rda-color-primary-400, #22d3ee); margin-bottom: 8px; text-transform: uppercase;">Em Andamento (1)</div>
+      <div style="font-size: 11px; font-weight: 700; color: var(--rda-content-brand, #22d3ee); margin-bottom: 8px; text-transform: uppercase;">Em Andamento (1)</div>
       <div style="background: var(--rda-surface-tertiary, #1e1e1e); border: 1px solid var(--rda-border-subtle, #262626); border-radius: 6px; padding: 10px;">
         <div style="font-size: 12px; font-weight: 600; color: var(--rda-content-primary, #fafafa);">Refatorar OpenUI Studio</div>
         <span style="display: inline-block; font-size: 10px; color: #f59e0b; background: rgba(245,158,11,0.1); padding: 1px 6px; border-radius: 4px; margin-top: 6px;">Design System</span>
@@ -126,8 +127,8 @@ export default class OpenUIStudioApp extends BaseApp {
       <input type="text" value="/home/user/apps/my-app/data" style="width: 100%; box-sizing: border-box; background: var(--rda-surface-secondary, #141414); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 12px;" />
     </div>
     <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
-      <button style="background: var(--rda-surface-tertiary, #1e1e1e); color: var(--rda-content-primary, #fafafa); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer;">Cancelar</button>
-      <button style="background: var(--rda-color-primary-500, #06b6d4); color: #021a1a; font-weight: 700; border: none; border-radius: 6px; padding: 6px 16px; font-size: 12px; cursor: pointer;">Salvar Configurações</button>
+      <button type="button" class="rda-button rda-button--sm" data-color="secondary">Cancelar</button>
+      <button type="button" class="rda-button rda-button--sm" data-color="primary">Salvar Configurações</button>
     </div>
   </div>
 </div>`
@@ -139,7 +140,7 @@ export default class OpenUIStudioApp extends BaseApp {
                 spec: `<div style="display: flex; flex-direction: column; gap: var(--rda-spacing-3, 12px);">
   <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--rda-border-primary, #2d2d2d); padding-bottom: 8px;">
     <h3 style="margin: 0; font-size: 15px; font-family: var(--rda-font-family-heading, 'Archivo', sans-serif); color: var(--rda-content-primary, #fafafa);">Explorador de Arquivos VFS</h3>
-    <span style="font-size: 11px; color: var(--rda-color-primary-400, #22d3ee); font-family: var(--rda-font-family-mono, monospace);">/home/user/documents</span>
+    <span style="font-size: 11px; color: var(--rda-content-brand, #22d3ee); font-family: var(--rda-font-family-mono, monospace);">/home/user/documents</span>
   </div>
   <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: var(--rda-content-secondary, #e5e5e5);">
     <thead>
@@ -152,16 +153,16 @@ export default class OpenUIStudioApp extends BaseApp {
     </thead>
     <tbody>
       <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-        <td style="padding: 8px; font-weight: 500;">📄 notas_arquitetura.md</td>
+        <td style="padding: 8px; font-weight: 500;"><rda-icon name="file-text"></rda-icon> notas_arquitetura.md</td>
         <td style="padding: 8px; color: var(--rda-content-muted, #737373);">4.2 KB</td>
-        <td style="padding: 8px;"><span style="color: var(--rda-color-primary-400, #22d3ee);">Markdown</span></td>
-        <td style="padding: 8px; text-align: right;"><button style="background: none; border: 1px solid var(--rda-border-primary, #2d2d2d); color: #fff; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;">Abrir</button></td>
+        <td style="padding: 8px;"><span style="color: var(--rda-content-brand, #22d3ee);">Markdown</span></td>
+        <td style="padding: 8px; text-align: right;"><button type="button" class="rda-button rda-button--sm" data-color="secondary">Abrir</button></td>
       </tr>
       <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-        <td style="padding: 8px; font-weight: 500;">📊 relatorio_q3.csv</td>
+        <td style="padding: 8px; font-weight: 500;"><rda-icon name="bar-chart-3"></rda-icon> relatorio_q3.csv</td>
         <td style="padding: 8px; color: var(--rda-content-muted, #737373);">18.9 KB</td>
         <td style="padding: 8px;"><span style="color: #10b981;">Planilha</span></td>
-        <td style="padding: 8px; text-align: right;"><button style="background: none; border: 1px solid var(--rda-border-primary, #2d2d2d); color: #fff; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;">Abrir</button></td>
+        <td style="padding: 8px; text-align: right;"><button type="button" class="rda-button rda-button--sm" data-color="secondary">Abrir</button></td>
       </tr>
     </tbody>
   </table>
@@ -170,20 +171,29 @@ export default class OpenUIStudioApp extends BaseApp {
         };
 
         this.snippets = {
-            "button-primary": `\n<button class="rda-btn rda-btn-primary" style="background: var(--rda-color-primary-500, #06b6d4); color: #021a1a; font-weight: 700; border: none; padding: 8px 16px; border-radius: var(--rda-radius-md, 6px); cursor: pointer;">Ação Primária Cyan</button>\n`,
-            "button-secondary": `\n<button class="rda-btn rda-btn-secondary" style="background: var(--rda-surface-tertiary, #1e1e1e); color: var(--rda-content-primary, #fafafa); border: 1px solid var(--rda-border-primary, #2d2d2d); padding: 8px 16px; border-radius: var(--rda-radius-md, 6px); cursor: pointer;">Ação Secundária</button>\n`,
-            "card": `\n<div class="rda-card" style="background: var(--rda-surface-secondary, #141414); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: var(--rda-radius-lg, 8px); padding: 16px;">\n  <h4 style="margin: 0 0 8px 0; color: var(--rda-content-primary, #fafafa);">Título do Card</h4>\n  <p style="margin: 0; color: var(--rda-content-secondary, #a3a3a3); font-size: 13px;">Conteúdo renderizado com tokens do Design System RDA.</p>\n</div>\n`,
-            "badge": `\n<span class="rda-badge" style="background: rgba(6, 182, 212, 0.15); color: var(--rda-color-primary-400, #22d3ee); border: 1px solid rgba(6, 182, 212, 0.3); padding: 2px 8px; border-radius: var(--rda-radius-full, 9999px); font-size: 11px; font-weight: 600;">Status RDA</span>\n`,
-            "metric": `\n<div class="rda-metric-box" style="background: var(--rda-surface-tertiary, #1e1e1e); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: var(--rda-radius-md, 6px); padding: 12px; text-align: center;">\n  <div style="font-size: 11px; color: var(--rda-content-muted, #737373); text-transform: uppercase;">Métrica Chave</div>\n  <div style="font-size: 22px; font-weight: 800; color: var(--rda-color-primary-400, #22d3ee); margin-top: 4px;">99.4%</div>\n</div>\n`,
-            "input": `\n<div style="display: flex; flex-direction: column; gap: 4px;">\n  <label style="font-size: 11px; font-weight: 600; color: var(--rda-content-secondary, #e5e5e5);">Nome do Parâmetro:</label>\n  <input type="text" style="background: var(--rda-surface-primary, #0a0a0a); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: var(--rda-radius-md, 6px); padding: 8px 10px; color: #fff; font-size: 13px;" placeholder="Digite o valor..." />\n</div>\n`,
-            "table": `\n<table style="width: 100%; border-collapse: collapse; font-size: 12px; color: var(--rda-content-secondary, #e5e5e5);">\n  <thead>\n    <tr style="border-bottom: 1px solid var(--rda-border-primary, #2d2d2d); text-align: left; color: var(--rda-content-muted, #737373);">\n      <th style="padding: 6px 8px;">Item</th>\n      <th style="padding: 6px 8px;">Status</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td style="padding: 6px 8px;">Serviço Core</td>\n      <td style="padding: 6px 8px;"><span style="color: #10b981;">Online</span></td>\n    </tr>\n  </tbody>\n</table>\n`
+            'button-primary': '<button type="button" class="rda-button rda-button--md" data-color="primary"><rda-icon name="save"></rda-icon><span class="rda-button__content">Salvar</span></button>',
+            'button-secondary': '<button type="button" class="rda-button rda-button--md" data-color="secondary"><span class="rda-button__content">Cancelar</span></button>',
+            card: '<article class="rda-card" data-style="matte"><h3>Título do card</h3><p>Conteúdo</p></article>',
+            badge: '<span class="rda-badge" data-color="success">Concluído</span>',
+            metric: '<article class="rda-card"><h3>Arquivos</h3><p class="rda-typography">128</p></article>',
+            input: '<label class="rda-label" for="title">Título</label><input class="rda-input rda-input--md" id="title" placeholder="Escreva um título">',
+            table: '<table class="rda-table rda-table--md"><thead class="rda-table__head"><tr><th class="rda-table__header-cell">Item</th><th class="rda-table__header-cell">Estado</th></tr></thead><tbody class="rda-table__body"><tr class="rda-table__row"><td class="rda-table__cell">Serviço</td><td class="rda-table__cell">Ativo</td></tr></tbody></table>'
         };
     }
 
-    async onRun() {
+    async onRun(terminalOutputCallback = null, appParams = {}) {
         console.log('[OpenUIStudio] Inicializando OpenUI Studio v2.0...');
         this.setupEventListeners();
         this.loadPreset('dashboard');
+        if (appParams.previewSpec && appParams.manifest) {
+            this.manifest = appParams.manifest;
+            this.currentSpec = appParams.previewSpec;
+            this.updateCodeEditor();
+            this.renderLiveSandbox();
+            this.setViewMode('canvas');
+            const title = this.appContentRoot?.closest('.app')?.querySelector('.app__top_bar__app_name');
+            if (title) title.textContent = `Prévia: ${this.manifest.name}`;
+        }
     }
 
     setupEventListeners() {
@@ -208,10 +218,10 @@ export default class OpenUIStudioApp extends BaseApp {
         if (codeBtn) codeBtn.addEventListener('click', () => this.setViewMode('code'));
 
         // Sidebar tabs
-        this.elements.all('.sidebar-tab').forEach(tab => {
+        this.$$('.sidebar-tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                this.elements.all('.sidebar-tab').forEach(t => t.classList.remove('active'));
-                this.elements.all('.sidebar-pane').forEach(p => p.classList.remove('active'));
+                this.$$('.sidebar-tab').forEach(t => t.classList.remove('active'));
+                this.$$('.sidebar-pane').forEach(p => p.classList.remove('active'));
                 tab.classList.add('active');
                 const pane = this.$(`#pane${tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1)}`);
                 if (pane) pane.classList.add('active');
@@ -219,9 +229,9 @@ export default class OpenUIStudioApp extends BaseApp {
         });
 
         // Preset selector cards
-        this.elements.all('.preset-card-btn').forEach(btn => {
+        this.$$('.preset-card-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                this.elements.all('.preset-card-btn').forEach(b => b.classList.remove('active'));
+                this.$$('.preset-card-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.loadPreset(btn.dataset.preset);
             });
@@ -232,7 +242,7 @@ export default class OpenUIStudioApp extends BaseApp {
         if (genBtn) genBtn.addEventListener('click', () => this.generateWithAi());
 
         // Component Palette snippets
-        this.elements.all('.component-item-btn').forEach(btn => {
+        this.$$('.component-item-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const snippetKey = btn.dataset.snippet;
                 this.insertSnippet(snippetKey);
@@ -302,14 +312,14 @@ export default class OpenUIStudioApp extends BaseApp {
             copyBtn.addEventListener('click', () => {
                 const code = this.$('#codeEditorInput').value;
                 navigator.clipboard?.writeText(code);
-                this.notify('✓ Código copiado para a área de transferência');
+                this.notify(" Código copiado para a área de transferência");
             });
         }
 
         // Canvas resolution buttons
-        this.elements.all('.canvas-control-btn[data-res]').forEach(btn => {
+        this.$$('.canvas-control-btn[data-res]').forEach(btn => {
             btn.addEventListener('click', () => {
-                this.elements.all('.canvas-control-btn[data-res]').forEach(b => b.classList.remove('active'));
+                this.$$('.canvas-control-btn[data-res]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 const res = btn.dataset.res;
                 const host = this.$('#sandboxHost');
@@ -384,6 +394,11 @@ export default class OpenUIStudioApp extends BaseApp {
         }
 
         host.innerHTML = '';
+        const validation = AppPackageLoader.validateManifest(this.manifest);
+        if (!validation.valid) {
+            host.textContent = `Manifesto inválido: ${validation.errors.join('; ')}`;
+            return;
+        }
 
         const mockPkg = {
             id: this.manifest.id,
@@ -406,7 +421,7 @@ export default class OpenUIStudioApp extends BaseApp {
         this.currentSpec += snippet;
         this.updateCodeEditor();
         this.renderLiveSandbox();
-        this.notify(`✓ Componente '${key}' inserido no Canvas`);
+        this.notify(` Componente '${key}' inserido no Canvas`);
     }
 
     async generateWithAi() {
@@ -419,13 +434,20 @@ export default class OpenUIStudioApp extends BaseApp {
         }
 
         const btn = this.$('#generateActionBtn');
-        btn.innerHTML = `<span class="btn-sparkle">⏳</span> Gerando Interface...`;
+        btn.innerHTML = `<span class="btn-sparkle"><rda-icon name="loader-2"></rda-icon></span> Gerando Interface...`;
         this.notify('IA gerando componentes com tokens do RDA Design System...');
 
         try {
             // Check if unkay.ai is available
             if (unkay.ai && typeof unkay.ai.prompt === 'function') {
-                const systemPrompt = `Você é o arquiteto do unkayOS 2.0. Gere código HTML semântico limpo usando estritamente as classes e variáveis do @reversodoavesso/design-system (--rda-surface-primary, --rda-surface-secondary, --rda-color-primary-500, --rda-border-primary, --rda-content-primary). Responda apenas com o bloco HTML.`;
+                const [guideResponse, iconsResponse] = await Promise.all([
+                    fetch('/design-system/APP_GUIDE.md'),
+                    fetch('/design-system/rda/icons/manifest.json')
+                ]);
+                if (!guideResponse.ok || !iconsResponse.ok) throw new Error('Guia ou catálogo oficial do DS indisponível.');
+                const guide = await guideResponse.text();
+                const catalog = await iconsResponse.json();
+                const systemPrompt = `${guide}\n\nGere somente o HTML declarativo do conteúdo solicitado, sem scripts, documento HTML completo ou inicialização do shell. Use controles reais do DS e <rda-icon>; não use emojis como ícones. Catálogo disponível: ${Object.keys(catalog.icons).join(', ')}. Responda apenas com HTML.`;
                 const response = await unkay.ai.prompt([
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: promptText }
@@ -434,8 +456,8 @@ export default class OpenUIStudioApp extends BaseApp {
                     this.currentSpec = response.content;
                     this.updateCodeEditor();
                     this.renderLiveSandbox();
-                    btn.innerHTML = `<span class="btn-sparkle">✨</span> Gerar Interface com IA`;
-                    this.notify('✓ Interface gerada com sucesso pela IA!');
+                    btn.innerHTML = `<span class="btn-sparkle"><rda-icon name="sparkles"></rda-icon></span> Gerar Interface com IA`;
+                    this.notify(" Interface gerada com sucesso pela IA!");
                     return;
                 }
             }
@@ -444,30 +466,35 @@ export default class OpenUIStudioApp extends BaseApp {
         }
 
         // Procedural generation fallback
-        setTimeout(() => {
+        this.setTimeout(() => {
             const title = promptText.length > 25 ? promptText.slice(0, 25) + '...' : promptText;
             this.currentSpec = `
 <div style="display: flex; flex-direction: column; gap: var(--rda-spacing-3, 12px);">
   <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--rda-border-primary, #2d2d2d); padding-bottom: 8px;">
-    <h3 style="margin: 0; font-size: 15px; color: var(--rda-color-primary-400, #22d3ee);">${title}</h3>
-    <span class="rda-badge" style="background: rgba(6,182,212,0.15); color: var(--rda-color-primary-400, #22d3ee); padding: 2px 8px; border-radius: 9999px; font-size: 11px;">Gerado com IA</span>
+    <h3 style="margin: 0; font-size: 15px; color: var(--rda-content-brand, #22d3ee);">${title}</h3>
+    <span class="rda-badge" style="background: rgba(6,182,212,0.15); color: var(--rda-content-brand, #22d3ee); padding: 2px 8px; border-radius: 9999px; font-size: 11px;">Prévia local</span>
   </div>
   <div style="background: var(--rda-surface-secondary, #141414); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: var(--rda-radius-lg, 8px); padding: 14px;">
     <p style="margin: 0 0 10px 0; font-size: 13px; color: var(--rda-content-secondary, #e5e5e5);">${promptText}</p>
     <div style="display: flex; gap: 8px;">
-      <button style="background: var(--rda-color-primary-500, #06b6d4); color: #021a1a; font-weight: 700; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer;">Ação RDA</button>
-      <button style="background: var(--rda-surface-tertiary, #1e1e1e); color: #fff; border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: 4px; padding: 6px 12px; cursor: pointer;">Detalhes</button>
+      <button type="button" class="rda-button rda-button--sm" data-color="primary">Ação RDA</button>
+      <button type="button" class="rda-button rda-button--sm" data-color="secondary">Detalhes</button>
     </div>
   </div>
 </div>`;
             this.updateCodeEditor();
             this.renderLiveSandbox();
-            btn.innerHTML = `<span class="btn-sparkle">✨</span> Gerar Interface com IA`;
-            this.notify('✓ Interface criada conforme prompt do usuário!');
+            btn.innerHTML = `<span class="btn-sparkle"><rda-icon name="sparkles"></rda-icon></span> Gerar Interface com IA`;
+            this.notify(" Interface criada conforme prompt do usuário!");
         }, 600);
     }
 
     async saveToVfs() {
+        const validation = AppPackageLoader.validateManifest(this.manifest);
+        if (!validation.valid) {
+            this.notify(`Manifesto inválido: ${validation.errors.join('; ')}`);
+            return false;
+        }
         const appId = this.manifest.id;
         const targetDir = `/home/user/apps/${appId}`;
 
@@ -496,13 +523,15 @@ export default class OpenUIStudioApp extends BaseApp {
 
             // 4. Create Desktop launcher entry
             await unkay.fs.mkdir('/home/guest/Desktop', true);
-            const desktopFile = `/home/guest/Desktop/${this.manifest.name.replace(/\s+/g, '_')}.desktop`;
+            const desktopFile = `/home/guest/Desktop/${appId}.desktop`;
             await unkay.fs.writeFile(desktopFile, `[Desktop Entry]\nName=${this.manifest.name}\nExec=unkay run ${appId}\nType=Application\nIcon=icon.svg\n`);
 
-            this.notify(`✓ Salvo com sucesso no VFS e criado atalho no Desktop!`);
+            this.notify(` Salvo com sucesso no VFS e criado atalho no Desktop!`);
+            return true;
         } catch (err) {
             console.error('[OpenUIStudio] Erro ao salvar no VFS:', err);
             this.notify(`Erro ao salvar no VFS: ${err.message}`);
+            return false;
         }
     }
 
@@ -526,19 +555,18 @@ export default class OpenUIStudioApp extends BaseApp {
         a.click();
         URL.revokeObjectURL(url);
 
-        this.notify(`✓ Pacote '${this.manifest.id}.unkayapp' exportado`);
+        this.notify(` Pacote '${this.manifest.id}.unkayapp' exportado`);
     }
 
     async launchInOsWindow() {
         this.notify('Iniciando janela nativa no unkayOS...');
-        await this.saveToVfs();
-
-        // Launch through unkay window/app manager if available
-        if (window.appManager && typeof window.appManager.openApp === 'function') {
-            window.appManager.openApp(this.manifest.id);
-        } else {
-            alert(`Aplicativo '${this.manifest.name}' preparado e instalado em /home/user/apps/${this.manifest.id}!\nExecute pelo menu Iniciar ou pelo Terminal.`);
+        if (!await this.saveToVfs()) return;
+        const manager = this.appManager || window.appManager;
+        if (!manager?.runApp) {
+            this.notify('Gerenciador de janelas indisponível. O projeto foi salvo no VFS.');
+            return;
         }
+        await manager.runApp('openui', { previewSpec: this.currentSpec, manifest: { ...this.manifest } });
     }
 
     createNewProject() {
@@ -546,7 +574,7 @@ export default class OpenUIStudioApp extends BaseApp {
         this.manifest.name = 'Novo Aplicativo OpenUI';
         this.currentSpec = `
 <div style="padding: 16px; background: var(--rda-surface-secondary, #141414); border: 1px solid var(--rda-border-primary, #2d2d2d); border-radius: 8px;">
-  <h3 style="margin: 0 0 8px 0; color: var(--rda-color-primary-400, #22d3ee);">Novo Aplicativo OpenUI</h3>
+  <h3 style="margin: 0 0 8px 0; color: var(--rda-content-brand, #22d3ee);">Novo Aplicativo OpenUI</h3>
   <p style="color: var(--rda-content-secondary, #a3a3a3); font-size: 13px;">Insira componentes da paleta ou descreva a interface no prompt com IA.</p>
 </div>`;
         this.updateVfsPathDisplay();
@@ -563,9 +591,9 @@ export default class OpenUIStudioApp extends BaseApp {
     notify(msg) {
         const notif = this.$('#statusNotification');
         if (notif) {
-            notif.innerHTML = `<span style="color: var(--rda-color-primary-400, #22d3ee); font-weight: 500;">${msg}</span>`;
-            setTimeout(() => {
-                if (notif) notif.innerHTML = `<span class="status-ready">✓ Pronto</span>`;
+            notif.textContent = msg;
+            this.setTimeout(() => {
+                if (notif) notif.innerHTML = `<span class="status-ready"><rda-icon name="check"></rda-icon> Pronto</span>`;
             }, 3000);
         }
     }

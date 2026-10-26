@@ -2,7 +2,7 @@
   <header class="store-header">
     <div class="store-title-bar">
       <div class="store-brand">
-        <span class="store-logo">🛍️</span>
+        <span class="store-logo"><rda-icon name="shopping-bag"></rda-icon></span>
         <h1>unkayOS Marketplace</h1>
       </div>
       <div class="store-tier-info">
@@ -11,8 +11,8 @@
     </div>
     <div class="store-controls">
       <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="storeSearchInput" placeholder="Buscar aplicativos, ferramentas, DSP, IA..." />
+        <span class="search-icon"><rda-icon name="search"></rda-icon></span>
+        <input type="text" id="storeSearchInput" placeholder="Buscar aplicativos, ferramentas, DSP, IA..." / class="rda-input rda-input--md">
       </div>
       <label class="compatibility-toggle">
         <input type="checkbox" id="compatFilterCheckbox" />
@@ -21,10 +21,10 @@
     </div>
     <nav class="category-tabs" id="categoryTabs">
       <button class="tab-btn active" data-category="all">Todos</button>
-      <button class="tab-btn" data-category="ai">✨ IA & Generative UI</button>
-      <button class="tab-btn" data-category="productivity">📋 Produtividade</button>
-      <button class="tab-btn" data-category="utilities">⚙️ Utilitários & Shell</button>
-      <button class="tab-btn" data-category="developer">💻 Desenvolvimento</button>
+      <button class="tab-btn" data-category="ai"><rda-icon name="sparkles"></rda-icon> IA & Generative UI</button>
+      <button class="tab-btn" data-category="productivity"><rda-icon name="clipboard-list"></rda-icon> Produtividade</button>
+      <button class="tab-btn" data-category="utilities"><rda-icon name="settings"></rda-icon> Utilitários & Shell</button>
+      <button class="tab-btn" data-category="developer"><rda-icon name="terminal"></rda-icon> Desenvolvimento</button>
     </nav>
   </header>
 
@@ -46,7 +46,7 @@
   <div class="app-modal" id="appDetailModal" style="display: none;">
     <div class="modal-backdrop" id="modalBackdrop"></div>
     <div class="modal-card">
-      <button class="modal-close-btn" id="modalCloseBtn">✕</button>
+      <button class="modal-close-btn" id="modalCloseBtn" aria-label="Fechar"><rda-icon name="x"></rda-icon></button>
       <div class="modal-body" id="modalBody"></div>
     </div>
   </div>

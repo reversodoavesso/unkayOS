@@ -12,5 +12,7 @@
   "minWidth": 600,
   "minHeight": 400,
   "autorun": false,
-  "hidden": false
+  "hidden": false,
+  "icon_name": "folder",
+  "short_name": "Arquivos"
 }

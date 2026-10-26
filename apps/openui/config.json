@@ -12,5 +12,7 @@
   "minWidth": 720,
   "minHeight": 480,
   "autorun": false,
-  "hidden": false
+  "hidden": false,
+  "icon_name": "sparkles",
+  "short_name": "OpenUI"
 }

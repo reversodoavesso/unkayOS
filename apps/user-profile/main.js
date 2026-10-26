@@ -2,6 +2,7 @@
 
 import { BaseApp } from '../../core/BaseApp.js';
 import eventBus from '../../core/eventBus.js';
+import { readPreferences, writePreferences, clearTemporaryFiles } from '../../core/utils/appPreferences.js';
 
 export default class UserProfileApp extends BaseApp {
   static get parameters() {
@@ -16,6 +17,9 @@ export default class UserProfileApp extends BaseApp {
 
   constructor(CORE, standardAPIs, appContentRoot = null, desktopElement = null) {
     super(CORE, standardAPIs, appContentRoot, desktopElement);
+    this.fileSystem = this.wasmFileSystem || this.fileSystem;
+    this.auth = standardAPIs.auth || this.unkay?.auth || window.unkay?.auth;
+    this.isDev = Boolean(import.meta.env?.DEV) && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
     this.profileConfigPath = '/home/user/.config/user-profile.json';
 
@@ -51,7 +55,7 @@ export default class UserProfileApp extends BaseApp {
     this.switchTab(tabName);
   }
 
-  onRun(terminalOutputCallback = null, appParams = {}) {
+  async onRun(terminalOutputCallback = null, appParams = {}) {
     console.log(`[UserProfileApp - ${this.instanceId}] Inicializando Painel do Usuário...`);
 
     // Elementos do Header
@@ -101,10 +105,14 @@ export default class UserProfileApp extends BaseApp {
     this.registerEventListeners();
 
     // Carrega dados salvos
-    this.loadProfile();
+    await this.loadProfile();
+    this.authChanged = () => { void this.loadProfile(); };
+    this.auth?.on?.('change', this.authChanged);
+    const devBox = this.$('.dev-auth-box');
+    if (devBox && !this.isDev) devBox.style.display = 'none';
 
     // Atualiza contadores de armazenamento
-    this.updateStorageStats();
+    await this.updateStorageStats();
 
     // Abre aba solicitada por parâmetro se houver
     if (appParams.tab) {
@@ -215,44 +223,26 @@ export default class UserProfileApp extends BaseApp {
     });
   }
 
-  loadProfile() {
-    let loadedData = null;
+  async loadProfile() {
+    let loadedData = await readPreferences(this.fileSystem, this.profileConfigPath, 'unkayos_user_profile');
+    if (!loadedData || typeof loadedData !== 'object' || Array.isArray(loadedData)) loadedData = {};
 
-    // 1. Tenta carregar do VFS
-    try {
-      if (this.fileSystem && typeof this.fileSystem.readFile === 'function') {
-        const content = this.fileSystem.readFile(this.profileConfigPath);
-        if (content) {
-          loadedData = JSON.parse(content);
-        }
-      }
-    } catch (_) {}
-
-    // 2. Fallback pelo localStorage
-    if (!loadedData) {
-      try {
-        const stored = localStorage.getItem('unkayos_user_profile');
-        if (stored) {
-          loadedData = JSON.parse(stored);
-        }
-      } catch (_) {}
-    }
-
-    // 3. Fallback pelo AuthSystem / unkay.auth
-    if (!loadedData) {
-      try {
-        const authUser = this.standardAPIs?.auth?.getCurrentUser?.() || window.unkay?.auth?.getCurrentUser?.();
-        if (authUser) {
-          loadedData = {
-            displayName: authUser.name || authUser.preferred_username || 'Operador RDA',
-            username: authUser.preferred_username || 'operador',
-            email: authUser.email || 'operador@reversodoavesso.com',
-            tier: authUser.tier ? (authUser.tier > 10 ? 'sysadmin' : 'standard') : 'standard',
-            role: authUser.role || 'member',
-            circle: authUser.circle || 'practice'
-          };
-        }
-      } catch (_) {}
+    // A cached profile never grants an authenticated session.
+    const authUser = this.auth?.getCurrentUser?.() || this.auth?.getUser?.();
+    loadedData = { ...loadedData, tier: 'guest', role: 'guest', circle: 'veil' };
+    if (authUser) {
+      const claims = authUser.roles || authUser['urn:zitadel:iam:org:project:roles'] || [];
+      const roles = Array.isArray(claims) ? claims : Object.keys(claims);
+      const admin = roles.some(role => ['demiurge', 'sysadmin', 'architect'].includes(role));
+      loadedData = {
+        ...loadedData,
+        displayName: authUser.name || authUser.preferred_username || 'Operador RDA',
+        username: authUser.preferred_username || authUser.username || 'operador',
+        email: authUser.email || '',
+        tier: admin ? 'sysadmin' : 'standard',
+        role: admin ? 'sysadmin' : 'member',
+        circle: admin ? 'arcane' : 'practice'
+      };
     }
 
     if (loadedData) {
@@ -330,19 +320,19 @@ export default class UserProfileApp extends BaseApp {
     }
   }
 
-  handleSaveIdentity() {
+  async handleSaveIdentity() {
     if (this.inputDisplayName) this.userData.displayName = this.inputDisplayName.value.trim() || 'Convidado';
     if (this.inputUsername) this.userData.username = this.inputUsername.value.trim() || 'guest';
     if (this.inputEmail) this.userData.email = this.inputEmail.value.trim() || 'offline@unkayos.local';
     if (this.inputOrganization) this.userData.organization = this.inputOrganization.value.trim();
     if (this.inputBio) this.userData.bio = this.inputBio.value.trim();
 
-    this.persistUserData();
+    if (!await this.persistUserData()) return;
     this.renderProfileToUI();
     this.showToast('Identidade atualizada com sucesso!');
   }
 
-  handleSavePreferences() {
+  async handleSavePreferences() {
     this.userData.preferences = {
       defaultShell: this.selectDefaultShell ? this.selectDefaultShell.value : 'wasi-bash',
       promptStyle: this.selectPromptStyle ? this.selectPromptStyle.value : 'standard',
@@ -352,12 +342,13 @@ export default class UserProfileApp extends BaseApp {
       syncHistory: this.checkSyncHistory ? this.checkSyncHistory.checked : true
     };
 
-    this.persistUserData();
+    if (!await this.persistUserData()) return;
     eventBus.emit('user:preferences_updated', this.userData.preferences);
     this.showToast('Preferências salvas no VFS!');
   }
 
-  handleDevProfileClick(tier, role, name) {
+  async handleDevProfileClick(tier, role, name) {
+    if (!this.isDev) return;
     const circleByRole = {
       guest: 'veil',
       acolyte: 'practice',
@@ -373,34 +364,27 @@ export default class UserProfileApp extends BaseApp {
     this.userData.circle = circleByRole[role] || 'veil';
 
     localStorage.setItem('unkay_tier', tier);
-    localStorage.setItem('unkay_auth_token', `dev-token-${tier}-${Date.now()}`);
-
-    this.persistUserData();
+    if (!await this.persistUserData()) return;
     this.renderProfileToUI();
 
-    eventBus.emit('auth:login', { user: this.userData, token: 'dev-token' });
     eventBus.emit('user:profile_updated', this.userData);
 
     this.showToast(`Perfil simulado ativado: ${name} (${tier.toUpperCase()})`);
   }
 
-  handleLoginZitadel() {
+  async handleLoginZitadel() {
     try {
-      if (this.standardAPIs?.auth?.login) {
-        this.standardAPIs.auth.login();
-      } else if (window.unkay?.auth?.login) {
-        window.unkay.auth.login();
-      } else {
-        // Fallback simulado para ambiente dev
-        this.handleDevProfileClick('standard', 'member', 'Membro Zitadel SSO');
-      }
+      if (!this.auth?.login) throw new Error('Serviço SSO indisponível.');
+      await this.auth.login();
     } catch (e) {
       console.warn(`[UserProfileApp] Erro ao iniciar login Zitadel:`, e);
-      this.handleDevProfileClick('standard', 'member', 'Membro Zitadel SSO');
+      this.showToast(`Não foi possível iniciar o SSO: ${e.message}`);
     }
   }
 
-  handleLogout() {
+  async handleLogout() {
+    try { await this.auth?.logout?.(); }
+    catch (error) { this.showToast(`Erro ao encerrar sessão: ${error.message}`); return; }
     this.userData.tier = 'guest';
     this.userData.role = 'guest';
     this.userData.displayName = 'Convidado';
@@ -412,7 +396,7 @@ export default class UserProfileApp extends BaseApp {
     localStorage.removeItem('unkay_auth_token');
     localStorage.removeItem('unkayos_auth_token');
 
-    this.persistUserData();
+    if (!await this.persistUserData()) return;
     this.renderProfileToUI();
 
     eventBus.emit('auth:logout');
@@ -421,7 +405,7 @@ export default class UserProfileApp extends BaseApp {
     this.showToast('Sessão encerrada com sucesso.');
   }
 
-  resetToDefaults() {
+  async resetToDefaults() {
     this.userData.displayName = 'Convidado';
     this.userData.username = 'guest';
     this.userData.email = 'offline@unkayos.local';
@@ -429,45 +413,34 @@ export default class UserProfileApp extends BaseApp {
     this.userData.bio = '';
     this.userData.avatar = '/assets/icons/apps/generic_app_icon.svg';
 
-    this.persistUserData();
+    if (!await this.persistUserData()) return;
     this.renderProfileToUI();
     this.showToast('Configurações redefinidas para o padrão.');
   }
 
-  persistUserData() {
-    const jsonString = JSON.stringify(this.userData, null, 2);
-
-    // 1. VFS
+  async persistUserData() {
     try {
-      if (this.fileSystem && typeof this.fileSystem.mkdir === 'function') {
-        try { this.fileSystem.mkdir('/home/user/.config', { recursive: true }); } catch (_) {}
-      }
-      if (this.fileSystem && typeof this.fileSystem.writeFile === 'function') {
-        this.fileSystem.writeFile(this.profileConfigPath, jsonString);
-      }
+      await writePreferences(this.fileSystem, this.profileConfigPath, 'unkayos_user_profile', this.userData);
     } catch (e) {
-      console.warn(`[UserProfileApp] Não foi possível gravar em ${this.profileConfigPath}:`, e);
+      this.showToast(e.message);
+      return false;
     }
-
-    // 2. localStorage
-    try {
-      localStorage.setItem('unkayos_user_profile', jsonString);
-    } catch (_) {}
 
     // Notifica o sistema
     eventBus.emit('user:profile_updated', this.userData);
+    return true;
   }
 
-  updateStorageStats() {
+  async updateStorageStats() {
     let filesCount = 0;
     let webClipsCount = 0;
 
     try {
       if (this.fileSystem && typeof this.fileSystem.readdir === 'function') {
-        const homeList = this.fileSystem.readdir('/home/user') || [];
+        const homeList = await this.fileSystem.readdir('/home/user') || [];
         filesCount = homeList.length;
 
-        const clipsList = this.fileSystem.readdir('/home/user/documents/web-clips') || [];
+        const clipsList = await this.fileSystem.readdir('/home/user/documents/web-clips') || [];
         webClipsCount = clipsList.length;
       }
     } catch (_) {}
@@ -480,19 +453,10 @@ export default class UserProfileApp extends BaseApp {
     }
   }
 
-  cleanTmp() {
+  async cleanTmp() {
     try {
-      if (this.fileSystem && typeof this.fileSystem.readdir === 'function') {
-        const tmpFiles = this.fileSystem.readdir('/tmp') || [];
-        tmpFiles.forEach(file => {
-          try {
-            if (typeof this.fileSystem.unlink === 'function') {
-              this.fileSystem.unlink(`/tmp/${file}`);
-            }
-          } catch (_) {}
-        });
-      }
-      this.showToast('Cache temporário limpo com sucesso!');
+      const removed = await clearTemporaryFiles(this.fileSystem);
+      this.showToast(`${removed} arquivo(s) temporário(s) removido(s).`);
     } catch (e) {
       this.showToast('Nenhum arquivo temporário pendente.');
     }
@@ -504,7 +468,7 @@ export default class UserProfileApp extends BaseApp {
 
     const toast = document.createElement('div');
     toast.className = 'profile-toast';
-    toast.innerHTML = `<span>👤</span> <span>${msg}</span>`;
+    toast.textContent = ` ${msg}`;
 
     if (this.appContentRoot) {
       this.appContentRoot.appendChild(toast);
@@ -512,6 +476,11 @@ export default class UserProfileApp extends BaseApp {
         if (toast.parentNode) toast.parentNode.removeChild(toast);
       }, 3000);
     }
+  }
+
+  async onCleanup() {
+    this.auth?.off?.('change', this.authChanged);
+    await super.onCleanup();
   }
 
   static async runCli(args, writeLine) {

@@ -1,17 +1,17 @@
 {
-    "app_name": "Terminal",
-    "icon_url": "icon.svg",
-    "dirApp": "index.html",    
-    "jsFile": "main.js",      
-    "styleFile": "style.css", 
-    "mode": "system_window",
-    "width": "800px",
-    "height": "500px",
-    "x_position": "10vw",
-    "y_position": "10vh",
-    "minWidth": 200,
-    "minHeight": 100,
-    "autorun": false,
-    "hidden": false
-  }
-  
+  "app_name": "Terminal",
+  "icon_url": "icon.svg",
+  "dirApp": "index.html",
+  "jsFile": "main.js",
+  "styleFile": "style.css",
+  "mode": "system_window",
+  "width": "800px",
+  "height": "500px",
+  "x_position": "10vw",
+  "y_position": "10vh",
+  "minWidth": 200,
+  "minHeight": 100,
+  "autorun": false,
+  "hidden": false,
+  "icon_name": "terminal"
+}

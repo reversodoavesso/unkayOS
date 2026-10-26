@@ -106,7 +106,7 @@ export class HostDropManager {
             this.overlayElement = document.createElement('div');
             this.overlayElement.className = 'desktop-drop-overlay';
             this.overlayElement.innerHTML = `
-                <div style="font-size: 3rem; margin-bottom: 12px;">📥</div>
+                <div style="font-size: 3rem; margin-bottom: 12px;"><rda-icon name="download"></rda-icon></div>
                 <div>Solte os arquivos para importar para o unkayOS Desktop</div>
                 <div style="font-size: 0.9rem; opacity: 0.8; margin-top: 6px;">Salvo em /home/guest/Desktop (Wasm OPFS)</div>
             `;

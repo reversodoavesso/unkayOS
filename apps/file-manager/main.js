@@ -226,7 +226,7 @@ export default class FileManagerApp extends BaseApp {
         if (items.length === 0) {
             this.elements.fileItems.innerHTML = `
                 <div class="empty-state">
-                    <span class="material-icons-outlined">folder_open</span>
+                    <rda-icon name="folder-open" size="20"></rda-icon>
                     <p>Esta pasta está vazia</p>
                 </div>
             `;
@@ -256,7 +256,7 @@ export default class FileManagerApp extends BaseApp {
         itemElement.dataset.path = item.path;
         itemElement.dataset.type = item.type;
         
-        const iconClass = item.type === 'directory' ? 'folder' : 'description';
+        const iconClass = item.type === 'directory' ? 'folder' : 'file-text';
         const iconColorClass = item.type === 'directory' ? 'directory' : 'file';
         
         const modified = new Date(item.modified);
@@ -269,7 +269,7 @@ export default class FileManagerApp extends BaseApp {
         if (this.viewMode === 'list') {
             itemElement.innerHTML = `
                 <div class="file-item-name">
-                    <span class="material-icons-outlined file-icon ${iconColorClass}">${iconClass}</span>
+                    <rda-icon name="${iconClass}" size="20" class="file-icon ${iconColorClass}"></rda-icon>
                     <span class="file-name">${this.escapeHtml(item.name)}</span>
                 </div>
                 <div class="column-modified">${modifiedStr}</div>
@@ -279,7 +279,7 @@ export default class FileManagerApp extends BaseApp {
         } else {
             itemElement.innerHTML = `
                 <div class="file-item-name">
-                    <span class="material-icons-outlined file-icon ${iconColorClass}">${iconClass}</span>
+                    <rda-icon name="${iconClass}" size="20" class="file-icon ${iconColorClass}"></rda-icon>
                     <span class="file-name">${this.escapeHtml(item.name)}</span>
                 </div>
             `;
@@ -1023,7 +1023,7 @@ export default class FileManagerApp extends BaseApp {
                 appItem.className = 'app-item';
                 appItem.innerHTML = `
                     <div class="app-icon">
-                        <span class="material-icons-outlined">${app.icon}</span>
+                        <rda-icon name="${app.icon}" size="20"></rda-icon>
                     </div>
                     <div class="app-info">
                         <div class="app-name">${app.name}</div>
@@ -1056,7 +1056,7 @@ export default class FileManagerApp extends BaseApp {
                 id: 'text-editor',
                 name: 'Editor de Texto',
                 description: 'Editor de texto avançado com destaque de sintaxe',
-                icon: 'edit_note'
+                icon: 'pencil'
             });
         }
         
@@ -1066,7 +1066,7 @@ export default class FileManagerApp extends BaseApp {
                 id: 'browser',
                 name: 'Navegador',
                 description: 'Navegador web interno',
-                icon: 'language'
+                icon: 'globe'
             });
         }
         
@@ -1086,7 +1086,7 @@ export default class FileManagerApp extends BaseApp {
                 id: 'pdf-reader',
                 name: 'Leitor de PDF',
                 description: 'Leitor de documentos PDF (em desenvolvimento)',
-                icon: 'picture_as_pdf'
+                icon: 'file-text'
             });
         }
         

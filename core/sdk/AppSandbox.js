@@ -1,7 +1,9 @@
 // core/sdk/AppSandbox.js - Modern Shadow DOM Application Sandbox
-// Eliminates insecure iframes and provides scoped SDK access based on declared permissions
+// Isolates styles and scopes SDK access. Native JS runs as trusted page code;
+// declarative OpenUI HTML is sanitized before rendering.
 
 import { unkay as baseUnkay } from './unkay.js';
+import DOMPurify from '../vendor/purify.es.mjs';
 
 export class AppSandbox {
     /**
@@ -75,9 +77,16 @@ export class AppSandbox {
             }
         `;
         this.shadowRoot.appendChild(style);
+        for (const file of ['design-system.css', 'unkayos.css']) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = '/design-system/rda/' + file;
+            this.shadowRoot.appendChild(link);
+        }
 
         const appContainer = document.createElement('div');
         appContainer.className = 'app-container';
+        appContainer.dataset.rdaProduct = 'base';
         this.shadowRoot.appendChild(appContainer);
 
         // 3. Build Scoped SDK with Permission Guards
@@ -93,6 +102,19 @@ export class AppSandbox {
         const perms = new Set(pkg.permissions || []);
         const base = this.baseSDK;
         const appDataPrefix = `/home/user/apps/${pkg.id}/data`;
+        if (!/^[a-z0-9][a-z0-9_-]*$/i.test(pkg.id)) throw new Error('Invalid application ID');
+        const scopedPath = (path = '') => {
+            if (typeof path !== 'string' || path.includes('\\')) throw new Error('Invalid storage path');
+            const full = path.startsWith('/') ? path : `${appDataPrefix}/${path}`;
+            const parts = [];
+            for (const part of full.split('/')) {
+                if (part === '..') parts.pop();
+                else if (part && part !== '.') parts.push(part);
+            }
+            const normalized = '/' + parts.join('/');
+            if (normalized !== appDataPrefix && !normalized.startsWith(appDataPrefix + '/')) throw new Error('Storage path outside application data');
+            return normalized;
+        };
 
         return {
             manifest: pkg,
@@ -117,28 +139,28 @@ export class AppSandbox {
                     if (!perms.has('storage:local')) {
                         throw new Error(`Permissão 'storage:local' não concedida para '${pkg.name}'`);
                     }
-                    const fullPath = path.startsWith('/') ? path : `${appDataPrefix}/${path}`;
+                    const fullPath = scopedPath(path);
                     return base.fs.readFile(fullPath);
                 },
                 readText: async (path) => {
                     if (!perms.has('storage:local')) {
                         throw new Error(`Permissão 'storage:local' não concedida para '${pkg.name}'`);
                     }
-                    const fullPath = path.startsWith('/') ? path : `${appDataPrefix}/${path}`;
+                    const fullPath = scopedPath(path);
                     return base.fs.readText(fullPath);
                 },
                 writeFile: async (path, content) => {
                     if (!perms.has('storage:local')) {
                         throw new Error(`Permissão 'storage:local' não concedida para '${pkg.name}'`);
                     }
-                    const fullPath = path.startsWith('/') ? path : `${appDataPrefix}/${path}`;
+                    const fullPath = scopedPath(path);
                     return base.fs.writeFile(fullPath, content);
                 },
                 list: async (path = '') => {
                     if (!perms.has('storage:local')) {
                         throw new Error(`Permissão 'storage:local' não concedida para '${pkg.name}'`);
                     }
-                    const fullPath = path ? (path.startsWith('/') ? path : `${appDataPrefix}/${path}`) : appDataPrefix;
+                    const fullPath = scopedPath(path);
                     return base.fs.list(fullPath);
                 }
             },
@@ -201,17 +223,24 @@ export class AppSandbox {
         container.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: var(--rda-spacing-md, 12px);">
                 <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--rda-border-default, #262626); padding-bottom: 8px;">
-                    <h2 style="margin: 0; font-size: 18px; color: var(--rda-color-primary-base, #06b6d4); font-family: var(--rda-font-family-display, 'Archivo', sans-serif);">✨ ${this.package.name}</h2>
-                    <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: var(--rda-color-primary-light, #22d3ee); border: 1px solid rgba(6, 182, 212, 0.3);">OpenUI Declarativo</span>
+                    <h2 style="margin: 0; font-size: 18px; color: var(--rda-content-brand); font-family: var(--rda-font-family-heading, 'Archivo', sans-serif);"></h2>
+                    <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: var(--rda-content-brand); border: 1px solid rgba(6, 182, 212, 0.3);">OpenUI Declarativo</span>
                 </div>
-                <p style="color: var(--rda-content-secondary, #a3a3a3); font-size: 13px; margin: 0;">${this.package.description}</p>
+                <p class="openui-description" style="color: var(--rda-content-secondary, #a3a3a3); font-size: 13px; margin: 0;"></p>
                 <div id="openui-body" style="background: var(--rda-surface-secondary, #141414); border-radius: var(--rda-radius-lg, 8px); padding: var(--rda-spacing-md, 14px); border: 1px solid var(--rda-border-default, #262626);">
                     <div style="font-size: 13px; color: var(--rda-content-primary, #fafafa); line-height: 1.5;">
-                        ${typeof spec === 'string' && spec.startsWith('<') ? spec : '<p>Ambiente renderizado com tokens do @reversodoavesso/design-system.</p>'}
                     </div>
                 </div>
             </div>
         `;
+        container.querySelector('h2').textContent = this.package.name || 'OpenUI';
+        container.querySelector('.openui-description').textContent = this.package.description || '';
+        container.querySelector('#openui-body > div').innerHTML = DOMPurify.sanitize(typeof spec === 'string' ? spec : '', {
+            USE_PROFILES: { html: true },
+            FORBID_TAGS: ['style', 'link', 'iframe', 'object', 'embed', 'form'],
+            FORBID_ATTR: ['srcdoc'],
+            CUSTOM_ELEMENT_HANDLING: { tagNameCheck: /^rda-icon$/, attributeNameCheck: /^(name|size|label)$/ }
+        });
     }
 
     /**

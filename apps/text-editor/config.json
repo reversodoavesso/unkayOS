@@ -1,6 +1,6 @@
 {
   "app_name": "Editor de Texto",
-  "icon_url": "icon.svg", 
+  "icon_url": "icon.svg",
   "dirApp": "index.html",
   "jsFile": "main.js",
   "styleFile": "style.css",
@@ -12,5 +12,7 @@
   "minWidth": 600,
   "minHeight": 400,
   "autorun": false,
-  "hidden": false
+  "hidden": false,
+  "icon_name": "file-text",
+  "short_name": "Texto"
 }

@@ -1,3 +1,4 @@
+import { scopeAppCss } from './ui/scopeAppCss.js';
 // /core/AppWindowSystem.js - v2.1.2 (Com Sistema de Loading Integrado)
 
 import { positionManager } from './PositionManager.js';
@@ -5,8 +6,10 @@ import { dragManager } from './DragManager.js';
 import eventBus from './eventBus.js';
 import { windowLayerManager } from './WindowLayerManager.js';
 import { loadingUI } from './LoadingUI.js';
+import { loadingManager } from './LoadingManager.js';
 import { lazyResourceLoader } from './LazyResourceLoader.js';
 import { aeroSnapManager } from './AeroSnapManager.js';
+import { iconMarkup } from './ui/designSystem.js';
 
 export class AppWindowSystem {
     constructor(core, desktopElement) { // Renomeado 'desktop' para 'desktopElement' para clareza
@@ -40,6 +43,10 @@ export class AppWindowSystem {
         this.restoreHeight = pixelPositions.height;
         this.restoreX = pixelPositions.x;
         this.restoreY = pixelPositions.y;
+        if (document.documentElement.dataset.centerWindows === 'true') {
+            this.restoreX = Math.max(0, (desktopElement.clientWidth - this.restoreWidth) / 2);
+            this.restoreY = Math.max(0, (desktopElement.clientHeight - this.restoreHeight - 50) / 2);
+        }
 
         this.isMaximized = false;
         this.isMinimized = false;
@@ -47,37 +54,10 @@ export class AppWindowSystem {
 
         this.namespaceCSS = this.namespaceCSS.bind(this);
 
-        this.createWindow();
+        this.ready = this.createWindow();
     }
 
-    namespaceCSS(css) {
-        if (!css) return '';
-
-        // Remove comentários CSS para evitar problemas
-        css = css.replace(/\/\*[\s\S]*?\*\//g, '');
-
-        // Para apps de system_window, sempre aplica namespace
-        // pois eles precisam de isolamento
-        const globalSelectors = ['html', 'body', ':root', '*', '::before', '::after'];
-
-        return css.replace(/([^}]*){/g, (match, selector) => {
-            // Se for um seletor global, não aplica namespace
-            if (globalSelectors.some(global => selector.trim().includes(global))) {
-                return match;
-            }
-
-            // Aplica namespace ao seletor
-            const selectors = selector.split(',').map(s => {
-                s = s.trim();
-                if (s.startsWith('.' + this.namespace)) {
-                    return s; // Já tem namespace
-                }
-                return `.${this.namespace} ${s}`;
-            });
-
-            return selectors.join(', ') + '{';
-        });
-    }
+    namespaceCSS(css) { return scopeAppCss(css, this.namespace); }
 
     async createWindow() {
         this.appWindowElement = document.createElement('div');
@@ -85,6 +65,19 @@ export class AppWindowSystem {
         this.appWindowElement.id = this.instanceId; // Define o ID da instância na janela
         this.appWindowElement.dataset.instanceId = this.instanceId; // Para o KeyboardManager
         this.appWindowElement.dataset.appType = 'system_window';
+
+        const desktopWidth = this.desktopElement.clientWidth || window.innerWidth;
+        const desktopHeight = this.desktopElement.clientHeight || window.innerHeight;
+        const rootStyle = getComputedStyle(document.documentElement);
+        const reserved = document.documentElement.dataset.taskbarAutohide === 'true' ? 6 : (parseFloat(rootStyle.getPropertyValue('--workspace-bar-height')) || 64) + (parseFloat(rootStyle.getPropertyValue('--workspace-bar-gap')) || 0) * 2;
+        const topInset = document.documentElement.dataset.taskbarPosition === 'top' ? reserved : 0;
+        this.restoreWidth = Math.min(this.restoreWidth, desktopWidth - 16);
+        this.restoreHeight = Math.min(this.restoreHeight, desktopHeight - reserved - 16);
+        if (desktopWidth < 760) { this.restoreWidth = desktopWidth - 16; this.restoreHeight = desktopHeight - reserved - 16; }
+        this.minWidth = Math.min(this.minWidth, this.restoreWidth);
+        this.minHeight = Math.min(this.minHeight, this.restoreHeight);
+        this.restoreX = Math.max(8, Math.min(this.restoreX, desktopWidth - this.restoreWidth - 8));
+        this.restoreY = Math.max(topInset + 8, Math.min(this.restoreY, desktopHeight - (reserved - topInset) - this.restoreHeight - 8));
 
         // Aplica dimensões e posição iniciais em pixels
         this.appWindowElement.style.width = `${this.restoreWidth}px`;
@@ -98,7 +91,8 @@ export class AppWindowSystem {
 
         const appNameSpan = document.createElement('span');
         appNameSpan.classList.add('app__top_bar__app_name');
-        appNameSpan.textContent = this.appName; // Usa appName da instância
+        appNameSpan.innerHTML = iconMarkup(this.core.rawData.icon_name || 'package', { size: 16 });
+        appNameSpan.appendChild(document.createTextNode(this.appName));
         topBar.appendChild(appNameSpan);
 
         // Habilita o arrastar na barra de título usando DragManager
@@ -144,7 +138,10 @@ export class AppWindowSystem {
         });
 
         // Botões de controle (minimizar, maximizar, fechar)
-        const minButton = document.createElement('div');
+        const minButton = document.createElement('button');
+        minButton.type = 'button';
+        minButton.setAttribute('aria-label', 'Minimizar');
+        minButton.innerHTML = iconMarkup('minus', { size: 12 });
         minButton.classList.add('app__top_bar__min_button');
         minButton.title = 'Minimizar';
         minButton.addEventListener('click', (e) => {
@@ -155,7 +152,10 @@ export class AppWindowSystem {
         });
         topBar.appendChild(minButton);
 
-        const maxButton = document.createElement('div');
+        const maxButton = document.createElement('button');
+        maxButton.type = 'button';
+        maxButton.setAttribute('aria-label', 'Maximizar/Restaurar');
+        maxButton.innerHTML = iconMarkup('maximize-2', { size: 12 });
         maxButton.classList.add('app__top_bar__max_button');
         maxButton.title = 'Maximizar/Restaurar';
         maxButton.addEventListener('click', (e) => {
@@ -170,7 +170,10 @@ export class AppWindowSystem {
         });
         topBar.appendChild(maxButton);
 
-        const closeButton = document.createElement('div');
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.setAttribute('aria-label', 'Fechar');
+        closeButton.innerHTML = iconMarkup('x', { size: 12 });
         closeButton.classList.add('app__top_bar__close_button');
         closeButton.title = 'Fechar';
         closeButton.addEventListener('click', (e) => {
@@ -192,6 +195,7 @@ export class AppWindowSystem {
         this.appWindowElement.appendChild(contentDiv);
 
         // *** NOVA ESTRATÉGIA: Sem Shadow DOM - injeção direta ***
+        loadingUI.attach(this.instanceId, this.appWindowElement, contentDiv, this.appName);
         this.appContentRoot = contentDiv; // O elemento de conteúdo direto
 
         // Anexa a janela ao div#desktop
@@ -205,7 +209,9 @@ export class AppWindowSystem {
         windowLayerManager.setResizeBordersLayer(this.appWindowElement);
 
         // Carrega o conteúdo HTML e CSS do aplicativo DENTRO do elemento de conteúdo
-        await this.loadAppContent();
+        await Promise.all([this.loadAppContent(), this.core.moduleReady]);
+        if (this.core.stopped) return;
+        if (this.loadError || this.core.moduleError) { this.showLoadError(); return; }
         
         // IMPORTANTE: Configura z-index dos botões APÓS tudo estar carregado
         windowLayerManager.setTopBarButtonsLayer(this.appWindowElement);
@@ -214,7 +220,7 @@ export class AppWindowSystem {
         // e o conteúdo HTML/CSS carregado.
         if (this.core.appInstance && typeof this.core.appInstance.onRun === "function") {
             this.core.appInstance.appContentRoot = this.appContentRoot;
-            this.core.appInstance.onRun(null, this.core.lastAppParams);
+            await this.core.appInstance.onRun(null, this.core.lastAppParams);
         } else {
             console.warn(`[${this.appName} - ${this.instanceId}] Nenhuma instância de app ou método onRun encontrado para chamar após renderização.`);
         }
@@ -254,19 +260,13 @@ export class AppWindowSystem {
     }
 
     async loadAppContent() {
-        // Cria overlay de loading
-        const loadingOverlay = loadingUI.createLoadingOverlay(this.instanceId, this.appName);
-        this.appContentRoot.appendChild(loadingOverlay);
-
         try {
             // Carrega o HTML do aplicativo com loading progressivo
             if (this.core.dirApp) {
                 const html = await lazyResourceLoader.loadHTMLProgressively(this.core.dirApp, this.instanceId);
+                if (this.core.stopped) return;
                 
-                // Remove o overlay temporariamente para inserir conteúdo
-                this.appContentRoot.removeChild(loadingOverlay);
                 this.appContentRoot.innerHTML = html;
-                this.appContentRoot.appendChild(loadingOverlay);
 
                 // Configura lazy loading para imagens e ícones no conteúdo
                 lazyResourceLoader.setupLazyImages(this.appContentRoot);
@@ -283,6 +283,7 @@ export class AppWindowSystem {
             // Carrega o CSS do aplicativo com loading progressivo
             if (this.core.styleFile) {
                 const styleText = await lazyResourceLoader.loadCSSProgressively(this.core.styleFile, this.instanceId);
+                if (this.core.stopped) return;
 
                 // Aplica namespace ao CSS
                 const namespacedCSS = this.namespaceCSS(styleText);
@@ -337,8 +338,9 @@ export class AppWindowSystem {
             }
 
         } catch (error) {
+            this.loadError = error;
             console.error(`Erro carregando recursos do app ${this.appName}:`, error);
-            this.appContentRoot.innerHTML = `<p class="error-message">Erro ao carregar recursos: ${error.message}</p>`;
+            if (!this.core.stopped) this.showLoadError();
             
             eventBus.emit('app:loading:error', { 
                 instanceId: this.instanceId, 
@@ -346,6 +348,14 @@ export class AppWindowSystem {
                 resourceType: 'general' 
             });
         }
+    }
+
+    showLoadError() {
+        this.appContentRoot.replaceChildren();
+        const alert = document.createElement('p');
+        alert.className = 'error-message'; alert.setAttribute('role', 'alert');
+        alert.textContent = 'Não foi possível abrir este aplicativo. Feche a janela e tente novamente.';
+        this.appContentRoot.appendChild(alert);
     }
 
     enableResizeRight(bord) {
@@ -516,6 +526,9 @@ export class AppWindowSystem {
     }
 
     remove() {
+        this.core.stopped = true;
+        loadingUI.remove(this.instanceId);
+        loadingManager.clearInstance(this.instanceId);
         // Limpa o drag se existir
         if (this.dragCleanup) {
             this.dragCleanup();
@@ -580,9 +593,9 @@ export class AppWindowSystem {
 
         // Aplica maximização
         this.appWindowElement.style.left = '0px';
-        this.appWindowElement.style.top = '0px';
-        this.appWindowElement.style.width = this.desktopElement.offsetWidth + 'px';
-        this.appWindowElement.style.height = this.desktopElement.offsetHeight + 'px';
+        this.appWindowElement.style.top = 'var(--workspace-window-top, 0px)';
+        this.appWindowElement.style.width = '100%';
+        this.appWindowElement.style.height = 'calc(100% - var(--workspace-reserved, 50px))';
         this.appWindowElement.classList.add('maximized');
 
         console.log(`[AppWindowSystem] Janela '${this.appName}' maximizada`);

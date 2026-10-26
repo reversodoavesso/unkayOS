@@ -47,9 +47,7 @@
   font-family: var(--rda-font-family-heading);
   font-weight: 700;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--rda-color-primary-400), var(--rda-color-primary-100));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--rda-content-brand);
 }
 
 .user-tier-pill {
@@ -63,9 +61,9 @@
 }
 
 .user-tier-pill.tier-demiurge, .user-tier-pill.tier-sysadmin {
-  background: rgba(34, 211, 238, 0.15);
-  color: var(--rda-color-primary-300);
-  border-color: rgba(34, 211, 238, 0.3);
+  background: color-mix(in srgb, var(--rda-content-brand) 15%, transparent);
+  color: var(--rda-content-brand);
+  border-color: color-mix(in srgb, var(--rda-content-brand) 30.0%, transparent);
 }
 
 .store-controls {
@@ -138,7 +136,7 @@
 }
 
 .tab-btn.active {
-  background: rgba(34, 211, 238, 0.15);
+  background: var(--unkay-accent-subtle);
   color: var(--rda-content-brand);
   font-weight: 600;
 }
@@ -153,7 +151,7 @@
 }
 
 .store-banner {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(8, 51, 68, 0.25));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--unkay-accent-border) 12.0%, transparent), rgba(8, 51, 68, 0.25));
   border: 1px solid var(--rda-border-primary);
   border-radius: var(--rda-radius-lg);
   padding: var(--rda-spacing-4) var(--rda-spacing-5);
@@ -241,8 +239,8 @@
 }
 
 .profile-client-server {
-  background: rgba(34, 211, 238, 0.15);
-  color: var(--rda-color-primary-300);
+  background: var(--unkay-accent-subtle);
+  color: var(--unkay-accent-text);
 }
 
 .profile-containerized {
@@ -276,10 +274,10 @@
 }
 
 .install-btn {
-  background: var(--rda-color-primary-500);
+  background: var(--unkay-accent-solid);
   border: none;
   border-radius: var(--rda-radius-sm);
-  color: var(--rda-content-inverse);
+  color: var(--unkay-accent-on-solid);
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 700;
@@ -288,13 +286,13 @@
 }
 
 .install-btn:hover {
-  background: var(--rda-color-primary-400);
+  background: var(--unkay-accent-hover);
 }
 
 .install-btn.installed {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: var(--rda-action-success-bg);
+  color: var(--rda-action-success-fg);
+  border: 1px solid var(--rda-action-success-border);
   cursor: default;
 }
 

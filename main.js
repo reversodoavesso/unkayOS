@@ -1,9 +1,13 @@
+import './core/ui/designSystem.js';
 // main.js - v2.0.0 (Refatorado com SystemManager centralizado)
 
 import { systemManager } from './core/SystemManager.js';
+import { WorkspaceSession } from './core/workspace/WorkspaceSession.js';
+
+let workspace;
 
 async function init() {
-    const desktop = document.querySelector('#desktop');
+    const desktop = document.getElementById('desktop');
 
     try {
         console.log('[main.js] Inicializando unkayOS com SystemManager...');
@@ -26,6 +30,9 @@ async function init() {
         window.loadingManager = systemManager.getSystem('loadingManager');
         window.loadingUI = systemManager.getSystem('loadingUI');
         window.lazyResourceLoader = systemManager.getSystem('lazyResourceLoader');
+        workspace = new WorkspaceSession({ desktop, appManager: window.appManager, fs: window.wasmFileSystem, auth: window.authSystem });
+        await workspace.initialize();
+        window.workspaceSession = workspace;
         
         console.log('[main.js] unkayOS inicializado com sucesso');
         console.log('[main.js] Estatísticas do sistema:', systemManager.getSystemStats());
@@ -59,6 +66,7 @@ async function init() {
 // Event listener para shutdown limpo
 window.addEventListener('beforeunload', async () => {
     if (systemManager.isInitialized) {
+        await workspace?.destroy();
         await systemManager.shutdown();
     }
 });

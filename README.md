@@ -1,5 +1,14 @@
 # unkayOS — Modular Web Operating System
 
+## Create apps with the RDA Design System
+
+The [practical app guide](docs/APP_DEVELOPMENT.md) covers official controls, tokens, icons, product accents, lifecycle and persistence. While the local server is running, open `/design-system/guide.html`. The SDK and OpenUI agent consume the same guide.
+
+```sh
+npm run scaffold -- --id my-notes --name "My Notes" --icon file-text --register
+npm run ds:check
+```
+
 **unkayOS** is a fully-featured web operating system built with modern vanilla JavaScript and ES modules. It delivers a native desktop experience in the browser with advanced window management, modular applications, and an event-driven architecture.
 
 ## The Story

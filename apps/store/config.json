@@ -12,5 +12,6 @@
   "minWidth": 580,
   "minHeight": 380,
   "autorun": false,
-  "hidden": false
+  "hidden": false,
+  "icon_name": "shopping-bag"
 }

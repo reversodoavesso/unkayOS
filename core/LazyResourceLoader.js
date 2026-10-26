@@ -3,6 +3,7 @@
 
 import { loadingManager } from './LoadingManager.js';
 import eventBus from './eventBus.js';
+import { iconMarkup } from './ui/designSystem.js';
 
 export class LazyResourceLoader {
     constructor() {
@@ -293,7 +294,8 @@ export class LazyResourceLoader {
             
         } catch (error) {
             console.error('[LazyResourceLoader] Erro ao carregar ícone:', error);
-            element.innerHTML = '❓'; // Fallback emoji
+            if (element.tagName.toLowerCase() === 'img') element.src = '/design-system/rda/icons/help-circle.svg';
+            else element.innerHTML = iconMarkup('help-circle');
         }
     }
 

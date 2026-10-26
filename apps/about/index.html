@@ -1,36 +1,6 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Sobre o unkayOS</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="about-app-container">
-    <header class="about-header">
-      <img src="/apps/about/icon.svg" alt="Ícone do unkayOS" class="about-icon"/>
-      <div>
-        <h1 class="about-title">Sobre o unkayOS</h1>
-        <span class="about-version">v1.1.0</span>
-      </div>
-    </header>
-    <div class="about-main-area">
-      <aside class="about-menu" aria-label="Menu de Documentação">
-        <h2 class="about-menu-title">Documentação</h2>
-        <ul id="about-docs-list" class="about-docs-list">
-          <!-- Itens de docs inseridos via JS -->
-        </ul>
-      </aside>
-      <main class="about-content" id="about-main-content" tabindex="0">
-        <p>Bem-vindo ao unkayOS!<br>
-        Selecione um documento à esquerda para visualizar informações, changelog ou tutoriais.</p>
-      </main>
-    </div>
-    <footer class="about-footer">
-      <span>unkayOS &copy; 2024 &mdash; <a href="https://github.com/unkayOS" target="_blank" rel="noopener">GitHub</a></span>
-    </footer>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script type="module" src="main.js"></script>
-</body>
-</html>
+<main class="about-app-container rda-unkay-scroll-region">
+  <header class="about-header"><span class="about-icon" data-about-icon></span><div><p class="about-eyebrow">SEU AMBIENTE</p><h1>unkayOS</h1><p data-version></p></div></header>
+  <p class="about-intro">Um espaço para explorar, criar e colocar ideias em movimento. Seu ambiente, suas preferências.</p>
+  <section aria-labelledby="releaseTitle"><h2 id="releaseTitle">O que mudou</h2><div class="system-release-notes" data-release-notes></div></section>
+  <footer class="about-footer"><a class="rda-button rda-button--sm" data-color="secondary" href="/design-system/guide.html" target="_blank" rel="noopener">Guia para criar apps</a><a href="https://github.com/reversodoavesso/unkayOS" target="_blank" rel="noopener">Código-fonte</a></footer>
+</main>

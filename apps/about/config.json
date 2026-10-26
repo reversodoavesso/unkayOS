@@ -5,12 +5,13 @@
   "jsFile": "main.js",
   "styleFile": "style.css",
   "mode": "system_window",
-  "width": "35vw",
-  "height": "40vh",
+  "width": "52vw",
+  "height": "70vh",
   "x_position": "30vw",
   "y_position": "30vh",
   "minWidth": 350,
   "minHeight": 300,
   "autorun": false,
-  "hidden": false
+  "hidden": false,
+  "icon_name": "info"
 }

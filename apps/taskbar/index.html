@@ -1,13 +1,9 @@
-<div class="taskbar">
-  <div class="taskbar__start_menu" id="startMenu">
-    <img src="/assets/icons/system/menu_list.svg" class="taskbar__start_menu__icon" alt="Menu Iniciar">
-  </div>
-  
-  <div class="taskbar__apps_on" id="appsOnToolbar">
-    <!-- Ícones dos aplicativos ativos serão inseridos aqui dinamicamente -->
-  </div>
-  
-  <div class="taskbar__system_tray" id="systemTray">
-    <!-- Área para ícones do sistema (futuro) -->
-  </div>
-</div> 
+<nav class="taskbar" aria-label="Aplicativos e ferramentas do espaço">
+  <button type="button" class="taskbar__start_menu" id="startMenu" aria-label="Abrir aplicativos" aria-haspopup="dialog" aria-expanded="false" title="Aplicativos · Ctrl + Espaço">
+    <rda-icon name="layout-grid" size="24" data-workspace-mark></rda-icon><span>Apps</span>
+  </button>
+  <div class="taskbar__pinned" aria-label="Aplicativos fixados"></div>
+  <span class="taskbar__divider" aria-hidden="true"></span>
+  <div class="taskbar__apps_on" id="appsOnToolbar" aria-label="Janelas em curso"></div>
+  <div class="taskbar__system_tray" id="systemTray"></div>
+</nav>

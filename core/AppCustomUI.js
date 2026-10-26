@@ -1,3 +1,4 @@
+import { scopeAppCss } from './ui/scopeAppCss.js';
 // /core/AppCustomUI.js - v2.1.1
 
 import { positionManager } from './PositionManager.js';
@@ -49,7 +50,7 @@ export class AppCustomUI {
                 const contentDiv = this.appElement.querySelector('.desktop-app-content');
                 this.core.appInstance.appContentRoot = contentDiv || this.appElement;
                 this.core.appInstance.desktopElement = this.desktopElement;
-                this.core.appInstance.onRun(null, this.core.lastAppParams);
+                await this.core.appInstance.onRun(null, this.core.lastAppParams);
             } else {
                 console.warn(`[AppCustomUI] App ${this.core.app_name} não tem instância ou método onRun`);
             }
@@ -113,41 +114,7 @@ export class AppCustomUI {
      * @param {string} css - CSS original
      * @returns {string} CSS com namespace aplicado
      */
-    namespaceCSS(css) {
-        if (!css) return '';
-        
-        // Remove comentários CSS para evitar problemas
-        css = css.replace(/\/\*[\s\S]*?\*\//g, '');
-        
-        // Para apps de desktop_ui, não aplica namespace
-        // pois eles precisam de acesso global aos estilos
-        if (this.core.mode === 'desktop_ui') {
-            console.log(`[AppCustomUI] Não aplicando namespace para ${this.core.app_name} (desktop_ui) - CSS global`);
-            return css;
-        }
-        
-        // Aplica namespace a seletores CSS
-        // Exceções para seletores globais e pseudo-elementos
-        const globalSelectors = ['html', 'body', ':root', '*', '::before', '::after'];
-        
-        return css.replace(/([^}]*){/g, (match, selector) => {
-            // Se for um seletor global, não aplica namespace
-            if (globalSelectors.some(global => selector.trim().includes(global))) {
-                return match;
-            }
-            
-            // Aplica namespace ao seletor
-            const selectors = selector.split(',').map(s => {
-                s = s.trim();
-                if (s.startsWith('.' + this.namespace)) {
-                    return s; // Já tem namespace
-                }
-                return `.${this.namespace} ${s}`;
-            });
-            
-            return selectors.join(', ') + '{';
-        });
-    }
+    namespaceCSS(css) { return scopeAppCss(css, this.namespace); }
 
 
 

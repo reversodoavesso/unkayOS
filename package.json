@@ -1,11 +1,11 @@
 {
   "name": "unkayos",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build:wasm": "cd src-wasm && npx wasm-pack build --target web --out-dir ../core/wasm/pkg",
-    "prebuild": "npm run build:wasm",
+    "prebuild": "npm run release:check && npm run build:info && npm run sync:vendor && npm run ds:check && npm run guide:build && npm run build:wasm",
     "build": "vite build",
     "build:dist": "vite build",
     "preview": "vite preview",
@@ -17,19 +17,34 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "scaffold": "node scripts/scaffold-app.mjs",
-    "typecheck": "tsc --noEmit"
+    "icon:author": "node design-system/rda/tools/icon-author.mjs",
+    "typecheck": "tsc --noEmit",
+    "sync:vendor": "node scripts/sync-vendor.mjs",
+    "postinstall": "npm run sync:vendor",
+    "predev": "npm run release:check && npm run build:info && npm run sync:vendor && npm run ds:check && npm run guide:build",
+    "pretest": "npm run sync:vendor && npm run ds:check && npm run guide:build",
+    "prebuild:dist": "npm run release:check && npm run build:info && npm run sync:vendor && npm run ds:check && npm run guide:build",
+    "sync:ds": "node scripts/sync-design-system.mjs",
+    "ds:check": "node scripts/check-design-system.mjs",
+    "guide:build": "node scripts/publish-app-guide.mjs",
+    "release:prepare": "node scripts/release.mjs prepare",
+    "release:sync": "node scripts/release.mjs sync",
+    "release:check": "node scripts/release.mjs check",
+    "build:info": "node scripts/build-info.mjs"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^3.2.1",
+    "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^9.27.0",
     "fast-check": "^4.1.1",
-    "happy-dom": "^17.4.4",
+    "happy-dom": "^21.0.4",
+    "jsdom": "^29.1.1",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
-    "vitest": "^3.2.1"
+    "vitest": "^4.1.12"
   },
   "dependencies": {
+    "dompurify": "^3.4.17",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   }

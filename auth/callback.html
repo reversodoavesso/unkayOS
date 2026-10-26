@@ -24,23 +24,18 @@
         const error = params.get('error');
         const errorDescription = params.get('error_description');
 
-        if (window.opener) {
-            if (code && state) {
-                window.opener.postMessage({
-                    type: 'AUTH_CALLBACK',
-                    code,
-                    state
-                }, window.location.origin);
-            } else if (error) {
-                window.opener.postMessage({
-                    type: 'AUTH_ERROR',
-                    error,
-                    errorDescription
-                }, window.location.origin);
-            }
+        const message = code && state
+            ? { type: 'AUTH_CALLBACK', code, state }
+            : { type: 'AUTH_ERROR', error: error || 'invalid_callback', errorDescription, state };
+        try {
+            if (!state || state !== localStorage.getItem('unkayos_oauth_state')) throw new Error('Estado OAuth inválido.');
+            if (window.opener) window.opener.postMessage(message, window.location.origin);
+            localStorage.setItem('unkayos_oauth_callback', JSON.stringify(message));
+            history.replaceState(null, '', window.location.pathname);
+            document.getElementById('msg').textContent = 'Retorne à janela principal do unkayOS.';
             window.close();
-        } else {
-            document.getElementById('msg').innerText = 'Não foi possível retornar para a aplicação principal. Feche esta janela.';
+        } catch (failure) {
+            document.getElementById('msg').textContent = failure.message;
         }
     };
     </script>

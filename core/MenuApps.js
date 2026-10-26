@@ -1,369 +1,98 @@
-// core/MenuApps.js - v2.0.0 - Mobile-Friendly
-
+import { workspaceIcon } from './deployment.js';
 import eventBus from './eventBus.js';
-import { windowLayerManager } from './WindowLayerManager.js';
+import { iconMarkup } from './ui/designSystem.js';
+import { getWorkspace } from './workspace/WorkspaceSession.js';
+import { escapeHtml, DEFAULT_SHELL } from './workspace/preferences.js';
 
-/**
- * Classe para gerenciar o menu de aplicativos do sistema.
- * Versão melhorada com suporte mobile e funcionalidades modernas.
- */
+const categories = { theorb: 'explore', about: 'system', terminal: 'create', 'process-manager': 'system', 'file-manager': 'explore', 'text-editor': 'create', openui: 'create', store: 'explore', 'user-profile': 'system', settings: 'system' };
+const descriptions = { theorb: 'Um novo caminho pela web', terminal: 'Comandos, ideias e possibilidades', about: 'Conheça o seu ambiente', 'process-manager': 'O que está em movimento', 'file-manager': 'Tudo o que você guarda', 'text-editor': 'Transforme ideias em palavras', openui: 'Crie novas interfaces', store: 'Descubra novas ferramentas', 'user-profile': 'Sua conta e identidade', settings: 'Deixe o espaço com a sua cara' };
+const focus = element => { if (element instanceof HTMLElement) element.focus(); };
+const groups = [['all', 'Todos'], ['create', 'Criar'], ['explore', 'Explorar'], ['system', 'Sistema'], ['pinned', 'Fixados']];
+
 export class menuApps {
-    constructor(desktop) {
-        this.desktop = desktop;
-        this.menuElement = null;
-        this.searchInput = null;
-        this.appsContainer = null;
-        this.visibilityFlag = false;
-        this.allApps = [];
-        this.filteredApps = [];
-        
-        // Detecta se é dispositivo touch
-        this.isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        
-        this.handleSearchInput = this.handleSearchInput.bind(this);
-        this.handleKeydown = this.handleKeydown.bind(this);
-        this.handleSearchKeydown = this.handleSearchKeydown.bind(this);
-        this.handleOutsideClick = this.handleOutsideClick.bind(this);
+  constructor(desktop) { this.desktop = desktop; this.category = 'all'; this.visibilityFlag = false; this.allApps = []; }
+  init() {
+    this.menuElement = document.createElement('dialog'); this.menuElement.className = 'menu_apps'; this.menuElement.id = 'menu_apps';
+    this.menuElement.setAttribute('aria-labelledby', 'launcherTitle'); this.desktop.appendChild(this.menuElement);
+    this.controller = new AbortController(); const options = { signal: this.controller.signal };
+    this.menuElement.addEventListener('click', event => this.click(event), options);
+    this.menuElement.addEventListener('input', event => { if (event.target === this.searchInput) this.renderApps(); }, options);
+    this.menuElement.addEventListener('keydown', event => this.keydown(event), options);
+    this.menuElement.addEventListener('close', () => {
+      this.visibilityFlag = false; this.menuElement.classList.remove('menu_apps--visible'); document.documentElement.dataset.launcherOpen = 'false';
+      document.querySelector('.taskbar__start_menu')?.setAttribute('aria-expanded', 'false');
+      if (this.previousFocus?.isConnected) focus(this.previousFocus);
+    }, options);
+    this.toggleHandler = () => this.toggle(); this.closeHandler = () => this.close();
+    this.updateHandler = () => { if (this.visibilityFlag) this.refresh(); };
+    eventBus.on('menu:apps:toggle', this.toggleHandler); eventBus.on('menu:apps:close', this.closeHandler);
+    eventBus.on('settings:updated', this.updateHandler); eventBus.on('app:started', this.updateHandler); eventBus.on('app:stopped', this.updateHandler);
+    this.refresh();
+  }
+  refresh() {
+    const query = this.searchInput?.value || '';
+    this.allApps = [...(window.loadedAppDetails || new Map()).values()].filter(app => !app.hidden && !app.widget).sort((a,b) => a.app_name.localeCompare(b.app_name, 'pt-BR'));
+    const session = getWorkspace(), name = session?.settings.onboarding.displayName;
+    this.menuElement.innerHTML = `<header class="launcher-header"><div><span class="workspace-eyebrow">${name ? `OLÁ, ${escapeHtml(name)}` : 'SEU ESPAÇO ESTÁ ABERTO'}</span><h1 id="launcherTitle">O que vamos<br><em>colocar em movimento?</em></h1></div><button type="button" class="workspace-icon-button" data-launcher-action="close" aria-label="Fechar aplicativos">${iconMarkup('x', { size: 20 })}</button></header>
+      <div class="launcher-search">${iconMarkup('search', { size: 22 })}<input class="rda-input rda-input--lg menu_apps__search" type="search" placeholder="Encontre um app, siga uma ideia…" aria-label="Buscar aplicativos"><kbd>Esc</kbd></div>
+      <div class="launcher-categories" role="group" aria-label="Filtrar aplicativos">${groups.map(([id,label])=>`<button type="button" data-category="${id}" aria-pressed="${id === this.category}">${label}</button>`).join('')}</div>
+      <div class="launcher-results-heading"><span id="launcherCount"></span><span>SEU PRÓXIMO MOVIMENTO</span></div><div class="launcher-scroll rda-unkay-scroll-region"><div class="menu_apps__container"></div></div>
+      <footer class="launcher-footer"><span>${iconMarkup(workspaceIcon, { size: 20 })}unkayOS <span>•</span> ${session?.auth.getCurrentUser() ? 'Conta conectada' : 'Este dispositivo'}</span><button type="button" data-launcher-action="settings">${iconMarkup('settings', { size: 16 })} Personalizar espaço ${iconMarkup('arrow-right', { size: 14 })}</button></footer>`;
+    this.searchInput = this.menuElement.querySelector('input'); this.searchInput.value = query;
+    this.appsContainer = this.menuElement.querySelector('.menu_apps__container'); this.renderApps();
+  }
+  renderApps() {
+    const query = this.searchInput.value.trim().toLocaleLowerCase('pt-BR');
+    const pinned = getWorkspace()?.settings.shell.pinned || DEFAULT_SHELL.pinned;
+    const running = new Set([...(window.appManager?.runningApps.values() || [])].map(app => app.CORE.id));
+    const apps = this.allApps.filter(app => (this.category === 'all' || (this.category === 'pinned' ? pinned.includes(app.id) : categories[app.id] === this.category)) && `${app.app_name} ${app.description || ''} ${descriptions[app.id] || ''}`.toLocaleLowerCase('pt-BR').includes(query));
+    this.appsContainer.innerHTML = apps.length ? apps.map(app => `<article class="launcher-tile rda-unkay-app-card"><button type="button" class="menu_apps__app rda-action-card rda-unkay-app-card__launch" id="${escapeHtml(app.id)}-launcher" data-app="${escapeHtml(app.id)}" aria-label="Abrir ${escapeHtml(app.app_name)}"><span class="launcher-app-icon rda-unkay-app-card__icon">${iconMarkup(app.icon_name || 'package', { size: 30 })}</span><span class="launcher-app-copy rda-unkay-app-card__copy"><strong class="rda-action-card__title">${escapeHtml(app.app_name)}</strong><span class="rda-action-card__description">${escapeHtml(descriptions[app.id] || app.description || 'Um novo lugar para suas ideias')}</span>${running.has(app.id) ? '<small class="rda-unkay-app-card__state">Em curso</small>' : ''}</span></button><button type="button" class="launcher-pin rda-unkay-app-card__pin workspace-icon-button" data-pin="${escapeHtml(app.id)}" aria-pressed="${pinned.includes(app.id)}" aria-label="${pinned.includes(app.id) ? 'Desafixar' : 'Fixar'} ${escapeHtml(app.app_name)}" title="${pinned.includes(app.id) ? 'Desafixar da trilha' : 'Fixar na trilha'}">${iconMarkup('star', { size: 16 })}</button></article>`).join('') : '<p class="launcher-empty">Nenhum app por aqui. Experimente outra busca ou categoria.</p>';
+    this.menuElement.querySelector('#launcherCount').textContent = `${apps.length} ${apps.length === 1 ? 'aplicativo' : 'aplicativos'}`;
+  }
+  async click(event) {
+    if (event.target === this.menuElement) {
+      const r = this.menuElement.getBoundingClientRect();
+      if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) this.close();
+      return;
     }
-
-    init() {
-        this.menuElement = document.createElement('div');
-        this.menuElement.classList.add('menu_apps');
-        this.menuElement.id = 'menu_apps';
-        
-        // Cria estrutura do menu
-        this.createMenuStructure();
-        
-        this.desktop.appendChild(this.menuElement);
-        
-        // Define z-index correto para o menu de apps
-        windowLayerManager.setSystemLayer(this.menuElement, 'APPS_MENU');
-        
-        // Configura eventos
-        this.setupEventListeners();
-        
-        this.loadApps();
+    const button = event.target.closest('button'); if (!button) return;
+    if (button.dataset.category) {
+      this.category = button.dataset.category;
+      this.menuElement.querySelectorAll('[data-category]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+      this.renderApps();
     }
-
-    createMenuStructure() {
-        // Header com busca
-        const header = document.createElement('div');
-        header.classList.add('menu_apps__header');
-        
-        // Container para input com ícone
-        const searchContainer = document.createElement('div');
-        searchContainer.classList.add('menu_apps__search-container');
-        
-        // Ícone de busca usando Material Icons
-        const searchIcon = document.createElement('span');
-        searchIcon.classList.add('material-icons', 'menu_apps__search-icon');
-        searchIcon.textContent = 'search';
-        
-        this.searchInput = document.createElement('input');
-        this.searchInput.classList.add('menu_apps__search');
-        this.searchInput.type = 'text';
-        this.searchInput.placeholder = 'Buscar aplicativos...';
-        
-        searchContainer.appendChild(searchIcon);
-        searchContainer.appendChild(this.searchInput);
-        header.appendChild(searchContainer);
-        this.menuElement.appendChild(header);
-        
-        // Container dos apps
-        this.appsContainer = document.createElement('div');
-        this.appsContainer.classList.add('menu_apps__container');
-        this.menuElement.appendChild(this.appsContainer);
+    if (button.dataset.app) { this.close(); await getWorkspace()?.launch(button.dataset.app); }
+    if (button.dataset.pin) {
+      const id = button.dataset.pin;
+      try { await getWorkspace()?.pin(id); focus(this.menuElement.querySelector(`[data-pin="${id}"]`)); }
+      catch (error) { this.menuElement.querySelector('#launcherCount').textContent = error.message; this.searchInput.focus(); }
     }
-
-    setupEventListeners() {
-        // Busca
-        this.searchInput.addEventListener('input', this.handleSearchInput);
-        this.searchInput.addEventListener('keydown', this.handleSearchKeydown);
-        
-        // Suporte a teclado
-        this.menuElement.addEventListener('keydown', this.handleKeydown);
-        
-        // Event bus para comunicação desacoplada
-        eventBus.on('menu:apps:toggle', () => {
-            this.toggle();
-        });
-        
-        eventBus.on('menu:apps:close', () => {
-            this.close();
-        });
-        
-        eventBus.on('menu:apps:cleanup', () => {
-            this.remove();
-        });
-        
-        // Fechar menu ao clicar fora (usando event delegation)
-        document.addEventListener('click', this.handleOutsideClick);
-    }
-
-    loadApps() {
-        // Busca a lista de apps detalhados de uma fonte global
-        const appDetailsMap = window.loadedAppDetails || new Map();
-        this.allApps = Array.from(appDetailsMap.values()).filter(app => !app.hidden);
-        this.filteredApps = [...this.allApps];
-        
-        this.renderApps();
-    }
-
-    renderApps() {
-        this.appsContainer.innerHTML = '';
-        
-        this.filteredApps.forEach((data, index) => {
-            const app = document.createElement('div');
-            app.classList.add('menu_apps__app');
-            app.id = data.id + '-launcher';
-            app.setAttribute('tabindex', '0');
-            app.setAttribute('role', 'button');
-            app.setAttribute('aria-label', `Abrir ${data.app_name}`);
-
-            // Eventos de clique/touch
-            const handleActivation = () => {
-                eventBus.emit('app:start', { appId: data.id });
-                this.close();
-            };
-
-            app.addEventListener('click', handleActivation);
-            app.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleActivation();
-                }
-            });
-
-            // Suporte a touch com feedback visual
-            if (this.isTouchDevice) {
-                app.addEventListener('touchstart', () => {
-                    app.classList.add('touch-active');
-                });
-                app.addEventListener('touchend', () => {
-                    app.classList.remove('touch-active');
-                });
-                app.addEventListener('touchcancel', () => {
-                    app.classList.remove('touch-active');
-                });
-            }
-
-            const appIcon = document.createElement('img');
-            appIcon.classList.add('menu_apps__app__icon');
-            appIcon.src = data.icon_url || '/assets/icons/apps/generic_app_icon.svg';
-            appIcon.alt = data.app_name;
-            appIcon.loading = 'lazy'; // Lazy loading para melhor performance
-
-            const appName = document.createElement('div');
-            appName.classList.add('menu_apps__app__name');
-            appName.innerText = data.app_name;
-
-            app.appendChild(appIcon);
-            app.appendChild(appName);
-            this.appsContainer.appendChild(app);
-        });
-    }
-
-    handleSearchInput(e) {
-        const query = e.target.value.toLowerCase().trim();
-        
-        if (query === '') {
-            this.filteredApps = [...this.allApps];
-        } else {
-            this.filteredApps = this.allApps.filter(app => 
-                app.app_name.toLowerCase().includes(query) ||
-                (app.description && app.description.toLowerCase().includes(query))
-            );
-        }
-        
-        this.renderApps();
-    }
-
-    handleSearchKeydown(e) {
-        if (e.key === 'Escape') {
-            this.close();
-            return;
-        }
-        
-        // Setas para navegar nos apps
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            // Foca no primeiro app da lista
-            const firstApp = this.appsContainer.querySelector('.menu_apps__app');
-            if (firstApp) {
-                firstApp.focus();
-            }
-            return;
-        }
-        
-        if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            // Foca no último app da lista
-            const apps = this.appsContainer.querySelectorAll('.menu_apps__app');
-            if (apps.length > 0) {
-                apps[apps.length - 1].focus();
-            }
-            return;
-        }
-        
-        // Enter para ativar primeiro app se houver busca
-        if (e.key === 'Enter') {
-            const firstApp = this.appsContainer.querySelector('.menu_apps__app');
-            if (firstApp) {
-                e.preventDefault();
-                firstApp.click();
-                return;
-            }
-        }
-    }
-
-    handleKeydown(e) {
-        if (e.key === 'Escape') {
-            this.close();
-            return;
-        }
-        
-        // Navegação por setas
-        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-            e.preventDefault();
-            this.navigateApps(e.key === 'ArrowDown' ? 1 : -1);
-            return;
-        }
-        
-        // Enter para ativar app focado
-        if (e.key === 'Enter' || e.key === ' ') {
-            const focusedApp = document.activeElement;
-            if (focusedApp && focusedApp.classList.contains('menu_apps__app')) {
-                e.preventDefault();
-                focusedApp.click();
-                return;
-            }
-        }
-    }
-
-    /**
-     * Navega entre os apps usando setas
-     */
-    navigateApps(direction) {
-        const apps = Array.from(this.appsContainer.querySelectorAll('.menu_apps__app'));
-        if (apps.length === 0) return;
-        
-        const currentIndex = apps.findIndex(app => app === document.activeElement);
-        let newIndex;
-        
-        if (currentIndex === -1) {
-            // Nenhum app focado, foca no primeiro ou último
-            newIndex = direction > 0 ? 0 : apps.length - 1;
-        } else {
-            // Calcula próximo índice com wrap-around
-            newIndex = (currentIndex + direction + apps.length) % apps.length;
-        }
-        
-        apps[newIndex].focus();
-    }
-
-    handleOutsideClick(e) {
-        if (!this.visibilityFlag) return;
-        
-        // Se clique foi dentro do menu, não fecha
-        if (this.menuElement.contains(e.target)) return;
-        
-        // Se clique foi no botão start, não fecha (será tratado pelo toggle)
-        const startButton = document.querySelector('.taskbar__start_menu');
-        if (startButton && startButton.contains(e.target)) return;
-        
-        this.close();
-    }
-
-    /**
-     * Alterna entre mostrar/esconder o menu
-     */
-    toggle() {
-        if (this.visibilityFlag) {
-            this.close();
-        } else {
-            this.show();
-        }
-    }
-
-    /**
-     * Método público mantido para compatibilidade
-     * @deprecated Use toggle() ao invés deste método
-     */
-    onClick() {
-        this.toggle();
-    }
-
-    /**
-     * Mostra o menu de aplicativos
-     */
-    show() {
-        this.menuElement.classList.add('menu_apps--visible');
-        this.visibilityFlag = true;
-        this.loadApps();
-        this.focusFirstElement();
-    }
-
-    /**
-     * Esconde o menu de aplicativos
-     */
-    close() {
-        this.menuElement.classList.remove('menu_apps--visible');
-        this.visibilityFlag = false;
-        this.clearSearch();
-    }
-
-    /**
-     * Foca no primeiro elemento interativo do menu
-     */
-    focusFirstElement() {
-        // Foca na busca primeiro para melhor UX
-        if (this.searchInput) {
-            setTimeout(() => this.searchInput.focus(), 100);
-        } else if (this.appsContainer) {
-            const firstApp = this.appsContainer.querySelector('.menu_apps__app');
-            if (firstApp) {
-                setTimeout(() => firstApp.focus(), 100);
-            }
-        }
-    }
-
-    /**
-     * Limpa a busca e restaura lista completa
-     */
-    clearSearch() {
-        if (this.searchInput) {
-            this.searchInput.value = '';
-            this.filteredApps = [...this.allApps];
-            this.renderApps();
-        }
-    }
-
-    /**
-     * Remove o menu e limpa recursos
-     */
-    remove() {
-        // Remove listeners
-        if (this.searchInput) {
-            this.searchInput.removeEventListener('input', this.handleSearchInput);
-            this.searchInput.removeEventListener('keydown', this.handleSearchKeydown);
-        }
-        
-        if (this.menuElement) {
-            this.menuElement.removeEventListener('keydown', this.handleKeydown);
-        }
-        
-        document.removeEventListener('click', this.handleOutsideClick);
-        
-        // Remove do DOM
-        if (this.menuElement && this.menuElement.parentNode) {
-            this.menuElement.parentNode.removeChild(this.menuElement);
-        }
-        
-        // Limpa referências
-        this.menuElement = null;
-        this.searchInput = null;
-        this.appsContainer = null;
-        this.allApps = [];
-        this.filteredApps = [];
-    }
-} 
+    if (button.dataset.launcherAction === 'close') this.close();
+    if (button.dataset.launcherAction === 'settings') { this.close(); await getWorkspace()?.launch('settings', { panel: 'workspace' }); }
+  }
+  keydown(event) {
+    if (event.defaultPrevented) return;
+    const apps = [...this.appsContainer.querySelectorAll('.menu_apps__app')];
+    if (event.target === this.searchInput && event.key === 'ArrowDown') { event.preventDefault(); focus(apps[0]); return; }
+    if (!event.target.matches('.menu_apps__app')) return;
+    const columns = getComputedStyle(this.appsContainer).gridTemplateColumns.split(' ').length;
+    const direction = { ArrowDown: columns, ArrowUp: -columns, ArrowLeft: -1, ArrowRight: 1 }[event.key];
+    if (direction !== undefined && apps.length) { event.preventDefault(); focus(apps[(apps.indexOf(event.target) + direction + apps.length) % apps.length]); }
+    if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); focus(apps[event.key === 'Home' ? 0 : apps.length - 1]); }
+  }
+  toggle() { if (this.visibilityFlag) this.close(); else this.show(); }
+  onClick() { this.toggle(); }
+  show() {
+    if (document.querySelector('dialog[open]')) return;
+    this.previousFocus = document.activeElement; this.category = 'all'; this.refresh();
+    this.menuElement.classList.add('menu_apps--visible'); this.menuElement.showModal(); this.visibilityFlag = true;
+    document.documentElement.dataset.launcherOpen = 'true'; document.querySelector('.taskbar__start_menu')?.setAttribute('aria-expanded', 'true');
+    this.searchInput.focus();
+  }
+  close() { if (this.menuElement?.open) this.menuElement.close(); this.menuElement?.classList.remove('menu_apps--visible'); }
+  remove() {
+    this.close(); this.controller?.abort(); this.menuElement?.remove();
+    eventBus.off('menu:apps:toggle', this.toggleHandler); eventBus.off('menu:apps:close', this.closeHandler);
+    eventBus.off('settings:updated', this.updateHandler); eventBus.off('app:started', this.updateHandler); eventBus.off('app:stopped', this.updateHandler);
+  }
+}

@@ -411,6 +411,15 @@ impl VfsEngine {
         let mut count = 0;
         for (path, val) in legacy_map {
             let norm = Self::normalize_path(&path);
+            // OPFS snapshots use the native Inode schema: directories have
+            // `is_dir` and file contents are byte arrays, not legacy strings.
+            if val.get("is_dir").is_some() {
+                let inode: Inode = serde_json::from_value(val)
+                    .map_err(|e| format!("Invalid snapshot inode at {}: {}", norm, e))?;
+                self.nodes.insert(norm, inode);
+                count += 1;
+                continue;
+            }
             let entry_type = val.get("type").and_then(|v| v.as_str()).unwrap_or("file");
             let name = val
                 .get("name")

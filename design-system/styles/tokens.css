@@ -1,102 +1,15 @@
-/* design-system/styles/tokens.css - unkayOS 2.0 / RDA Design System Tokens */
-
+/* Compatibility aliases only. Canonical RDA tokens are supplied by the versioned DS distribution. */
 :root {
-  /* ==========================================================================
-     RDA DESIGN SYSTEM PRIMITIVE TOKENS (§3.2 - Official Cyan Identity)
-     ========================================================================== */
-  --rda-color-primary-50: #ecfeff;
-  --rda-color-primary-100: #cffafe;
-  --rda-color-primary-200: #a5f3fc;
-  --rda-color-primary-300: #67e8f9;
-  --rda-color-primary-400: #22d3ee;
-  --rda-color-primary-500: #06b6d4;
-  --rda-color-primary-600: #0891b2;
-  --rda-color-primary-700: #0e7490;
-  --rda-color-primary-800: #155e75;
-  --rda-color-primary-900: #164e63;
-  --rda-color-primary-950: #083344;
-
-  /* Secondary (Slate) */
-  --rda-color-secondary-50: #f8fafc;
-  --rda-color-secondary-100: #f1f5f9;
-  --rda-color-secondary-200: #e2e8f0;
-  --rda-color-secondary-300: #cbd5e1;
-  --rda-color-secondary-400: #94a3b8;
-  --rda-color-secondary-500: #64748b;
-  --rda-color-secondary-600: #475569;
-  --rda-color-secondary-700: #334155;
-  --rda-color-secondary-800: #1e293b;
-  --rda-color-secondary-900: #0f172a;
-  --rda-color-secondary-950: #020617;
-
-  /* Neutrals */
-  --rda-color-neutral-950: #0a0a0a;
-  --rda-color-neutral-900: #171717;
-  --rda-color-neutral-800: #262626;
-  --rda-color-neutral-700: #404040;
-  --rda-color-neutral-600: #525252;
-  --rda-color-neutral-500: #737373;
-  --rda-color-neutral-400: #a3a3a3;
-  --rda-color-neutral-200: #e5e5e5;
-  --rda-color-neutral-50: #fafafa;
-
-  /* ==========================================================================
-     RDA DESIGN SYSTEM SEMANTIC TOKENS (Dark Theme Standard)
-     ========================================================================== */
-  --rda-surface-primary: #0a0a0a;
-  --rda-surface-secondary: #141414;
-  --rda-surface-tertiary: #1e1e1e;
-  --rda-surface-card: #141414;
-  --rda-surface-input: #0f0f0f;
-  --rda-surface-hover: #262626;
-  --rda-surface-active: #333333;
-  --rda-surface-elevated: #1f1f1f;
-  --rda-surface-overlay: rgba(0, 0, 0, 0.65);
-
-  --rda-content-primary: #fafafa;
-  --rda-content-secondary: #e5e5e5;
-  --rda-content-tertiary: #a3a3a3;
-  --rda-content-muted: #737373;
-  --rda-content-brand: #22d3ee;
-  --rda-content-inverse: #0a0a0a;
-
-  --rda-border-primary: #2d2d2d;
-  --rda-border-subtle: #1e1e1e;
-  --rda-border-focus: #22d3ee;
-  --rda-border-hover: #444444;
-
-  --rda-status-success: #10b981;
-  --rda-status-warning: #f59e0b;
-  --rda-status-error: #f43f5e;
-  --rda-status-info: #0ea5e9;
-
-  /* Typography */
-  --rda-font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --rda-font-family-heading: "Archivo", "Inter", sans-serif;
-  --rda-font-family-mono: "Fira Code", "Courier New", monospace;
-
-  /* Spacing */
-  --rda-spacing-1: 0.25rem;
-  --rda-spacing-2: 0.5rem;
-  --rda-spacing-3: 0.75rem;
-  --rda-spacing-4: 1rem;
-  --rda-spacing-5: 1.25rem;
-  --rda-spacing-6: 1.5rem;
-  --rda-spacing-8: 2rem;
-
-  /* Border radius */
-  --rda-radius-sm: 0.25rem;
-  --rda-radius-md: 0.375rem;
-  --rda-radius-lg: 0.5rem;
-  --rda-radius-xl: 0.75rem;
-  --rda-radius-full: 9999px;
-
-  /* ==========================================================================
-     BACKWARD COMPATIBILITY ALIASES (Maps unkayOS legacy variables to RDA DS)
-     ========================================================================== */
-  --color-primary-base: var(--rda-color-primary-400);
-  --color-primary-variation-1: var(--rda-color-primary-300);
-  --color-primary-variation-2: var(--rda-color-primary-500);
+  --rda-font-family-base: var(--rda-font-family-body);
+  --rda-font-family-heading: var(--rda-font-family-display);
+  --rda-radius-sm: var(--rda-border-radius-sm);
+  --rda-radius-md: var(--rda-border-radius-md);
+  --rda-radius-lg: var(--rda-border-radius-lg);
+  --rda-radius-xl: var(--rda-border-radius-xl);
+  --rda-radius-full: var(--rda-border-radius-full);
+  --color-primary-base: var(--rda-content-brand);
+  --color-primary-variation-1: var(--rda-action-primary-bg-hover);
+  --color-primary-variation-2: var(--rda-action-primary-bg);
 
   --color-secondary-base: var(--rda-surface-secondary);
   --color-secondary-variation-1: var(--rda-surface-tertiary);
@@ -128,9 +41,9 @@
   --color-warning: var(--rda-status-warning);
   --color-error: var(--rda-status-error);
 
-  --color-primary: var(--rda-color-primary-500);
-  --color-primary-light: var(--rda-color-primary-400);
-  --color-primary-dark: var(--rda-color-primary-700);
+  --color-primary: var(--rda-action-primary-bg);
+  --color-primary-light: var(--rda-content-brand);
+  --color-primary-dark: var(--rda-action-primary-bg-active);
 
   --color-light-primary: var(--rda-content-primary);
   --color-light-secondary: var(--rda-content-secondary);
@@ -159,7 +72,7 @@
   --border-secondary: var(--rda-border-subtle);
 
   --color-file: var(--rda-content-secondary);
-  --color-folder: var(--rda-color-primary-400);
+  --color-folder: var(--rda-content-brand);
 
   --border-radius-sm: var(--rda-radius-sm);
   --border-radius-md: var(--rda-radius-md);
@@ -178,7 +91,7 @@
   --shadow-color: rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
-  --blur-intensity: blur(8px);
+  --blur-intensity: 8px;
   --size-small-icon: 10px;
 
   /* ==========================================================================
@@ -199,7 +112,7 @@
   --opacity-low: 0.5;
 
   --color-dark-primary-middle-up-opacity: rgba(18, 18, 18, 0.88);
-  --color-focus: var(--rda-color-primary-400);
+  --color-focus: var(--rda-content-brand);
 
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;

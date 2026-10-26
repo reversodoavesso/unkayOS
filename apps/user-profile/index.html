@@ -7,7 +7,7 @@
         <img id="userAvatarImg" class="user-avatar" src="/assets/icons/apps/generic_app_icon.svg" alt="Avatar do Usuário" />
         <span id="userStatusDot" class="status-indicator status-guest" title="Status da Sessão"></span>
       </div>
-      <button id="changeAvatarBtn" class="change-avatar-btn" title="Alterar Avatar">📷</button>
+      <button id="changeAvatarBtn" class="change-avatar-btn" title="Alterar Avatar"><rda-icon name="camera"></rda-icon></button>
     </div>
 
     <div class="user-main-info">
@@ -23,8 +23,8 @@
     </div>
 
     <div class="header-action-group">
-      <button id="ssoQuickActionBtn" class="rda-btn rda-btn-primary">
-        <span class="btn-icon">⚡</span>
+      <button id="ssoQuickActionBtn" class="rda-button rda-button--md" data-color="primary">
+        <span class="btn-icon"><rda-icon name="zap"></rda-icon></span>
         <span id="ssoQuickActionText">Entrar com SSO RDA</span>
       </button>
     </div>
@@ -33,16 +33,16 @@
   <!-- Navigation Tabs Strip -->
   <nav class="profile-tabs-nav">
     <button class="profile-tab-btn active" data-tab="identity">
-      <span class="tab-icon">👤</span> Identidade & Perfil
+      <span class="tab-icon"><rda-icon name="user"></rda-icon></span> Identidade & Perfil
     </button>
     <button class="profile-tab-btn" data-tab="sso">
-      <span class="tab-icon">🛡️</span> Autenticação SSO RDA
+      <span class="tab-icon"><rda-icon name="shield"></rda-icon></span> Autenticação SSO RDA
     </button>
     <button class="profile-tab-btn" data-tab="preferences">
-      <span class="tab-icon">⚙️</span> Preferências Locais
+      <span class="tab-icon"><rda-icon name="settings"></rda-icon></span> Preferências Locais
     </button>
     <button class="profile-tab-btn" data-tab="storage">
-      <span class="tab-icon">💾</span> Quotas & Armazenamento
+      <span class="tab-icon"><rda-icon name="save"></rda-icon></span> Quotas & Armazenamento
     </button>
   </nav>
 
@@ -58,13 +58,13 @@
           <div class="form-row">
             <div class="form-group flex-1">
               <label for="inputDisplayName">Nome de Exibição</label>
-              <input type="text" id="inputDisplayName" class="rda-input" placeholder="Ex: Demiurge Explorer" />
+              <input type="text" id="inputDisplayName" class="rda-input rda-input rda-input--md" placeholder="Ex: Demiurge Explorer" />
             </div>
             <div class="form-group flex-1">
               <label for="inputUsername">Nome de Usuário (Handle)</label>
               <div class="input-prefix-wrapper">
                 <span class="input-prefix">@</span>
-                <input type="text" id="inputUsername" class="rda-input with-prefix" placeholder="usuario" />
+                <input type="text" id="inputUsername" class="rda-input with-prefix rda-input rda-input--md" placeholder="usuario" />
               </div>
             </div>
           </div>
@@ -72,17 +72,17 @@
           <div class="form-row">
             <div class="form-group flex-1">
               <label for="inputEmail">E-mail</label>
-              <input type="email" id="inputEmail" class="rda-input" placeholder="usuario@reversodoavesso.com" />
+              <input type="email" id="inputEmail" class="rda-input rda-input rda-input--md" placeholder="usuario@reversodoavesso.com" />
             </div>
             <div class="form-group flex-1">
               <label for="inputOrganization">Organização / Célula RDA</label>
-              <input type="text" id="inputOrganization" class="rda-input" placeholder="Reverso do Avesso • Core Labs" />
+              <input type="text" id="inputOrganization" class="rda-input rda-input rda-input--md" placeholder="Reverso do Avesso • Core Labs" />
             </div>
           </div>
 
           <div class="form-group">
             <label for="inputBio">Biografia & Notas do Operador</label>
-            <textarea id="inputBio" class="rda-textarea" rows="3" placeholder="Escreva sobre suas áreas de atuação ou pesquisas..."></textarea>
+            <textarea id="inputBio" class="rda-textarea__field rda-textarea__field--md rda-textarea" rows="3" placeholder="Escreva sobre suas áreas de atuação ou pesquisas..."></textarea>
           </div>
 
           <div class="form-group">
@@ -96,8 +96,8 @@
           </div>
 
           <div class="form-actions">
-            <button id="saveIdentityBtn" class="rda-btn rda-btn-primary">Salvar Alterações de Perfil</button>
-            <button id="resetIdentityBtn" class="rda-btn rda-btn-secondary">Restaurar Padrão</button>
+            <button id="saveIdentityBtn" class="rda-button rda-button--md" data-color="primary">Salvar Alterações de Perfil</button>
+            <button id="resetIdentityBtn" class="rda-button rda-button--md" data-color="secondary">Restaurar Padrão</button>
           </div>
         </form>
       </div>
@@ -111,34 +111,34 @@
 
         <div class="sso-status-card" id="ssoStatusCard">
           <div class="status-left">
-            <div class="status-symbol">🛡️</div>
+            <div class="status-symbol"><rda-icon name="shield"></rda-icon></div>
             <div class="status-meta">
               <h4 id="ssoStatusTitle">Sessão Local (Não Autenticado)</h4>
               <p id="ssoStatusDesc">Conecte-se para sincronizar seus arquivos, web clips e permissões de computação.</p>
             </div>
           </div>
           <div class="status-actions">
-            <button id="loginZitadelBtn" class="rda-btn rda-btn-primary">Entrar com Zitadel SSO</button>
+            <button id="loginZitadelBtn" class="rda-button rda-button--md" data-color="primary">Entrar com Zitadel SSO</button>
             <button id="logoutBtn" class="rda-btn rda-btn-danger" style="display: none;">Encerrar Sessão</button>
           </div>
         </div>
 
         <!-- Dev Mode Simulated Auth Profiles -->
         <div class="dev-auth-box">
-          <h4 class="dev-auth-title">🧪 Simulação de Perfis de Desenvolvimento (Offline / Dev)</h4>
+          <h4 class="dev-auth-title"><rda-icon name="flask-conical"></rda-icon> Simulação de Perfis de Desenvolvimento (Offline / Dev)</h4>
           <p class="dev-auth-subtitle">Alterne rapidamente entre níveis para testar recursos de Guest, Membro e Sysadmin.</p>
           <div class="dev-profile-buttons">
             <button class="dev-profile-btn" data-tier="guest" data-role="guest" data-name="Convidado Visitante">
-              <span class="role-icon">👤</span> Guest (Visitante)
+              <span class="role-icon"><rda-icon name="user"></rda-icon></span> Guest (Visitante)
             </button>
             <button class="dev-profile-btn" data-tier="standard" data-role="acolyte" data-name="Acólito Iniciante">
-              <span class="role-icon">🔮</span> Acólito (Tier 2)
+              <span class="role-icon"><rda-icon name="sparkles"></rda-icon></span> Acólito (Tier 2)
             </button>
             <button class="dev-profile-btn" data-tier="standard" data-role="member" data-name="Membro Egrégora">
-              <span class="role-icon">⚡</span> Membro (Tier 5)
+              <span class="role-icon"><rda-icon name="zap"></rda-icon></span> Membro (Tier 5)
             </button>
             <button class="dev-profile-btn" data-tier="sysadmin" data-role="sysadmin" data-name="Demiurgo Administrador">
-              <span class="role-icon">👑</span> Sysadmin (Tier 14)
+              <span class="role-icon"><rda-icon name="crown"></rda-icon></span> Sysadmin (Tier 14)
             </button>
           </div>
         </div>
@@ -148,23 +148,23 @@
         <div class="linked-identities-list">
           <div class="identity-item">
             <div class="identity-info">
-              <span class="identity-icon">💬</span>
+              <span class="identity-icon"><rda-icon name="message-square"></rda-icon></span>
               <div>
                 <strong>Discord</strong>
                 <p id="discordLinkedStatus" class="identity-status">Não conectado</p>
               </div>
             </div>
-            <button id="linkDiscordBtn" class="rda-btn rda-btn-secondary">Vincular</button>
+            <button id="linkDiscordBtn" class="rda-button rda-button--md" data-color="secondary">Vincular</button>
           </div>
           <div class="identity-item">
             <div class="identity-info">
-              <span class="identity-icon">🐙</span>
+              <span class="identity-icon"><rda-icon name="code-2"></rda-icon></span>
               <div>
                 <strong>GitHub</strong>
                 <p id="githubLinkedStatus" class="identity-status">Não conectado</p>
               </div>
             </div>
-            <button id="linkGithubBtn" class="rda-btn rda-btn-secondary">Vincular</button>
+            <button id="linkGithubBtn" class="rda-button rda-button--md" data-color="secondary">Vincular</button>
           </div>
         </div>
       </div>
@@ -179,36 +179,51 @@
         <form id="preferencesForm" class="profile-form" onsubmit="return false;">
           <div class="form-row">
             <div class="form-group flex-1">
-              <label for="selectDefaultShell">Shell Padrão do Terminal</label>
-              <select id="selectDefaultShell" class="rda-select">
+              <label for="selectDefaultShell" class="rda-select__label">Shell Padrão do Terminal</label>
+              <div class="rda-select">
+                <div class="rda-select__field-wrapper">
+              <select id="selectDefaultShell" class="rda-select__field rda-select__field--md">
                 <option value="wasi-bash">WASI Bash (WebAssembly GNU)</option>
                 <option value="unkay-cli">unkayOS Core Shell</option>
                 <option value="python-wasm">Python 3.12 (Pyodide Wasm)</option>
               </select>
+              <span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span>
+                </div>
+              </div>
             </div>
             <div class="form-group flex-1">
-              <label for="selectPromptStyle">Estilo de Prompt do Terminal</label>
-              <select id="selectPromptStyle" class="rda-select">
+              <label for="selectPromptStyle" class="rda-select__label">Estilo de Prompt do Terminal</label>
+              <div class="rda-select">
+                <div class="rda-select__field-wrapper">
+              <select id="selectPromptStyle" class="rda-select__field rda-select__field--md">
                 <option value="standard">user@unkayos:~#</option>
-                <option value="minimal">❯ unkayos</option>
+                <option value="minimal"> unkayos</option>
                 <option value="cybersigil">[user@rda-egregore] $</option>
               </select>
+              <span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group flex-1">
               <label for="inputHomeDir">Diretório Raiz do Usuário</label>
-              <input type="text" id="inputHomeDir" class="rda-input" value="/home/user" />
+              <input type="text" id="inputHomeDir" class="rda-input rda-input rda-input--md" value="/home/user" />
             </div>
             <div class="form-group flex-1">
-              <label for="selectTimezone">Fuso Horário</label>
-              <select id="selectTimezone" class="rda-select">
+              <label for="selectTimezone" class="rda-select__label">Fuso Horário</label>
+              <div class="rda-select">
+                <div class="rda-select__field-wrapper">
+              <select id="selectTimezone" class="rda-select__field rda-select__field--md">
                 <option value="America/Sao_Paulo">Brasília (GMT-3)</option>
                 <option value="UTC">UTC (Universal Coordinated)</option>
                 <option value="America/New_York">New York (GMT-4)</option>
                 <option value="Europe/Lisbon">Lisboa (GMT+1)</option>
               </select>
+              <span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -227,7 +242,7 @@
           </div>
 
           <div class="form-actions">
-            <button id="savePreferencesBtn" class="rda-btn rda-btn-primary">Salvar Preferências</button>
+            <button id="savePreferencesBtn" class="rda-button rda-button--md" data-color="primary">Salvar Preferências</button>
           </div>
         </form>
       </div>
@@ -251,21 +266,21 @@
 
         <div class="user-directories-grid">
           <div class="dir-card">
-            <span class="dir-icon">📁</span>
+            <span class="dir-icon"><rda-icon name="folder"></rda-icon></span>
             <div class="dir-info">
               <strong>/home/user</strong>
               <p id="homeFilesCount">Documentos e dados locais</p>
             </div>
           </div>
           <div class="dir-card">
-            <span class="dir-icon">📰</span>
+            <span class="dir-icon"><rda-icon name="file-text"></rda-icon></span>
             <div class="dir-info">
               <strong>web-clips/</strong>
               <p id="webClipsCount">Artigos salvos pelo The Orb</p>
             </div>
           </div>
           <div class="dir-card">
-            <span class="dir-icon">📦</span>
+            <span class="dir-icon"><rda-icon name="package"></rda-icon></span>
             <div class="dir-info">
               <strong>cloud/</strong>
               <p id="cloudSyncStatus">Sincronizado com MinIO</p>
@@ -274,11 +289,11 @@
         </div>
 
         <div class="storage-actions">
-          <button id="openFileManagerBtn" class="rda-btn rda-btn-secondary">
-            <span>📂</span> Abrir Pasta Pessoal
+          <button id="openFileManagerBtn" class="rda-button rda-button--md" data-color="secondary">
+            <span><rda-icon name="folder-open"></rda-icon></span> Abrir Pasta Pessoal
           </button>
-          <button id="cleanUserTmpBtn" class="rda-btn rda-btn-secondary">
-            <span>🧹</span> Limpar Arquivos Temporários
+          <button id="cleanUserTmpBtn" class="rda-button rda-button--md" data-color="secondary">
+            <span><rda-icon name="brush-cleaning"></rda-icon></span> Limpar Arquivos Temporários
           </button>
         </div>
       </div>

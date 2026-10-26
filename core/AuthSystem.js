@@ -24,7 +24,7 @@ export class AuthSystem {
         }
         
         this.eventListeners = new Map();
-        this.init();
+        this.ready = this.init();
     }
 
     /**
@@ -52,12 +52,10 @@ export class AuthSystem {
         try {
             this.authToken = localStorage.getItem('unkayos_auth_token');
             this.refreshToken = localStorage.getItem('unkayos_refresh_token');
-            const userData = localStorage.getItem('unkayos_user_data');
             
-            if (userData) {
-                this.currentUser = JSON.parse(userData);
-                this.isAuthenticated = true;
-            }
+            // The token must be validated before exposing any cached identity.
+            this.currentUser = null;
+            this.isAuthenticated = false;
         } catch (error) {
             console.error('[AuthSystem] Erro ao carregar tokens salvos:', error);
             this.clearStoredTokens();
@@ -70,7 +68,8 @@ export class AuthSystem {
     saveTokens(token, refreshToken, userData) {
         try {
             localStorage.setItem('unkayos_auth_token', token);
-            localStorage.setItem('unkayos_refresh_token', refreshToken);
+            if (refreshToken) localStorage.setItem('unkayos_refresh_token', refreshToken);
+            else localStorage.removeItem('unkayos_refresh_token');
             localStorage.setItem('unkayos_user_data', JSON.stringify(userData));
         } catch (error) {
             console.error('[AuthSystem] Erro ao salvar tokens:', error);
@@ -90,6 +89,9 @@ export class AuthSystem {
      * Inicia o processo de login SSO
      */
     async login() {
+        const authWindow = window.open('about:blank', 'unkayos_auth', 'width=500,height=600,scrollbars=yes,resizable=yes');
+        if (!authWindow) throw new Error('Permita a janela de autenticação para entrar com SSO.');
+        this.authWindow = authWindow;
         // Gera code_verifier e code_challenge (PKCE)
         const codeVerifier = generateCodeVerifier();
         localStorage.setItem('unkayos_code_verifier', codeVerifier);
@@ -107,15 +109,7 @@ export class AuthSystem {
         authUrl.searchParams.set('code_challenge', codeChallenge);
         authUrl.searchParams.set('code_challenge_method', 'S256');
 
-        // Abre a janela de autenticação
-        const authWindow = window.open(
-            authUrl.toString(),
-            'unkayos_auth',
-            'width=500,height=600,scrollbars=yes,resizable=yes'
-        );
-
-        // Salva referência da janela para fechar depois
-        this.authWindow = authWindow;
+        authWindow.location.href = authUrl.toString();
 
         console.log('[AuthSystem] Redirecionando para autenticação SSO (PKCE):', authUrl.toString());
     }
@@ -125,6 +119,9 @@ export class AuthSystem {
      */
     async handleAuthCallback(code, state) {
         try {
+            const expectedState = localStorage.getItem('unkayos_oauth_state');
+            if (!code || !expectedState || state !== expectedState) throw new Error('Estado OAuth inválido ou expirado.');
+            localStorage.removeItem('unkayos_oauth_state');
             // Troca o código por tokens
             const tokenResponse = await this.exchangeCodeForTokens(code);
             
@@ -331,47 +328,48 @@ export class AuthSystem {
      * Gera um estado aleatório para segurança
      */
     generateState() {
-        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        return generateCodeVerifier();
     }
 
     /**
      * Configura listener para mensagens de autenticação
      */
     setupMessageListener() {
-        window.addEventListener('message', (event) => {
+        if (this.messageHandler) return;
+        const receive = (data) => {
+            const expectedState = localStorage.getItem('unkayos_oauth_state');
+            if (!data || !expectedState || data.state !== expectedState) return;
+            if (data.type === 'AUTH_CALLBACK') {
+                void this.handleAuthCallback(data.code, data.state);
+            } else if (data.type === 'AUTH_ERROR') {
+                localStorage.removeItem('unkayos_oauth_state');
+                localStorage.removeItem('unkayos_code_verifier');
+                this.emit('login_error', { error: data.error, description: data.errorDescription });
+            } else return;
+            try { this.authWindow?.close(); } catch (_) {}
+            this.authWindow = null;
+        };
+        this.messageHandler = (event) => {
             // Verifica se a mensagem é do nosso domínio
             if (event.origin !== window.location.origin) {
                 return;
             }
             
-            console.log('[AuthSystem] Mensagem recebida:', event.data.type);
-            
-            if (event.data.type === 'AUTH_CALLBACK') {
-                this.handleAuthCallback(event.data.code, event.data.state);
-                
-                // Fecha a janela de autenticação
-                if (this.authWindow) {
-                    this.authWindow.close();
-                    this.authWindow = null;
-                }
-            } else if (event.data.type === 'AUTH_ERROR') {
-                // Trata erros de autenticação
-                console.error('[AuthSystem] Erro de autenticação:', event.data.error, event.data.errorDescription);
-                
-                // Emite evento de erro
-                this.emit('login_error', {
-                    error: event.data.error,
-                    description: event.data.errorDescription
-                });
-                
-                // Fecha a janela de autenticação
-                if (this.authWindow) {
-                    this.authWindow.close();
-                    this.authWindow = null;
-                }
-            }
-        });
+            receive(event.data);
+        };
+        // COOP isolates the OIDC popup from window.opener; same-origin storage
+        // events still deliver its one-time authorization code after redirect.
+        this.storageHandler = (event) => {
+            if (event.key !== 'unkayos_oauth_callback' || !event.newValue) return;
+            try { receive(JSON.parse(event.newValue)); } catch (_) {}
+            localStorage.removeItem('unkayos_oauth_callback');
+        };
+        window.addEventListener('message', this.messageHandler);
+        window.addEventListener('storage', this.storageHandler);
     }
+
+    getCurrentUser() { return this.isAuthenticated ? this.currentUser : null; }
+    getAuthToken() { return this.isAuthenticated ? this.authToken : null; }
 
     /**
      * Sistema de eventos para notificar mudanças de autenticação
@@ -418,7 +416,7 @@ export class AuthSystem {
         return {
             // Estado da autenticação
             isAuthenticated: () => this.isAuthenticated,
-            getCurrentUser: () => this.currentUser,
+            getCurrentUser: () => this.getCurrentUser(),
             
             // Novo método para obter o prompt do usuário
             getUserPrompt: () => {
@@ -442,7 +440,7 @@ export class AuthSystem {
             off: (event, callback) => this.off(event, callback),
             
             // Token para requisições
-            getAuthToken: () => this.authToken,
+            getAuthToken: () => this.getAuthToken(),
             
             // Requisição autenticada
             authenticatedRequest: async (url, options = {}) => {
@@ -477,4 +475,4 @@ export class AuthSystem {
             }
         };
     }
-} 
+}

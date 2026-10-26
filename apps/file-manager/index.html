@@ -4,38 +4,38 @@
     <div class="file-manager-toolbar">
         <div class="navigation-controls">
             <button id="back-btn" class="toolbar-btn" title="Voltar" disabled>
-                <span class="material-icons-outlined">arrow_back</span>
+                <rda-icon name="arrow-left" size="20"></rda-icon>
             </button>
             <button id="forward-btn" class="toolbar-btn" title="Avançar" disabled>
-                <span class="material-icons-outlined">arrow_forward</span>
+                <rda-icon name="arrow-right" size="20"></rda-icon>
             </button>
             <button id="up-btn" class="toolbar-btn" title="Subir um nível">
-                <span class="material-icons-outlined">keyboard_arrow_up</span>
+                <rda-icon name="chevron-up" size="20"></rda-icon>
             </button>
         </div>
         
         <div class="path-bar">
-            <input type="text" id="path-input" class="path-input" placeholder="Caminho atual..." readonly>
+            <input type="text" id="path-input" class="path-input rda-input rda-input--md" placeholder="Caminho atual..." readonly>
             <button id="refresh-btn" class="toolbar-btn" title="Atualizar">
-                <span class="material-icons-outlined">refresh</span>
+                <rda-icon name="refresh-cw" size="20"></rda-icon>
             </button>
         </div>
         
         <div class="view-controls">
             <button id="view-list-btn" class="toolbar-btn active" title="Visualização em lista">
-                <span class="material-icons-outlined">view_list</span>
+                <rda-icon name="file-text" size="20"></rda-icon>
             </button>
             <button id="view-grid-btn" class="toolbar-btn" title="Visualização em grade">
-                <span class="material-icons-outlined">grid_view</span>
+                <rda-icon name="file-text" size="20"></rda-icon>
             </button>
         </div>
         
         <div class="action-controls">
             <button id="new-folder-btn" class="toolbar-btn" title="Nova pasta">
-                <span class="material-icons-outlined">create_new_folder</span>
+                <rda-icon name="folder-plus" size="20"></rda-icon>
             </button>
             <button id="new-file-btn" class="toolbar-btn" title="Novo arquivo">
-                <span class="material-icons-outlined">note_add</span>
+                <rda-icon name="file-plus" size="20"></rda-icon>
             </button>
         </div>
     </div>
@@ -47,23 +47,23 @@
                 <h3>Locais</h3>
                 <ul class="location-list">
                     <li class="location-item" data-path="/">
-                        <span class="material-icons-outlined">computer</span>
+                        <rda-icon name="monitor" size="20"></rda-icon>
                         <span>Raiz do Sistema</span>
                     </li>
                     <li class="location-item" data-path="/home/user">
-                        <span class="material-icons-outlined">home</span>
+                        <rda-icon name="house" size="20"></rda-icon>
                         <span>Pasta Pessoal</span>
                     </li>
                     <li class="location-item" data-path="/home/user/Desktop">
-                        <span class="material-icons-outlined">desktop_windows</span>
+                        <rda-icon name="monitor" size="20"></rda-icon>
                         <span>Área de Trabalho</span>
                     </li>
                     <li class="location-item" data-path="/home/user/Documents">
-                        <span class="material-icons-outlined">description</span>
+                        <rda-icon name="file-text" size="20"></rda-icon>
                         <span>Documentos</span>
                     </li>
                     <li class="location-item" data-path="/home/user/Downloads">
-                        <span class="material-icons-outlined">download</span>
+                        <rda-icon name="download" size="20"></rda-icon>
                         <span>Downloads</span>
                     </li>
                 </ul>
@@ -73,15 +73,15 @@
                 <h3>Sistema</h3>
                 <ul class="location-list">
                     <li class="location-item" data-path="/system">
-                        <span class="material-icons-outlined">settings</span>
+                        <rda-icon name="settings" size="20"></rda-icon>
                         <span>Sistema</span>
                     </li>
                     <li class="location-item" data-path="/apps">
-                        <span class="material-icons-outlined">apps</span>
+                        <rda-icon name="layout-grid" size="20"></rda-icon>
                         <span>Aplicativos</span>
                     </li>
                     <li class="location-item" data-path="/tmp">
-                        <span class="material-icons-outlined">folder_special</span>
+                        <rda-icon name="folder" size="20"></rda-icon>
                         <span>Temporários</span>
                     </li>
                 </ul>
@@ -122,37 +122,37 @@
     <div id="context-menu" class="context-menu hidden">
         <ul>
             <li id="ctx-open">
-                <span class="material-icons-outlined">open_in_new</span>
+                <rda-icon name="external-link" size="20"></rda-icon>
                 Abrir
             </li>
             <li id="ctx-open-with">
-                <span class="material-icons-outlined">launch</span>
+                <rda-icon name="external-link" size="20"></rda-icon>
                 Abrir com...
             </li>
             <li id="ctx-copy">
-                <span class="material-icons-outlined">content_copy</span>
+                <rda-icon name="copy" size="20"></rda-icon>
                 Copiar
             </li>
             <li id="ctx-cut">
-                <span class="material-icons-outlined">content_cut</span>
+                <rda-icon name="scissors" size="20"></rda-icon>
                 Recortar
             </li>
             <li id="ctx-paste">
-                <span class="material-icons-outlined">content_paste</span>
+                <rda-icon name="clipboard-paste" size="20"></rda-icon>
                 Colar
             </li>
             <li class="separator"></li>
             <li id="ctx-rename">
-                <span class="material-icons-outlined">edit</span>
+                <rda-icon name="pencil" size="20"></rda-icon>
                 Renomear
             </li>
             <li id="ctx-delete">
-                <span class="material-icons-outlined">delete</span>
+                <rda-icon name="trash-2" size="20"></rda-icon>
                 Excluir
             </li>
             <li class="separator"></li>
             <li id="ctx-properties">
-                <span class="material-icons-outlined">info</span>
+                <rda-icon name="info" size="20"></rda-icon>
                 Propriedades
             </li>
         </ul>
@@ -162,7 +162,7 @@
     <div id="new-folder-modal" class="modal hidden">
         <div class="modal-content">
             <h3>Nova Pasta</h3>
-            <input type="text" id="folder-name-input" placeholder="Nome da pasta" maxlength="255">
+            <input type="text" id="folder-name-input" placeholder="Nome da pasta" maxlength="255" class="rda-input rda-input--md">
             <div class="modal-actions">
                 <button id="cancel-folder-btn" class="btn-secondary">Cancelar</button>
                 <button id="create-folder-btn" class="btn-primary">Criar</button>
@@ -174,7 +174,7 @@
     <div id="new-file-modal" class="modal hidden">
         <div class="modal-content">
             <h3>Novo Arquivo</h3>
-            <input type="text" id="file-name-input" placeholder="Nome do arquivo" maxlength="255">
+            <input type="text" id="file-name-input" placeholder="Nome do arquivo" maxlength="255" class="rda-input rda-input--md">
             <div class="modal-actions">
                 <button id="cancel-file-btn" class="btn-secondary">Cancelar</button>
                 <button id="create-file-btn" class="btn-primary">Criar</button>

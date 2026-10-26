@@ -1,0 +1,671 @@
+{
+  "version": "3.5.0",
+  "icons": {
+    "activity": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "9b07665dbe7ed01351cc05856a516b6cefe5201c8fff31101e70e1bddc81868c"
+    },
+    "alert-triangle": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "7f8827c057923b104f6a8ab93fea84b3985663c2d8335608b1e74d730bfeee4b"
+    },
+    "arrow-left": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "0e1194fbcabffcda03d47fa52d3102bec1f08d9539ddbbf568d28a8d23f90549"
+    },
+    "arrow-right": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "da76c92414cfa495dcd475f5429788389d372964865290ea13e009c38cb897e1"
+    },
+    "arrow-up": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "08f386edd0251ac971887f0a5644916ab51e09db3ec75238c2fd520c1774dab6"
+    },
+    "arrow-down": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "1c149b7b71034a5cdfeaf1579a8c147365b082f477098fc77d1d8ba0077bd4f7"
+    },
+    "ban": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "fe00041d1c8a99c73a2e0a3214de8b8d68887c64c7e0b18e5a83b1d3af206365"
+    },
+    "bar-chart-3": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "bdd02dad642aa75a272e4e8fa414d1f622a6c4f2c80fcfc5c7abb8a9c1b84a93"
+    },
+    "bell": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "f26b97203f8d53d796f19e2f4ed408e967a74c9bc30a127a979f32a16e8bdc33"
+    },
+    "book-open": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "7babb019325ef42d3feb58ddc7e845873b7bba22d2a0957b23f43f191af1e21f"
+    },
+    "bookmark": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "a255651efbf16aeea3ef56d709dece2ab2239368a5c34c386193fe989bb0920f"
+    },
+    "calendar": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "e960079408014d560c4e18d254ddc00b74f2af04cf34b8a494cd52446e329160"
+    },
+    "check": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "cd544807e316f15500748caa7b8282fd8fad2c8f0e14a3f686f285856215a017"
+    },
+    "chevron-down": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "5d1199d501485caacc9c0ccf71dae75f1519653070e2b79fa702ceda285c9c9a"
+    },
+    "chevron-left": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "bf882eb978a57fb04d0c49a1bc47736e1621e6327761a70ce45efac4b3581c9d"
+    },
+    "chevron-right": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "c02e04510d5896986e9c6c640c3ea57281561146b33db39fa5c5864c2765d6a7"
+    },
+    "chevron-up": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "17170782bc8521c603d251575802a4cee8af19eae96daa6a7127351c3604aaae"
+    },
+    "clapperboard": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "935660b650c8d821b79d661143e879e0d96edd17714f90686ab5040bd3072c39"
+    },
+    "clock": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "252ff2be1b515852e16804d0146633adce33dec71364de2169b5c5a3e72cef59"
+    },
+    "compass": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "eab6dd6e8407f69a773f2b382fda641e79ec46add16742130fb3676289593247"
+    },
+    "copy": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "9231de1e82bcead04bce074c6470550953b1a8eca28260951c09bff6a5408656"
+    },
+    "database": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "b25497e874f49319e41d6d528401d8fe846b84ff41e991636b4b9db623ee9a3f"
+    },
+    "dices": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "070de1e3ad43dff8d41ce16a95369155032784b6eedb63eba7f83be0f7106a3d"
+    },
+    "download": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "e057b31deed9cbf5932947492061972d2e2843cf6b41a444559388a5af45a3ae"
+    },
+    "external-link": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "c1e40298b458b62b48e37409a8145682135c083a433e700e0838b8fdee842caf"
+    },
+    "eye": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "c7d99ff5bfbd039c69a5ba15b168c8d76fff50fa79d57763732e925dc35c2043"
+    },
+    "eye-off": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "1030caeea07ef4d2b438a469d7b0f3980cd5af11d2eb5f76268a99b61ec0df1f"
+    },
+    "file-text": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "989f2bd5b705d210962750412a551a8b23225f1c2a28f42331af357ab7228b9c"
+    },
+    "film": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "bcdd28ff8a080371decefc9ab06e7fc80417b8bdac277645575212f24d37bd90"
+    },
+    "filter": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "1f0a4eb97acc3b9d3658c4c6f995bbc901030577254a557d0f3c35757e7403b0"
+    },
+    "flame": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "12cc2c91c3eeb1f4ac2d9247f785edb8498fb6650f1210d5a4a63eb78aee6d60"
+    },
+    "folder-open": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "0ba5460f0cf51c0d6ae36d152c9f0df57306d9c9d866564a85b0cad9b374d17b"
+    },
+    "gauge": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "c6e0790b5b810b46b8eef77306f67dcd7dc9f3cb5de5d06ab0f996e532a20518"
+    },
+    "globe": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "fbdb763778ef30fdda9a538e92a78cdcd326732ef75e2ca7b89bedb4dc8c10a5"
+    },
+    "heart": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "b511b760d56064407ccc440d753138596177a67555e2a7eb2e3d25d0a6573cd5"
+    },
+    "help-circle": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "a4290289ae0bd986ffdc3331ae8b69960a10844ffc479cf3f97b65561ed953d6"
+    },
+    "info": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "88af885cde22f5919cd2e2f65c8df0d6ef8676167310f8a6abd0aa9330fdd639"
+    },
+    "key": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "1707181c3baaa9589375f4a524bf05fa1f96c0447abcd02b9b7431dccbbdd8d5"
+    },
+    "layers": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "558b8475ff844886646fb7f5e3333531948105e4847259dae01a0a1030ad8c70"
+    },
+    "layout-grid": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "1b2463d06b1eb820bc8e1a608f66399fbf22bc33e51637e3e7ceb23bacf11f3b"
+    },
+    "list": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "0fd76dae7c47ffeca2609f1bbaa8d81ee2d4b0e6be7f75c5f30dad1d23bf5c01"
+    },
+    "list-plus": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "81cb7687efb38c2375408c70447673fc7fe9c2ea585fab95d171fdde925edab6"
+    },
+    "list-video": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "21ac571ff17219a1483bb3582bfde7dc1eb71e3c46ffbdc335c77d93275fd1b2"
+    },
+    "loader-2": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "bba67006f389bbc2f8d10789168a2f454d9848bc31d0f05455570e3d84ea38f7"
+    },
+    "lock": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "8557e750faf1a674f35f025300e69f873f1c2e3f6715116790249d28dbd7758f"
+    },
+    "log-out": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "a90e53bf663aa021f7d37f37f09d27c3c93952116891745639ef6548e42886e0"
+    },
+    "menu": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "c3e44eaa4cd109e5d065f8770f89fe8f882878b0ce6a7137bd87e52d004b13eb"
+    },
+    "message-square": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "8d4f76b6cf4fd2ce4a75d4a37667c168e9c7515a16ab6253b56e3c7377ede418"
+    },
+    "monitor": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "ffaee24395103ed1c744394a79307c115fa0bc286b1c002b4bb7054bdfe33ca0"
+    },
+    "moon": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "09c27593619fa7943b489d56fd32ba93f0dccaf2bf88d62debfaf2a6e182f235"
+    },
+    "music": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "da7589271562b9dc745a1fc61c51edcef751d261e657630cb19c49b61c729cf1"
+    },
+    "palette": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "b67eae4f0136d4b01ceaec60403eef7bc0d4a8654a6c37047efd07a97eea2b3a"
+    },
+    "pencil": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "7c4b13d99e99bfd0d70839d026833af2984e4ca74fd2aa26185df47121e0ca8b"
+    },
+    "play": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "2bbb1c4b5c15f3787baf5359b7752e654beff207695b85564ac8fbb76189711c"
+    },
+    "plus": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "24dfaccf9eaa286449330c22269a997833b6c9c0f207f28da78773e572439fa5"
+    },
+    "refresh-cw": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "ab65eb1a83936ac743474301f2eb16ac18bfa815361ccd7975b1f33760656cbe"
+    },
+    "repeat": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "2f005da3ab8ae2516229205843a27d1ca5d3c077ede5022eb9b3a67b0170d94e"
+    },
+    "save": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "6831b376bc041cf02bd237c964099e664080de565c9b2fcc73bb3766fed7b2e3"
+    },
+    "search": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "bd84fafdf63a087b63187f370c9ad1f082fad1f6e08a5bd5fa5a2f57e643f65c"
+    },
+    "send": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "73f5f34f04d348d94a21b2fba91bb7526271b519cf3893780d62e3890623f9c1"
+    },
+    "settings": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "36c662f582deae88a72e4237f59b0e07753a6e7c8132f72d684477cb44632912"
+    },
+    "share-2": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "3a45bdcb57e3eef612d458219338317935b5c91a8c2f31c136fa470b5b0ef618"
+    },
+    "shield": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "044d32b942e64d615511ee4bfc1141436641bbb0e8575003dc5ecdc93bf49b7c"
+    },
+    "sparkles": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "e4474bd876afe4d9552d1bb0178354bde4211316aaed213b93477239adeef168"
+    },
+    "star": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "cfe52ccad52fcb6077546d5396506a353b621029304f5a51266a350b0a955585"
+    },
+    "sun": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "e16ffb08dd6650e18292613313df507b9cbb90b999ce72bef904642909ad42f4"
+    },
+    "thumbs-up": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "98acc21f3abf8c3546ea16969ff6b4dad4a11f61232909363db4cd53f2d9edcb"
+    },
+    "trash-2": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "0f9e7c3d28cdee0a2717456e2704600a60c2a5dae6428db137605ce94ee393f9"
+    },
+    "tv": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "1e72f7155e41f060780ecb63acbfb7d35f030e6f3971f2ecf3f1716f9114befa"
+    },
+    "unlock": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "cb017fce25b416596047c6e943e00fd8a57ca1cf98c36355ece25cb0022e1509"
+    },
+    "upload": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "29529d8f1c0e44122cf75890bf6afa3227f0cbe64d7e23235658a00bc13eda68"
+    },
+    "user": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "1d2a97d5b8dbb8672df3d707bd88e827eb18d9d6f74e033313f5a1ac9835b323"
+    },
+    "users": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "e44198b6594056980f3834e05cde9aace67509d40c184ac864287537d87fa413"
+    },
+    "x": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "14b5c2dd1a535f9310cc55edd1509f8398f9ab7002f8948eb87f549b895f8d94"
+    },
+    "camera": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "12ed5708835b6e041a5772f056ce1d623c5fde91795d235be7476e2ea066c421"
+    },
+    "code-2": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "fd5991a12f0015022bf8d0a1d8f4bf37d4865920229c7952c3bffdbdbcf4e722"
+    },
+    "terminal": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "f6ca146c2fc555bcb71731f499319305efd7eb5c178707f03747c6bf9a298b85"
+    },
+    "package": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "7c07e3a8a71679434b8ab1cf5c55b5cbd7d1fbd8c7faa93b8963af5018a609b6"
+    },
+    "cpu": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "d7f4427fa406abfce4668ba8454423e03c351d36aa1d2ce12d4cd4651b9dc8fa"
+    },
+    "hard-drive": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "912df30baffbdadbe4f522d1372c4a3382e01b7509798292065bb1e6644facde"
+    },
+    "cloud": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "cb325cabb00a7c99dd8f217bd029c80b8c5f8542f65d25bdddde8198c2b06f6c"
+    },
+    "shopping-bag": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "8fa39aa363eeec4d6f21f12957ba16271736c8c2e1d5adc9cc3da581ae94cc4d"
+    },
+    "clipboard-list": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "7b17566de619ed607123fdc7b4ae8b633c8108c4e52ff16cf8a2c8e2f7ab00e0"
+    },
+    "panels-top-left": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "35081743490d3f6716f5a0d9eadf0b5e06cf739dd72efead385afe878d6d70c2"
+    },
+    "flask-conical": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "3263126a986e180f4e1bc4ce4fb67ca59bce74d718117cd730cc515589916584"
+    },
+    "crown": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "00c6bda610dd362f6b8b3106eaa3d06a8b18ba202f6cb5685a6d1868768767de"
+    },
+    "folder": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "d3e3b53ca4d617f60d1a593d7463743b60705df7b076f2c357d1b15775b4e807"
+    },
+    "file": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "ec81a2ffc800a6e87208845bbce74c4736322f003473908f30442e71abb5ba24"
+    },
+    "brush-cleaning": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "bb94c06e10a0c7e13379adad3dd6af685dfa2404ac4b2ca1b61f5b5cad6d66eb"
+    },
+    "minus": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "701bcdb67845074e6707629db453b13db1f34ab57e8932f28607f335284fa6fa"
+    },
+    "maximize-2": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "0b9eeebc0370be44db602c3a9e175fc0f13232ee193a1b64e8aa5abeace17482"
+    },
+    "circle-check": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "1ffa11956ec9b5e8b4b52141604fb931b27de40217534100deaa398a807c2d1e"
+    },
+    "circle-x": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "9e88cb2172cab07e1f16db67eba65327059e6d5cb2cb337ade22f96b242dfd81"
+    },
+    "zap": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "536950c0ac71559186ebfa8027dfb4f707ee99d9d376dd66135a5062ab38ffa6"
+    },
+    "undo-2": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "40f416abab0d2c5ed255708aa2d7fce0e9c0cdbdd188e621e1429d30d0482b3d"
+    },
+    "redo-2": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "0379e6cb1659a8461e6fe499e0b997f2604cc0d16b34ca076253070e698a28ce"
+    },
+    "clipboard-paste": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "de0d7e7002e73eb5758fcc3e3e6b3911e3d04f9f98cb90c49c50ee158eb5e051"
+    },
+    "scissors": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "2a8bf5a2affa9456499336a60397b938e0699fc232dca2f8d80f21558018bbdd"
+    },
+    "folder-plus": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "550c13bc31179d632bf75de5afdceb05ab445b725fc2be47859bc28a4b7452c5"
+    },
+    "file-plus": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "9738f79e2b0e956b2221c2d084b00c2ed5c0ca2d2749d13ab41e671e20c35165"
+    },
+    "house": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "dded4142b2026b6ad9f18f316b256aea826a8e1304784debbe1c8ff02c2d3d81"
+    },
+    "circle-stop": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "bcc55bcc5f0edeb463290f3e8aeff7cf5707b009074219860012f2638bd688ff"
+    },
+    "replace": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "730552e93bc3144c4486e191914378f4da98ff5e3d89bec7689a9135b19bbf70"
+    },
+    "image": {
+      "category": "core",
+      "type": "stroke",
+      "viewBox": "0 0 24 24",
+      "sha256": "b9f325feaf151a68ad1da99739ae93efec096eb79cee47dd4624424c43791289"
+    },
+    "cine-icon": {
+      "category": "custom",
+      "type": "fill",
+      "usage": "brand",
+      "viewBox": "0 0 150 150",
+      "sha256": "b077073cd55667d2662d4ff5cee39061eb99e40b2d4e04df9262befc3616e7f0"
+    },
+    "cine-logo": {
+      "category": "custom",
+      "type": "fill",
+      "usage": "brand",
+      "viewBox": "0 0 420.563 150",
+      "sha256": "282f454ab04910f9f1d3bdcf8d304ae7d4509e654c9b9b30bb70d787ac89abe1"
+    },
+    "orb-compact": {
+      "category": "custom",
+      "type": "fill",
+      "usage": "brand",
+      "viewBox": "0 0 24 24",
+      "sha256": "6be70c70cfd84a1a088575c867ca8cd5f0550afce97bc56d0e850888c2587b90"
+    },
+    "orb-icon": {
+      "category": "custom",
+      "type": "fill",
+      "usage": "brand",
+      "viewBox": "0 0 637.6 609.2",
+      "sha256": "84370ba506a9ec96942e72761000631c84ba5e52355af40c71606f88b1e7bb8b"
+    },
+    "rda-icon": {
+      "category": "custom",
+      "type": "fill",
+      "usage": "brand",
+      "viewBox": "0 0 108.3 140.8",
+      "sha256": "d2c7e6d3d01f67ad5326bfa26228391cc5389cf0f69289c8e92e701b3ed865b0"
+    },
+    "rda-logo": {
+      "category": "custom",
+      "type": "fill",
+      "usage": "brand",
+      "viewBox": "0 0 2994.66 1400.48",
+      "sha256": "e66aeee6cb4182344b6ef4b8dfa44413d609c3b4813357e1c8fc5e0a92aa672e"
+    }
+  }
+}

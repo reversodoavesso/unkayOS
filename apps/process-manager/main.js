@@ -16,8 +16,8 @@ export default class ProcessManagerApp extends BaseApp {
 
     if (this.refreshBtn) {
       this.refreshBtn.addEventListener('click', () => this.renderTable());
-      if (!this.refreshBtn.querySelector('.material-icons')) {
-        this.refreshBtn.innerHTML = '<span class="material-icons-round" aria-label="Atualizar" title="Atualizar">refresh</span>';
+      if (!this.refreshBtn.querySelector('rda-icon')) {
+        this.refreshBtn.innerHTML = "<rda-icon name=\"refresh-cw\" size=\"20\" aria-label=\"Atualizar\" title=\"Atualizar\"></rda-icon>";
       }
     }
 
@@ -71,7 +71,7 @@ export default class ProcessManagerApp extends BaseApp {
         <td>${app.status}</td>
         <td>
           <button class="action-btn" data-instance="${app.instanceId}" ${!app.canStop ? 'disabled' : ''} aria-label="Parar processo" title="Parar processo">
-            <span class="material-icons-round">stop_circle</span>
+            <rda-icon name="circle-stop" size="20"></rda-icon>
           </button>
         </td>
       </tr>

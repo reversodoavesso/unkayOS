@@ -1,504 +1,191 @@
-# Diretrizes de Desenvolvimento de Aplicativos para unkayOS 2.0 (AI & Native App Guidelines)
+# Criar apps no Unkayos com o RDA Design System
 
-Este guia estabelece o padrão oficial de arquitetura, design visual, componentes e APIs do sistema para a criação de aplicativos no **unkayOS 2.0**, seja por desenvolvedores humanos ou por agentes e modelos de Inteligência Artificial (Generative UI, OpenUI Studio, Copilot, etc.).
+Este é o guia canônico para pessoas e agentes. A cópia fornecida ao SDK e a versão acessível pelo navegador são geradas a partir deste arquivo.
 
----
+## 1. Como o DS chega ao app
 
-## 1. Filosofia de Arquitetura do unkayOS 2.0
+O shell carrega uma distribuição oficial versionada em `/design-system/rda/`. Ela inclui CSS dos componentes, tokens, extensão Unkayos, runtime HTML de ícones e SVGs. O app herda esses recursos: não instale React para um app JavaScript nativo e não copie uma paleta própria.
 
-O unkayOS é um sistema operacional web desktop construído sobre três pilares técnicos:
-1. **Microkernel WebAssembly & Armazenamento OPFS**: Operações de alta performance rodam em WebAssembly (Rust) com persistência real em Origin Private File System (OPFS).
-2. **Isolamento e Segurança Declarativa**: Todo aplicativo declara permissões explícitas em seu manifesto (`permissions: [...]`) e executa em ambiente controlado com **Shadow DOM Sandbox** e escopo estrito de sistema de arquivos (VFS).
-3. **Consistência Visual Canônica com RDA Design System**: Nenhuma aplicação deve usar paletas de cores arbitrárias ou estilos desconectados. Todo layout e elemento visual deve consumir estritamente as variáveis e regras do `@reversodoavesso/design-system` (Dark Theme padrão com identidade Cyan).
+O endereço de documentação local é `/design-system/guide.html`. O catálogo legível por ferramentas está em `/design-system/rda/icons/manifest.json` e a versão/hash em `/design-system/rda/distribution.json`.
 
----
+CDN é o mecanismo para distribuir arquivos; DNS apenas aponta um domínio para a hospedagem. A execução local e o build Docker usam a cópia verificada do DS, sem depender de uma CDN em tempo de execução. Não substitua esses arquivos manualmente.
 
-## 2. Estrutura Canônica de Arquivos de um Aplicativo
+Para atualizar a cópia a partir do workspace:
 
-Todo aplicativo nativo ou modular do unkayOS reside em um diretório próprio (ex.: `/apps/<app-id>/` no sistema ou `/home/user/apps/<app-id>/` no VFS do usuário) contendo 5 arquivos essenciais:
-
-```
-apps/<app-id>/
-├── package.json      # Manifesto do aplicativo, permissões e metadados
-├── config.json       # Configuração de renderização da janela nativa
-├── index.html        # Estrutura semântica do documento (HTML5)
-├── style.css         # Estilos escopados utilizando tokens do RDA DS
-├── main.js           # Classe controladora estendendo BaseApp
-└── icon.svg          # Ícone vetorial canônico (viewBox 0 0 24 24)
+```powershell
+# No rda-ds: gere o pacote e o CSS standalone, incluindo a extensão Unkayos.
+npm run build
+# No unkayOS:
+npm run sync:ds
+npm run ds:check
 ```
 
----
+Para um checkout separado, use `npm run sync:ds -- --from=C:/caminho/rda-ds`. Uma publicação de CDN pode expor os mesmos artefatos sob uma URL de versão fixa; preserve o manifesto e seus hashes. O comando `sync:ds` atual usa diretório local.
 
-## 3. Especificação do Manifesto (`package.json` e `config.json`)
+## 2. Gere um app funcional
 
-### 3.1. `package.json` (Manifesto Modular & Sandbox)
-```json
-{
-  "id": "meu-app-id",
-  "name": "Meu Aplicativo unkayOS",
-  "version": "1.0.0",
-  "description": "Descrição clara do propósito da aplicação.",
-  "type": "native",
-  "runtime_profile": "client-only",
-  "category": "utilities",
-  "entrypoint": "main.js",
-  "icon": "icon.svg",
-  "permissions": [
-    "storage:local",
-    "ai:generate"
-  ],
-  "window": {
-    "width": 800,
-    "height": 540,
-    "minWidth": 480,
-    "minHeight": 360,
-    "resizable": true
-  }
-}
+```powershell
+npm run scaffold -- --id minhas-notas --name "Minhas Notas" --icon file-text --register
+npm run dev -- --host 127.0.0.1 --port 5178
 ```
 
-### 3.2. `config.json` (Configuração da Janela no WindowManager)
-```json
-{
-  "app_name": "Meu Aplicativo unkayOS",
-  "icon_url": "icon.svg",
-  "dirApp": "index.html",
-  "jsFile": "main.js",
-  "styleFile": "style.css",
-  "mode": "system_window",
-  "width": "800px",
-  "height": "540px",
-  "x_position": "15vw",
-  "y_position": "10vh",
-  "minWidth": 480,
-  "minHeight": 360,
-  "autorun": false,
-  "hidden": false
-}
-```
+O gerador cria `config.json`, `index.html`, `style.css`, `main.js` e um `icon.svg` oficial. `--register` acrescenta o app em `apps/apps.json`; sem essa opção, faça o registro explicitamente. `--dry-run` mostra os arquivos sem gravar. Diretórios existentes nunca são sobrescritos.
 
-### 3.3. Tabela de Permissões Disponíveis
+## 3. Componha controles reais do DS
 
-| Permissão | Finalidade | Escopo & Restrição de Segurança |
-| :--- | :--- | :--- |
-| `storage:local` | Armazenamento de dados no VFS | Restrito a `/home/user/apps/<app-id>/data/` |
-| `storage:cloud` | Sincronização em nuvem via MinIO | Exige usuário autenticado (`auth:session`) |
-| `ai:generate` | Chamadas à IA Generativa do sistema | Acesso à API `unkay.ai.prompt(...)` |
-| `auth:session` | Identidade e credenciais do usuário | Acesso a `unkay.auth.getUser()`, `getTier()` e JWT |
-| `compute:wasm` | Execução de computação WebAssembly | Instanciação de micro-módulos Wasm locais |
-| `compute:websocket` | Acesso a containers Linux sob demanda | Conexão com compute-service (exige tier sysadmin) |
-| `audio:worklet` | Processamento DSP de áudio em tempo real | Instanciação de AudioContext e AudioWorkletNode |
-
----
-
-## 4. Padrões de Design: `@reversodoavesso/design-system` (RDA DS)
-
-Todas as cores, fontes, raios de borda e espaçamentos devem ser definidos exclusivamente por meio das variáveis CSS do Design System. É **terminantemente proibido** utilizar cores hexadecimais aleatórias diretamente no CSS (como `#1e293b`, `#ff0055`, etc.).
-
-### 4.1. Tokens Principais de Cores e Superfícies
-
-```css
-:root {
-  /* Marca e Destaque Principal (Cyan RDA) */
-  --rda-color-primary-500: #06b6d4; /* Cor primária de ação e foco */
-  --rda-color-primary-400: #22d3ee; /* Variação clara para hovers e badges */
-  --rda-color-primary-600: #0891b2; /* Variação escura para botões ativos */
-
-  /* Superfícies Semânticas (Dark Theme Canônico) */
-  --rda-surface-primary: #0a0a0a;   /* Fundo principal da aplicação/janela */
-  --rda-surface-secondary: #141414; /* Painéis, toolbars, sidebars */
-  --rda-surface-tertiary: #1e1e1e;  /* Cartões, containers secundários */
-  --rda-surface-card: #141414;      /* Superfície padrão de cards */
-  --rda-surface-hover: #262626;     /* Efeito de hover em itens e botões */
-  --rda-surface-active: #333333;    /* Efeito de clique ativo */
-
-  /* Conteúdo e Tipografia */
-  --rda-content-primary: #fafafa;   /* Texto principal de alto contraste */
-  --rda-content-secondary: #e5e5e5; /* Texto de leitura padrão */
-  --rda-content-tertiary: #a3a3a3;  /* Texto de apoio */
-  --rda-content-muted: #737373;     /* Labels, rodapés e placeholders */
-  --rda-content-brand: #22d3ee;     /* Links e marcas em destaque */
-
-  /* Bordas */
-  --rda-border-primary: #2d2d2d;    /* Divisórias de painéis e cards */
-  --rda-border-subtle: #1e1e1e;     /* Linhas secundárias sutis */
-  --rda-border-focus: #22d3ee;      /* Indicador de foco acessível */
-  --rda-border-hover: #444444;      /* Hover sobre bordas interativas */
-
-  /* Estados e Status */
-  --rda-status-success: #10b981;    /* Sucesso e status online */
-  --rda-status-warning: #f59e0b;    /* Avisos e pendências */
-  --rda-status-error: #f43f5e;      /* Erros e ações destrutivas */
-  --rda-status-info: #0ea5e9;       /* Notificações informativas */
-
-  /* Tipografia */
-  --rda-font-family-heading: "Archivo", sans-serif;
-  --rda-font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --rda-font-family-mono: "Fira Code", monospace;
-
-  /* Raios de Borda */
-  --rda-radius-sm: 0.25rem;  /* 4px */
-  --rda-radius-md: 0.375rem; /* 6px */
-  --rda-radius-lg: 0.5rem;   /* 8px */
-  --rda-radius-full: 9999px; /* Pílulas e avatares circulares */
-}
-```
-
----
-
-## 5. Regras Rígidas de Iconografia
-
-Os ícones de aplicativos no unkayOS seguem uma linguagem minimalista, moderna e linear integrada à barra de tarefas e ao desktop:
-
-1. **Formato**: Arquivo SVG puro com `viewBox="0 0 24 24"`.
-2. **Traço / Silhouette**: Traço branco puro (`stroke="#ffffff"` ou `fill="#ffffff"`), com espessura padrão `stroke-width="2"`, `stroke-linecap="round"` e `stroke-linejoin="round"`.
-3. **Fundo**: **100% transparente** (`fill="none"` no elemento `<svg>`).
-4. **Proibição**: **NÃO crie blocos com fundos coloridos** (como retângulos arredondados azuis, vermelhos ou verdes com o ícone dentro). O desktop do unkayOS renderiza os ícones diretamente sobre o papel de parede e na barra de tarefas escura.
-
-### Exemplo de Ícone Conforme (`icon.svg`):
-```xml
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="3" y="3" width="18" height="18" rx="2"/>
-  <path d="M3 9h18"/>
-  <path d="M9 21V9"/>
-</svg>
-```
-
----
-
-## 6. Componentes Canônicos de UI (HTML & CSS)
-
-Ao criar interfaces declarativas ou código HTML para o unkayOS, utilize as classes e padrões abaixo:
-
-### 6.1. Botões
 ```html
-<!-- Botão Primário (Ação principal em Cyan) -->
-<button class="rda-btn rda-btn-primary">Confirmar Ação</button>
-
-<!-- Botão Secundário (Superfície escura com borda) -->
-<button class="rda-btn rda-btn-secondary">Cancelar</button>
-
-<!-- Botão Destrutivo (Alerta/Erro) -->
-<button class="rda-btn rda-btn-danger">Excluir Registro</button>
+<label class="rda-label" for="title">Título</label>
+<input id="title" class="rda-input rda-input--md" placeholder="Nome da nota">
+<button type="button" class="rda-button rda-button--md" data-color="primary">
+  <rda-icon name="save"></rda-icon>
+  <span class="rda-button__content">Salvar</span>
+</button>
+<button type="button" class="rda-button rda-button--sm" data-color="danger" data-style="outlined">
+  <rda-icon name="trash-2"></rda-icon> Excluir
+</button>
+<p role="status" id="status"></p>
 ```
 
-```css
-.rda-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-family: var(--rda-font-family-base);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 8px 14px;
-  border-radius: var(--rda-radius-md);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
+Cor semântica (`data-color`), superfície (`data-style`) e tamanho são eixos independentes. Use `primary` para a ação principal, `secondary` para auxiliares e `danger` para ações destrutivas. Tamanhos `sm`, `md` e `lg` seguem o contrato de cada componente.
 
-.rda-btn-primary {
-  background-color: var(--rda-color-primary-500);
-  color: #021a1a;
-  font-weight: 700;
-  border-color: var(--rda-color-primary-400);
-}
-.rda-btn-primary:hover {
-  background-color: var(--rda-color-primary-400);
-}
+O Select HTML usa `.rda-select` no wrapper e `.rda-select__field` no campo nativo. Aplicar a classe do wrapper no `<select>` não desenha o controle:
 
-.rda-btn-secondary {
-  background-color: var(--rda-surface-tertiary);
-  color: var(--rda-content-primary);
-  border-color: var(--rda-border-primary);
-}
-.rda-btn-secondary:hover {
-  background-color: var(--rda-surface-hover);
-}
-
-.rda-btn-danger {
-  background-color: rgba(244, 63, 94, 0.15);
-  color: var(--rda-status-error);
-  border-color: rgba(244, 63, 94, 0.3);
-}
-.rda-btn-danger:hover {
-  background-color: var(--rda-status-error);
-  color: #ffffff;
-}
-```
-
-### 6.2. Cartões & Painéis de Dados (`.rda-card`)
 ```html
-<div class="rda-card">
-  <div class="rda-card-header">
-    <h4 class="rda-card-title">Visão Geral do Serviço</h4>
-    <span class="rda-badge rda-badge-cyan">v2.0 Ativo</span>
+<div class="rda-select">
+  <label class="rda-select__label" for="sort">Ordenação</label>
+  <div class="rda-select__field-wrapper">
+    <select id="sort" class="rda-select__field rda-select__field--md">
+      <option value="name">Nome</option>
+      <option value="date">Data</option>
+    </select>
+    <span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span>
   </div>
-  <p class="rda-card-body">Texto descritivo do cartão renderizado com alto contraste.</p>
 </div>
 ```
 
+O shell opta pelo produto com `data-rda-product="unkayos"` e escolhe um preset em `data-unkay-accent="cyan|violet|blue|rose|fuchsia|teal|indigo"`. Os mesmos controles adotam a paleta inteira por herança. Atributos de produto não são novos valores de `data-color` ou de `data-style`. Erro, sucesso, aviso e membership preservam seus contratos.
+
+Em React, a composição equivalente é:
+
+```tsx
+import '@reversodoavesso/design-system/styles';
+import '@reversodoavesso/design-system/unkayos/styles';
+import { Button } from '@reversodoavesso/design-system';
+import { UnkayosScope } from '@reversodoavesso/design-system/unkayos';
+<UnkayosScope accent="violet" theme="light">
+  <Button variant="primary" styleVariant="matte">Salvar</Button>
+  <Button variant="danger">Excluir</Button>
+</UnkayosScope>
+```
+
+O provedor de tema/persistência da aplicação permanece responsável pela preferência do usuário. `UnkayosScope` aplica somente o escopo visual. Conteúdo que conserva a identidade padrão pode usar `data-rda-product="base"`.
+
+## 4. Tokens e CSS do app
+
 ```css
-.rda-card {
-  background-color: var(--rda-surface-secondary);
-  border: 1px solid var(--rda-border-primary);
-  border-radius: var(--rda-radius-lg);
-  padding: var(--rda-spacing-4, 16px);
+.notes {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-.rda-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.rda-card-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
+  gap: var(--rda-spacing-4);
+  padding: var(--rda-spacing-4);
   color: var(--rda-content-primary);
-  font-family: var(--rda-font-family-heading);
+  background: var(--rda-surface-primary);
+  border-radius: var(--rda-border-radius-md);
 }
-.rda-card-body {
-  margin: 0;
-  font-size: 13px;
-  color: var(--rda-content-secondary);
-  line-height: 1.5;
+.notes__selection {
+  color: var(--unkay-accent-on-subtle);
+  background: var(--unkay-accent-subtle);
+  border: 1px solid var(--unkay-accent-border);
 }
 ```
 
-### 6.3. Badges de Status (`.rda-badge`)
+Use tokens `--rda-*` para fundamentos e intenções semânticas. Use `--unkay-accent-*` somente para estados do produto que adotam o accent: solid/on-solid, hover, active, subtle/on-subtle, text, border e focus. Não reescreva primitivos como `--rda-color-primary-400`. Não crie versões locais de `.rda-button` ou `.rda-input`.
+
+O runtime aplica namespace ao CSS do app. Use classes locais simples; coloque animações ou regras globais compartilhadas na camada do produto, sem depender de seletores globais no CSS do aplicativo.
+
+## 5. Ícones oficiais em HTML e JavaScript
+
 ```html
-<span class="rda-badge rda-badge-cyan">Cyan Brand</span>
-<span class="rda-badge rda-badge-success">Online</span>
-<span class="rda-badge rda-badge-warning">Pendente</span>
+<rda-icon name="settings" size="20"></rda-icon>
+<button type="button" aria-label="Fechar">
+  <rda-icon name="x"></rda-icon>
+</button>
+<rda-icon name="circle-check" label="Concluído"></rda-icon>
 ```
-
-```css
-.rda-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--rda-radius-full);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-.rda-badge-cyan {
-  background: rgba(6, 182, 212, 0.15);
-  color: var(--rda-color-primary-400);
-  border: 1px solid rgba(6, 182, 212, 0.3);
-}
-.rda-badge-success {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--rda-status-success);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-```
-
-### 6.4. Formulários e Campos de Entrada (`.rda-input`)
-```html
-<div class="rda-field">
-  <label class="rda-label" for="username">Nome de Usuário:</label>
-  <input class="rda-input" type="text" id="username" placeholder="demiurge_user" />
-</div>
-```
-
-```css
-.rda-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.rda-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--rda-content-secondary);
-}
-.rda-input {
-  background-color: var(--rda-surface-primary);
-  border: 1px solid var(--rda-border-primary);
-  border-radius: var(--rda-radius-md);
-  color: var(--rda-content-primary);
-  font-family: inherit;
-  font-size: 13px;
-  padding: 8px 12px;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.15s ease;
-}
-.rda-input:focus {
-  border-color: var(--rda-border-focus);
-}
-```
-
----
-
-## 7. Catálogo Completo das APIs do Sistema (`unkay` SDK)
-
-Toda aplicação em execução recebe acesso ao objeto global `unkay` ou ao `scopedSDK` injetado pelo `AppSandbox`:
-
-### 7.1. Sistema de Arquivos Virtual (`unkay.fs`)
-*Exige permissão `storage:local`*.
-```javascript
-// Escrever arquivo de texto
-await unkay.fs.writeFile('dados.json', JSON.stringify({ items: [1, 2, 3] }));
-
-// Ler arquivo como texto UTF-8
-const text = await unkay.fs.readText('dados.json');
-
-// Ler arquivo binário
-const buffer = await unkay.fs.readFile('imagem.png');
-
-// Listar arquivos no diretório de dados
-const files = await unkay.fs.list();
-
-// Criar diretório (recursivo opcional)
-await unkay.fs.mkdir('backups', true);
-
-// Verificar existência
-const exists = await unkay.fs.exists('dados.json');
-```
-
-### 7.2. Persistência Chave-Valor Isolada (`unkay.kv`)
-```javascript
-// Salvar preferência (isolada por app ID automaticamente)
-await unkay.kv.set('lastTab', 'dashboard');
-
-// Recuperar preferência
-const lastTab = await unkay.kv.get('lastTab');
-```
-
-### 7.3. Inteligência Artificial Generativa (`unkay.ai`)
-*Exige permissão `ai:generate`*.
-```javascript
-const response = await unkay.ai.prompt([
-  { role: 'system', content: 'Você é um assistente técnico do unkayOS.' },
-  { role: 'user', content: 'Resuma os logs de execução recentes.' }
-]);
-console.log(response.content);
-```
-
-### 7.4. Autenticação e Sessão do Usuário (`unkay.auth`)
-*Exige permissão `auth:session`*.
-```javascript
-// Obter tier do usuário ('guest' | 'standard' | 'curator' | 'sysadmin')
-const tier = unkay.auth.getTier();
-
-// Obter dados do usuário
-const user = unkay.auth.getUser(); // { id, username, email }
-
-// Obter token JWT para requisições seguras
-const token = unkay.auth.getToken();
-```
-
-### 7.5. Controle de Janela (`unkay.window`)
-```javascript
-// Atualizar o título da janela na barra superior
-unkay.window.setTitle('Documento Editado *');
-
-// Fechar a janela do aplicativo
-unkay.window.close();
-```
-
-### 7.6. Barramento de Eventos Inter-Processos (`unkay.events`)
-```javascript
-// Escutar evento de outro aplicativo ou do sistema
-unkay.events.on('system:theme-changed', (theme) => {
-  console.log('Tema alterado:', theme);
-});
-
-// Emitir evento
-unkay.events.emit('my-app:job-finished', { jobId: 123 });
-```
-
----
-
-## 8. Ciclo de Vida da Aplicação (`BaseApp`)
-
-Toda aplicação em JavaScript deve estender a classe `BaseApp`:
 
 ```javascript
-import { BaseApp } from '../../core/BaseApp.js';
-import { unkay } from '../../core/sdk/unkay.js';
-
-export default class MyApp extends BaseApp {
-    constructor(CORE, standardAPIs) {
-        super(CORE, standardAPIs);
-        this.state = {};
-    }
-
-    /**
-     * Invocado quando a janela do aplicativo é montada na tela.
-     */
-    async onRun() {
-        console.log('[MyApp] Inicializando...');
-        this.setupDOM();
-        this.setupEventListeners();
-    }
-
-    setupDOM() {
-        // Use this.$() para seletores escopados dentro do aplicativo
-        const titleEl = this.$('#appTitle');
-        if (titleEl) titleEl.textContent = 'unkayOS Ready';
-    }
-
-    setupEventListeners() {
-        const btn = this.$('#myActionBtn');
-        if (btn) {
-            btn.addEventListener('click', () => this.handleAction());
-        }
-    }
-
-    async handleAction() {
-        unkay.window.setTitle('Processando...');
-        await unkay.kv.set('status', 'ativo');
-        unkay.window.setTitle('Concluído');
-    }
-
-    /**
-     * Invocado quando a janela é fechada pelo usuário ou sistema.
-     * Limpe intervalos, conexões WebSocket, áudio e listeners aqui.
-     */
-    onCleanup() {
-        console.log('[MyApp] Limpando recursos da aplicação...');
-    }
-}
+import { iconMarkup } from '../../core/ui/designSystem.js';
+this.$('#icon').innerHTML = iconMarkup('folder-open', { size: 24 });
 ```
 
----
+O runtime não depende de React, busca remota ou fonte de ícones. Ele usa o mesmo catálogo SVG do componente React `Icon`. Nomes desconhecidos recebem o fallback oficial. Não use emojis como ícones de botões, navegação, estados ou apps. Emojis que façam parte do conteúdo criado pelo usuário são conteúdo, não iconografia de interface.
 
-## 9. Template de Prompt de Sistema para IAs Gerarem Apps no unkayOS
+Ícones são decorativos por padrão. Dê nome acessível ao botão que contém apenas um ícone. `label` é reservado ao ícone que transmite informação por conta própria. O manifesto do app declara `icon_name` com um nome do catálogo; seu arquivo `icon.svg` é uma cópia do SVG oficial correspondente.
 
-Ao orientar um LLM (como Gemini, Claude ou GPT) a criar um aplicativo para o unkayOS, utilize o prompt abaixo como System Prompt:
+### Ícones de novos apps com IA
 
-````markdown
-Você é um desenvolvedor sênior de aplicações para o unkayOS 2.0.
-Sua tarefa é gerar uma aplicação compatível com o ecossistema unkayOS.
+Procure primeiro um símbolo do catálogo. Preserve marcas próprias existentes: o navegador The Orb usa `orb-icon`, registrado como marca custom, com seu desenho original. A padronização do DS não substitui identidades por glyphs genéricos.
 
-Regras Obrigatórias:
-1. Respeite estritamente o Design System (@reversodoavesso/design-system):
-   - Use as variáveis CSS:
-     --rda-surface-primary: #0a0a0a
-     --rda-surface-secondary: #141414
-     --rda-surface-tertiary: #1e1e1e
-     --rda-border-primary: #2d2d2d
-     --rda-content-primary: #fafafa
-     --rda-content-secondary: #e5e5e5
-     --rda-content-muted: #737373
-     --rda-color-primary-500: #06b6d4 (Cyan)
-     --rda-color-primary-400: #22d3ee
-   - Proibido cores arbitrárias fora dos tokens.
-2. Iconografia:
-   - Forneça um icon.svg com viewBox="0 0 24 24", fill="none", stroke="#ffffff", stroke-width="2". Fundo 100% transparente.
-3. Arquitetura:
-   - Forneça a estrutura completa contendo:
-     * package.json (com permissions apropriadas: storage:local, ai:generate, etc.)
-     * config.json (com dimensões e configurações da janela)
-     * index.html (estrutura semântica)
-     * style.css (classes .rda-* e variáveis CSS)
-     * main.js (classe estendendo BaseApp com onRun() e onCleanup())
-4. Não utilize frameworks externos desnecessários (React, Vue, jQuery) a menos que explicitamente solicitado. Priorize JavaScript ES6+ nativo e Web APIs.
-````
+O Icon Studio da documentação do DS fica em `/tools/icons`: prepara o brief para o modelo de IA escolhido, valida o SVG recebido e mostra prévias em 16, 20, 24, 32 e 48 px, em claro/escuro. O comando local usa o mesmo contrato:
+
+```powershell
+npm run icon:author -- brief --name app-minhas-notas --description "Notas rápidas; folha dobrada com poucos detalhes" --out ./icon-brief.md
+# Envie o brief à IA e salve o SVG retornado em ./icon.svg.
+npm run icon:author -- validate --file ./icon.svg
+npm run icon:author -- register --name app-minhas-notas --file ./icon.svg --ds C:/workspace/rda/rda-ds
+# Gere o DS no checkout indicado, mantendo o terminal na pasta do Unkayos:
+npm --prefix C:/workspace/rda/rda-ds run build
+npm run sync:ds
+npm run scaffold -- --id minhas-notas --icon app-minhas-notas --register
+```
+
+O registro escreve somente a fonte nova no catálogo custom do DS e recusa sobrescritas; é necessário gerar o DS antes de sincronizar. Para uma marca original existente, use `--kind brand` na validação e no registro, preservando paths, proporções e viewBox.
+
+Novos ícones de interface usam viewBox `0 0 24 24`, `fill="none"`, `stroke="currentColor"`, espessura 2, extremos/junções arredondados e margem óptica de 2 unidades. Evite texto, emoji, sombras, gradientes e detalhes que desaparecem a 16 px. O tamanho e o accent vêm do componente consumidor. Marcas existentes têm contrato de preenchimento e geometria próprios.
+
+As regras legíveis por agentes estão em `/design-system/rda/icons/guidelines.json`; o autor SVG e o validador são distribuídos em `/design-system/rda/tools/`. A validação bloqueia elementos/atributos ativos e recursos externos. A aceitação técnica ainda exige revisar legibilidade, originalidade e identidade antes de registrar.
+
+## 6. Ciclo de vida e persistência
+
+Estenda `BaseApp`; use `this.$()` e `this.$$()` para seletores locais. Registre eventos no `onRun()` e limpe listeners, sockets e recursos no `onCleanup()`. Utilize os temporizadores gerenciados da BaseApp. Nunca use um ID global para buscar elementos de outra instância.
+
+Prefira `this.wasmFileSystem` para persistência. Suas operações são assíncronas: aguarde `mkdir`, `readFile`, `writeFile`, `readdir` e `remove`. Para confirmar uma gravação durável antes de recarregar ou fechar, aguarde também `fs.flush()` quando disponível: o Wasm VFS usa autosave com debounce de 500 ms. Só apresente sucesso após concluir essas operações. Trate erros e restaure o estado de loading/disabled. O gerador contém um exemplo completo de salvamento.
+
+## 7. HTML gerado, segurança e acessibilidade
+
+OpenUI sanitiza HTML e permite o elemento oficial `rda-icon`. Shadow DOM isola estilos; JavaScript nativo roda como código confiável da página. O SDK de apps valida acesso a caminhos dentro da pasta de dados do app. Recursos restritos exigem permissão e autorização do serviço; uma cor ou tier em localStorage não concede acesso.
+
+Verifique claro e escuro, os sete presets, foco visível, teclado, rótulos, disabled/loading e feedback de erro. Não dependa só de cor para comunicar um estado. Teste janelas pequenas e múltiplas instâncias.
+
+## 8. Verificação antes de entregar
+
+```powershell
+npm run ds:check
+npm run lint
+npm test
+npm run build:dist
+```
+
+Execute também o app no navegador. Confirme que seus ícones vêm do catálogo, que o accent altera apenas os estados previstos, que ações destrutivas continuam identificáveis e que a gravação sobrevive a uma recarga.
+
+## 9. Integração com o espaço e widgets
+
+O shell oferece setup inicial, menu de apps amplo/compacto e trilha flutuante/barra de borda. A busca e a estrela usam `app_name` e `icon_name`. Opcionalmente, `short_name` oferece um nome curto para a trilha. Apps não devem alterar as preferências globais de aparência ou navegação por conta própria.
+
+Widgets de dados são importados em Configurações → Widgets com `schema: "unkayos.widget/v1"`, identificador de 2–48 caracteres, título de até 60 caracteres, `icon` do catálogo e tipo `note` ou `links`. Uma nota tem `content` de até 1600 caracteres; links usam até oito itens `{label,url}` com HTTP/HTTPS sem credenciais. O conteúdo é renderizado como texto/links, sem código executável. O usuário revisa uma prévia e escolhe se o widget inicia com o sistema. O painel permite baixar um exemplo JSON real.
+
+Widgets nativos locais usam `mode: "desktop_ui"` e `widget: true` no manifesto. Não use essa marcação na barra ou em serviços essenciais. O gerenciador controla início e encerramento, organiza os cards no desktop e preserva a diferença entre carregar nesta sessão e carregar ao entrar. Use temporizadores gerenciados e limpe recursos no ciclo de vida. A importação de JSON não instala módulos JavaScript de terceiros.
+
+O fluxo completo de uso e exemplos estão em `docs/WORKSPACE.md` no checkout do Unkayos.
+
+## 10. Padrões do workspace e distribuição
+
+Os padrões oficiais `rda-unkay-app-card`, `rda-unkay-scroll-region` e `rda-unkay-window-progress` pertencem à camada de produto do DS (`/patterns/unkayos`). Cards compõem ActionCard com botão de fixar como irmão, sem botões aninhados. Use slots de ícone, título e descrição alinhados ao início. A rolagem fica em uma região interna com margem para os cantos do painel.
+
+A abertura de `system_window` é gerenciada pelo sistema: linha Progress indeterminada abaixo do cabeçalho, visível apenas após 150 ms pendentes; removida imediatamente ao concluir HTML, CSS, módulo e `onRun`. Não adicione espera mínima nem um overlay próprio. `onRun` deve retornar a Promise do trabalho necessário para o app estar pronto. Falhas devem ser comunicadas; feche recursos em `onCleanup`.
+
+Use `orb-compact` para o The Orb em 16–32 px. `orb-icon` mantém a marca original para tamanhos maiores. Nunca use imagem rasterizada para esses ícones.
+
+A distribuição é neutra por padrão. A flag de operador `UNKAYOS_BRANDING=rda` no container habilita a marca RDA no menu, setup e informações. Ela não aparece nas preferências pessoais nem concede autenticação. Em hospedagem estática, defina somente `{ branding: 'rda' }` em `deployment.js`; remova/defina `neutral` para uso genérico. Tokens e componentes continuam os mesmos nos dois modos.
+
+Versão e histórico têm fonte única em `releases.json`. Veja `docs/RELEASING.md` para preparar uma release sem divergência entre pacote, changelog e interface.

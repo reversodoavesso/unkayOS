@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
 
+    <!-- Runs before styles and the asynchronous application bootstrap. -->
+    <script src="/deployment.js"></script>
+    <script src="/appearance-bootstrap.js"></script>
+
     <!-- CSS -->
     <link rel="stylesheet" href="./assets/style/global.css" />
 
@@ -17,7 +21,7 @@
     <title>unkayOS</title>
   </head>
   <body>
-    <div id="desktop"></div>
+    <div id="desktop" data-rda-product="unkayos" data-unkay-accent="cyan"></div>
 
     <!-- JS principal -->
     <script src="./main.js" type="module"></script>   

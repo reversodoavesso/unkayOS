@@ -15,6 +15,7 @@ export class AeroSnapManager {
      * @returns {'none'|'left'|'right'|'top'}
      */
     checkSnapZone(clientX, clientY) {
+        if (typeof document !== 'undefined' && document.documentElement.dataset.aeroSnap === 'false') return 'none';
         const width = typeof window !== 'undefined' ? window.innerWidth : 1920;
 
         if (clientY <= this.threshold) {
@@ -87,16 +88,16 @@ export class AeroSnapManager {
 
         if (snapType === 'left') {
             windowElement.style.left = '0px';
-            windowElement.style.top = '0px';
+            windowElement.style.top = 'var(--workspace-window-top, 0px)';
             windowElement.style.width = '50vw';
-            windowElement.style.height = '100vh';
+            windowElement.style.height = 'calc(100% - var(--workspace-reserved, 50px))';
             windowElement.classList.add('snapped-left');
             appWindowSystem.snapState = 'left';
         } else if (snapType === 'right') {
             windowElement.style.left = '50vw';
-            windowElement.style.top = '0px';
+            windowElement.style.top = 'var(--workspace-window-top, 0px)';
             windowElement.style.width = '50vw';
-            windowElement.style.height = '100vh';
+            windowElement.style.height = 'calc(100% - var(--workspace-reserved, 50px))';
             windowElement.classList.add('snapped-right');
             appWindowSystem.snapState = 'right';
         }

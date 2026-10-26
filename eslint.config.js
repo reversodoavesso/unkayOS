@@ -4,7 +4,7 @@
 export default [
     // Global ignores
     {
-        ignores: ['node_modules/**', 'dist/**', 'coverage/**', '.kiro/**']
+        ignores: ['node_modules/**', 'dist/**', 'coverage/**', '.kiro/**', 'core/wasm/pkg/**', 'core/vendor/**']
     },
 
     // Base config for all JS files

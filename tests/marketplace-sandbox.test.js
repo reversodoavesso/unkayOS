@@ -1,4 +1,4 @@
-// @vitest-environment happy-dom
+// @vitest-environment jsdom
 // tests/marketplace-sandbox.test.js - unkayOS 2.0 Marketplace & Sandbox Test Suite
 // Verifies Phase 5 deliverables: Package Loader, Modern Shadow DOM Sandbox, and Store App
 
@@ -155,6 +155,25 @@ describe('unkayOS 2.0 AppSandbox (Shadow DOM & Scoped SDK)', () => {
         expect(body).toBeTruthy();
         expect(body.innerHTML).toContain('Vendas: 42');
 
+        sandbox.unmount();
+    });
+
+    it('keeps declared storage access inside the application data directory', async () => {
+        const sandbox = new AppSandbox(container, { id: 'scoped-test', name: 'Test', type: 'openui', permissions: ['storage:local'] }, mockBaseSDK);
+        sandbox.mount();
+        await expect(sandbox.scopedSDK.fs.writeFile('../other/settings.json', 'evil')).rejects.toThrow('outside application');
+        await expect(sandbox.scopedSDK.fs.readFile('/etc/unkay-settings.json')).rejects.toThrow('outside application');
+        await expect(sandbox.scopedSDK.fs.list('/home/user/apps/scoped-test/data-other')).rejects.toThrow('outside application');
+        sandbox.unmount();
+    });
+
+    it('sanitizes OpenUI markup including whitespace-prefixed specs and metadata', async () => {
+        const sandbox = new AppSandbox(container, { id: 'safe-preview', name: '<img onerror=alert(1)>', description: '<script>evil()</script>', type: 'openui' }, mockBaseSDK);
+        await sandbox.run('\n <h3>Generated preview</h3><img src=x onerror="alert(1)"><script>evil()</script><iframe srcdoc="evil"></iframe>');
+        const root = container.shadowRoot;
+        expect(root.querySelector('#openui-body').textContent).toContain('Generated preview');
+        expect(root.querySelector('script, iframe, [onerror]')).toBeNull();
+        expect(root.querySelector('h2').textContent).toBe('<img onerror=alert(1)>');
         sandbox.unmount();
     });
 });

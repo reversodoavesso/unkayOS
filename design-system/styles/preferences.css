@@ -1,0 +1,15 @@
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-dark-primary-high-opacity: rgba(250, 250, 250, 0.95);
+  --color-dark-primary-middle-opacity: rgba(250, 250, 250, 0.8);
+  --color-dark-primary-middle-up-opacity: rgba(250, 250, 250, 0.95);
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+
+:root[data-glass="false"] { --blur-intensity: 0px; }
+[data-rda-product="unkayos"] {
+  --color-primary-base: var(--unkay-accent-text);
+  --color-primary-variation-1: var(--unkay-accent-hover);
+  --color-primary-variation-2: var(--unkay-accent-solid);
+  --color-focus: var(--unkay-accent-focus);
+}

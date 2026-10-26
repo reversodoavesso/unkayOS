@@ -3,7 +3,7 @@
   <!-- Left Navigation Sidebar -->
   <aside class="settings-sidebar">
     <div class="sidebar-header">
-      <div class="header-logo">⚙️</div>
+      <div class="header-logo"><rda-icon name="settings"></rda-icon></div>
       <div>
         <h2 class="sidebar-title">Configurações</h2>
         <span class="sidebar-version">unkayOS 2.0</span>
@@ -11,27 +11,29 @@
     </div>
 
     <div class="sidebar-search">
-      <input type="text" id="settingsSearchInput" class="sidebar-search-input" placeholder="Buscar ajuste..." />
+      <input type="text" id="settingsSearchInput" class="sidebar-search-input rda-input rda-input--md" placeholder="Buscar ajuste..." />
     </div>
 
     <nav class="sidebar-nav">
       <button class="nav-item active" data-panel="appearance">
-        <span class="nav-icon">🎨</span> Aparência
+        <span class="nav-icon"><rda-icon name="palette"></rda-icon></span> Aparência
       </button>
       <button class="nav-item" data-panel="windowing">
-        <span class="nav-icon">🪟</span> Janelas & Desktop
+        <span class="nav-icon"><rda-icon name="panels-top-left"></rda-icon></span> Janelas & Desktop
       </button>
+      <button class="nav-item" data-panel="workspace"><span class="nav-icon"><rda-icon name="compass"></rda-icon></span> Meu espaço</button>
+      <button class="nav-item" data-panel="widgets"><span class="nav-icon"><rda-icon name="layout-grid"></rda-icon></span> Widgets</button>
       <button class="nav-item" data-panel="storage">
-        <span class="nav-icon">💾</span> Armazenamento & VFS
+        <span class="nav-icon"><rda-icon name="save"></rda-icon></span> Armazenamento & VFS
       </button>
       <button class="nav-item" data-panel="services">
-        <span class="nav-icon">🌐</span> Rede & Serviços RDA
+        <span class="nav-icon"><rda-icon name="globe"></rda-icon></span> Rede & Serviços RDA
       </button>
       <button class="nav-item" data-panel="security">
-        <span class="nav-icon">🛡️</span> Segurança & Sandbox
+        <span class="nav-icon"><rda-icon name="shield"></rda-icon></span> Segurança & Sandbox
       </button>
       <button class="nav-item" data-panel="about">
-        <span class="nav-icon">ℹ️</span> Sobre o Sistema
+        <span class="nav-icon"><rda-icon name="info"></rda-icon></span> Sobre o Sistema
       </button>
     </nav>
   </aside>
@@ -42,7 +44,7 @@
     <div id="panelAppearance" class="settings-panel active">
       <div class="panel-header">
         <h2>Aparência & Personalização</h2>
-        <p>Personalize o tema, cores de destaque, papel de parede e efeitos visuais da interface.</p>
+        <p>Personalize o tema, papel de parede, efeitos visuais e tamanho do texto.</p>
       </div>
 
       <div class="settings-card">
@@ -62,33 +64,28 @@
       </div>
 
       <div class="settings-card">
-        <h3 class="card-heading">Cor de Destaque (Accent Palette)</h3>
-        <p class="card-subtext">Afeta botões de ação, foco de janelas, barras de progresso e seleções.</p>
-        <div class="accent-color-picker">
-          <button class="accent-dot active" data-color="#22d3ee" style="background-color: #22d3ee;" title="Cyan Oficial RDA"></button>
-          <button class="accent-dot" data-color="#a855f7" style="background-color: #a855f7;" title="Ametista Arcane"></button>
-          <button class="accent-dot" data-color="#10b981" style="background-color: #10b981;" title="Esmeralda Matrix"></button>
-          <button class="accent-dot" data-color="#f59e0b" style="background-color: #f59e0b;" title="Âmbar Helios"></button>
-          <button class="accent-dot" data-color="#f43f5e" style="background-color: #f43f5e;" title="Rubi Alarme"></button>
-        </div>
+        <h3 class="card-heading">Cor de Destaque do Sistema</h3>
+        <p class="card-subtext">Personaliza ações, seleções e foco. Alertas e níveis de acesso mantêm suas próprias cores.</p>
+        <div id="accentPicker" class="accent-presets" role="group" aria-label="Cor de destaque"></div>
+        <p id="selectedAccentName" class="accent-caption" aria-live="polite"></p>
       </div>
 
       <div class="settings-card">
         <h3 class="card-heading">Papel de Parede do Desktop</h3>
-        <div class="wallpaper-grid">
-          <button class="wallpaper-thumb active" data-wp="/assets/images/wallpaper_01.jpg">
-            <span class="wp-label">Montanhas Cyan</span>
+        <div class="wallpaper-grid" id="wallpaperPicker">
+          <button type="button" class="wallpaper-thumb active" data-wp="/assets/images/wallpaper_01.jpg" aria-pressed="true">
+            <span class="wp-label">Montanhas</span>
           </button>
-          <button class="wallpaper-thumb" data-wp="radial-gradient(circle at 50% 50%, #164e63 0%, #0a0a0a 100%)">
+          <button type="button" class="wallpaper-thumb" data-wp="radial-gradient(circle at 50% 50%, #164e63 0%, #0a0a0a 100%)" aria-pressed="false">
             <span class="wp-label">Nebulosa RDA</span>
           </button>
-          <button class="wallpaper-thumb" data-wp="#0a0a0a">
+          <button type="button" class="wallpaper-thumb" data-wp="#0a0a0a" aria-pressed="false">
             <span class="wp-label">Obsidian Puro</span>
           </button>
         </div>
         <div class="custom-wp-row">
-          <input type="text" id="customWallpaperUrl" class="rda-input flex-1" placeholder="URL ou caminho VFS (/home/user/pictures/wallpaper.png)" />
-          <button id="applyCustomWallpaperBtn" class="rda-btn rda-btn-secondary">Aplicar</button>
+          <input type="text" id="customWallpaperUrl" class="flex-1 rda-input rda-input--md" placeholder="URL ou caminho VFS (/home/user/pictures/wallpaper.png)" />
+          <button id="applyCustomWallpaperBtn" class="rda-button rda-button--md" data-color="secondary">Aplicar</button>
         </div>
       </div>
 
@@ -106,16 +103,38 @@
         </div>
         <div class="setting-toggle-row">
           <div class="toggle-info">
-            <strong>Escala de Fonte da Interface</strong>
-            <p>Ajuste o tamanho do texto para conforto visual.</p>
+            <label for="selectFontScale" class="rda-select__label">Escala de Fonte da Interface</label>
+            <p id="fontScaleHint">Ajuste o tamanho do texto para conforto visual.</p>
           </div>
-          <select id="selectFontScale" class="rda-select">
-            <option value="compact">Compacto (85%)</option>
-            <option value="standard" selected>Padrão (100%)</option>
-            <option value="large">Grande (115%)</option>
-          </select>
+          <div class="rda-select settings-select">
+            <div class="rda-select__field-wrapper">
+              <select id="selectFontScale" class="rda-select__field rda-select__field--md" aria-describedby="fontScaleHint">
+                <option value="compact">Compacto (85%)</option>
+                <option value="standard" selected>Padrão (100%)</option>
+                <option value="large">Grande (115%)</option>
+              </select>
+              <span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+
+    <div id="panelWorkspace" class="settings-panel" style="display:none">
+      <div class="panel-header"><h2>Meu espaço</h2><p>Um jeito de navegar que combina com o seu ritmo.</p></div>
+      <div class="settings-card"><h3 class="card-heading">Aplicativos sempre à mão</h3><p class="card-subtext">Fixe seus favoritos pela estrela no menu de apps. A trilha também reúne as janelas em curso.</p>
+        <div class="setting-toggle-row"><div class="toggle-info"><label for="selectShellBar" class="rda-select__label">Barra de aplicativos</label><p>Flutuante e leve, ou alinhada à borda da tela.</p></div><div class="rda-select settings-select"><div class="rda-select__field-wrapper"><select id="selectShellBar" class="rda-select__field rda-select__field--md"><option value="floating">Trilha flutuante</option><option value="edge">Barra de borda</option></select><span class="rda-select__chevron"><rda-icon name="chevron-down"></rda-icon></span></div></div></div>
+        <div class="setting-toggle-row"><div class="toggle-info"><label for="selectShellLauncher" class="rda-select__label">Menu de aplicativos</label><p>Painel para explorar ou uma busca compacta.</p></div><div class="rda-select settings-select"><div class="rda-select__field-wrapper"><select id="selectShellLauncher" class="rda-select__field rda-select__field--md"><option value="atlas">Painel amplo</option><option value="compact">Lista compacta</option></select><span class="rda-select__chevron"><rda-icon name="chevron-down"></rda-icon></span></div></div></div>
+        <div class="setting-toggle-row"><div class="toggle-info"><label for="showTaskbarLabels">Mostrar nomes na barra</label><p>Exibe os nomes ao lado dos ícones. O padrão é só ícones.</p></div><input id="showTaskbarLabels" type="checkbox" class="rda-checkbox-native"></div>
+        <p class="card-subtext">Atalho: Ctrl + Espaço abre os apps. Esc volta ao que você estava fazendo.</p>
+      </div>
+      <div class="settings-card"><h3 class="card-heading">Um espaço pessoal</h3><label class="rda-label" for="workspaceDisplayName">Como quer ser chamado neste dispositivo?</label><input id="workspaceDisplayName" class="rda-input rda-input--md" maxlength="40" placeholder="Seu nome, se quiser"><div class="card-actions-row"><button id="reopenWelcomeBtn" type="button" class="rda-button rda-button--md" data-color="secondary"><rda-icon name="compass"></rda-icon> Reabrir boas-vindas</button></div></div>
+    </div>
+
+    <div id="panelWidgets" class="settings-panel" style="display:none">
+      <div class="panel-header"><h2>Widgets</h2><p>Informação por perto, sem ocupar o espaço das suas ideias.</p></div>
+      <div class="settings-card"><div class="setting-toggle-row"><div class="toggle-info"><label for="widgetsEnabled">Widgets na área de trabalho</label><p>Ao desativar, os widgets são encerrados. Suas escolhas de início ficam guardadas.</p></div><input id="widgetsEnabled" type="checkbox" class="rda-checkbox-native"></div><div id="widgetSettingsList" class="widget-settings-list"></div><p class="card-subtext">Carregar e ocultar valem para esta sessão. “Ao entrar” define o que será carregado na próxima vez.</p></div>
+      <div class="settings-card"><h3 class="card-heading">Traga algo seu</h3><p class="card-subtext">Importe um widget de notas ou uma coleção de links em JSON. Confira a prévia antes de adicionar.</p><label class="rda-label" for="widgetImportFile">Arquivo do widget</label><input id="widgetImportFile" type="file" accept=".json,application/json" class="rda-input rda-input--md"><div id="widgetImportPreview" class="widget-import-preview" hidden></div><label class="widget-startup-option" id="widgetImportStartupRow" hidden><input id="widgetImportStartup" type="checkbox" class="rda-checkbox-native" checked> Carregar ao entrar</label><div class="card-actions-row"><button id="confirmWidgetImport" type="button" class="rda-button rda-button--md" data-color="primary" hidden>Adicionar widget</button><button id="downloadWidgetExample" type="button" class="rda-button rda-button--md" data-color="secondary"><rda-icon name="download"></rda-icon> Baixar exemplo</button></div><p id="widgetSettingsStatus" role="status" class="card-subtext"></p></div>
     </div>
 
     <!-- Panel 2: Janelas & Desktop -->
@@ -153,13 +172,18 @@
         <h3 class="card-heading">Barra de Tarefas</h3>
         <div class="setting-toggle-row">
           <div class="toggle-info">
-            <strong>Posição da Barra</strong>
+            <label for="selectTaskbarPosition" class="rda-select__label">Posição da Barra</label>
             <p>Escolha a ancoragem principal da barra na área de trabalho.</p>
           </div>
-          <select id="selectTaskbarPosition" class="rda-select">
-            <option value="bottom" selected>Inferior (Padrão)</option>
-            <option value="top">Superior</option>
-          </select>
+          <div class="rda-select settings-select">
+            <div class="rda-select__field-wrapper">
+              <select id="selectTaskbarPosition" class="rda-select__field rda-select__field--md">
+                <option value="bottom" selected>Inferior (Padrão)</option>
+                <option value="top">Superior</option>
+              </select>
+              <span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span>
+            </div>
+          </div>
         </div>
         <div class="setting-toggle-row">
           <div class="toggle-info">
@@ -207,16 +231,16 @@
         <div class="form-row">
           <div class="form-group flex-1">
             <label for="inputMinioUrl">Endpoint S3 / MinIO</label>
-            <input type="text" id="inputMinioUrl" class="rda-input" value="http://localhost:9000" />
+            <input type="text" id="inputMinioUrl" class="rda-input rda-input rda-input--md" value="http://localhost:9000" />
           </div>
           <div class="form-group flex-1">
             <label for="inputMinioBucket">Bucket</label>
-            <input type="text" id="inputMinioBucket" class="rda-input" value="unkayos-storage" />
+            <input type="text" id="inputMinioBucket" class="rda-input rda-input rda-input--md" value="unkayos-storage" />
           </div>
         </div>
         <div class="card-actions-row">
-          <button id="syncMinioNowBtn" class="rda-btn rda-btn-primary">
-            <span>🔄</span> Sincronizar Agora
+          <button id="syncMinioNowBtn" class="rda-button rda-button--md" data-color="primary">
+            <span><rda-icon name="refresh-cw"></rda-icon></span> Sincronizar Agora
           </button>
         </div>
       </div>
@@ -224,11 +248,11 @@
       <div class="settings-card">
         <h3 class="card-heading">Manutenção & Backup</h3>
         <div class="backup-actions-grid">
-          <button id="exportBackupBtn" class="rda-btn rda-btn-secondary">
-            <span>💾</span> Exportar Backup do VFS (JSON)
+          <button id="exportBackupBtn" class="rda-button rda-button--md" data-color="secondary">
+            <span><rda-icon name="save"></rda-icon></span> Exportar Preferências e Perfil (JSON)
           </button>
-          <button id="cleanTmpBtn" class="rda-btn rda-btn-secondary">
-            <span>🧹</span> Limpar Arquivos Temporários (/tmp)
+          <button id="cleanTmpBtn" class="rda-button rda-button--md" data-color="secondary">
+            <span><rda-icon name="brush-cleaning"></rda-icon></span> Limpar Arquivos Temporários (/tmp)
           </button>
         </div>
       </div>
@@ -279,8 +303,8 @@
         </div>
 
         <div class="card-actions-row">
-          <button id="checkServicesHealthBtn" class="rda-btn rda-btn-secondary">
-            <span>⚡</span> Testar Conectividade Novamente
+          <button id="checkServicesHealthBtn" class="rda-button rda-button--md" data-color="secondary">
+            <span><rda-icon name="zap"></rda-icon></span> Testar Conectividade Novamente
           </button>
         </div>
       </div>
@@ -341,9 +365,9 @@
 
       <div class="settings-card text-center">
         <div class="about-hero">
-          <div class="about-logo">🌐</div>
+          <div class="about-logo"><rda-icon name="globe"></rda-icon></div>
           <h1 class="about-title">unkayOS 2.0</h1>
-          <span class="about-badge">v2.0.0-alpha.1 • Hybrid Architecture</span>
+          <span class="about-badge" data-system-version></span>
           <p class="about-desc">
             Sistema operacional web completo baseado em WebAssembly, Rust VFS com persistência OPFS, 
             e componentes nativos do RDA Design System (§3.2 Identidade Cyan).
@@ -370,9 +394,10 @@
         </div>
 
         <div class="about-actions">
-          <button id="checkUpdatesBtn" class="rda-btn rda-btn-primary">Verificar Atualizações</button>
+          <button id="checkUpdatesBtn" class="rda-button rda-button--md" data-color="primary">Informações da versão</button>
           <button id="resetAllSettingsBtn" class="rda-btn rda-btn-danger">Restaurar Padrões de Fábrica</button>
         </div>
+        <section class="system-release-notes" data-release-notes aria-label="Histórico de versões"></section>
       </div>
     </div>
   </main>

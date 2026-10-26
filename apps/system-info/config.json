@@ -9,5 +9,8 @@
   "hidden": true,
   "position": "top-right",
   "width": "250px",
-  "height": "120px"
-} 
+  "height": "120px",
+  "icon_name": "monitor",
+  "widget": true,
+  "description": "Atividade e tempo de sessão do sistema."
+}

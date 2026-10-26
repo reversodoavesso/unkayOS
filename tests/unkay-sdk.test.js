@@ -2,6 +2,19 @@ import { describe, it, expect, vi } from 'vitest';
 import { createUnkaySDK } from '../core/sdk/unkay.js';
 
 describe('unkayOS 2.0 Unified SDK', () => {
+    it('reads Zitadel role maps and attaches the actual session token to AI requests', async () => {
+        const sdk = createUnkaySDK(null, { getSystem: () => ({
+            getCurrentUser: () => ({ 'urn:zitadel:iam:org:project:roles': { sysadmin: {} } }),
+            getAuthToken: () => 'session-token'
+        }) });
+        expect(sdk.auth.getTier()).toBe('sysadmin');
+        const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ content: 'Response' }) });
+        vi.stubGlobal('fetch', fetchMock);
+        try {
+            await sdk.ai.prompt([{ role: 'user', content: 'Generate UI' }]);
+            expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer session-token');
+        } finally { vi.unstubAllGlobals(); }
+    });
     it('should determine access tier correctly from user roles', () => {
         const mockAuthSystemGuest = {
             getCurrentUser: () => null

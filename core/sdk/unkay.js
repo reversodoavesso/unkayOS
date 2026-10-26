@@ -1,7 +1,7 @@
 // core/sdk/unkay.js - unkayOS 2.0 Unified SDK
 // Standard application interface inspired by puter.js and customized for RDA ecosystem
 
-import { wasmFileSystem, wasmFs } from '../WasmFileSystem.js';
+import { wasmFileSystem } from '../WasmFileSystem.js';
 
 export function createUnkaySDK(appCore = null, systemManager = null) {
     const getAuth = () => systemManager?.getSystem('authSystem') || (typeof window !== 'undefined' ? window.authSystem : null);
@@ -21,7 +21,8 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                 const authSystem = getAuth();
                 const user = authSystem?.getCurrentUser?.();
                 if (!user) return 'guest';
-                const roles = user.roles || user['urn:zitadel:iam:org:project:roles'] || [];
+                const claims = user.roles || user['urn:zitadel:iam:org:project:roles'] || [];
+                const roles = Array.isArray(claims) ? claims : Object.keys(claims);
                 if (roles.includes('demiurge')) return 'demiurge';
                 if (roles.includes('sysadmin') || roles.includes('architect')) return 'sysadmin';
                 if (roles.includes('standard') || roles.includes('initiate')) return 'standard';
@@ -94,7 +95,7 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
         ai: {
             async prompt(messages) {
                 // Calls RDA AI Gateway proxy (/api/v1/ai/chat)
-                const token = this.auth?.getToken?.();
+                const token = getAuth()?.getAuthToken?.();
                 const headers = { 'Content-Type': 'application/json' };
                 if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -112,7 +113,7 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
             },
 
             async stream(messages, onChunk) {
-                const token = this.auth?.getToken?.();
+                const token = getAuth()?.getAuthToken?.();
                 const headers = { 'Content-Type': 'application/json' };
                 if (token) headers['Authorization'] = `Bearer ${token}`;
 

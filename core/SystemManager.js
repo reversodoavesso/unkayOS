@@ -169,6 +169,7 @@ export class SystemManager {
         
         // AuthSystem
         this.systems.authSystem = new AuthSystem();
+        await this.systems.authSystem.ready;
         await this._waitForSystemReady('authSystem');
         
         console.log('[SystemManager] Fase 2 concluída');
@@ -216,7 +217,7 @@ export class SystemManager {
         console.log('[SystemManager] Fase 4: Iniciando apps autorun');
         
         // Inicia apps que devem executar automaticamente
-        this.systems.appManager.initAutorunApps();
+        await this.systems.appManager.initAutorunApps();
 
         // Inicializa suporte a arrastar arquivos do sistema operacional para o desktop
         if (this.config.desktop) {

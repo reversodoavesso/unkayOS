@@ -3,6 +3,7 @@
 
 import { BaseApp } from '../../core/BaseApp.js';
 import { unkay } from '../../core/sdk/unkay.js';
+import { iconMarkup } from '../../core/ui/designSystem.js';
 
 export default class StoreApp extends BaseApp {
     constructor(CORE, standardAPIs) {
@@ -71,7 +72,7 @@ export default class StoreApp extends BaseApp {
                 appType: "native",
                 runtimeProfile: "client-only",
                 requiredTier: "guest",
-                icon: "✨",
+                icon: "sparkles",
                 version: "2.0.0",
                 permissions: ["storage:local", "ai:generate"]
             },
@@ -85,7 +86,7 @@ export default class StoreApp extends BaseApp {
                 appType: "native",
                 runtimeProfile: "containerized",
                 requiredTier: "sysadmin",
-                icon: "⚡",
+                icon: "zap",
                 version: "2.0.0",
                 permissions: ["compute:websocket", "auth:stepup-mfa"]
             },
@@ -99,7 +100,7 @@ export default class StoreApp extends BaseApp {
                 appType: "native",
                 runtimeProfile: "client-only",
                 requiredTier: "guest",
-                icon: "🗄️",
+                icon: "hard-drive",
                 version: "1.0.0",
                 permissions: ["storage:local", "compute:wasm"]
             },
@@ -113,7 +114,7 @@ export default class StoreApp extends BaseApp {
                 appType: "native",
                 runtimeProfile: "client-only",
                 requiredTier: "guest",
-                icon: "📋",
+                icon: "clipboard-list",
                 version: "1.1.0",
                 permissions: ["storage:local"]
             }
@@ -165,13 +166,13 @@ export default class StoreApp extends BaseApp {
     getProfileBadge(profile) {
         switch (profile) {
             case 'client-only':
-                return '<span class="profile-badge profile-client-only">🟢 100% Offline / Standalone</span>';
+                return "<span class=\"profile-badge profile-client-only\"><rda-icon name=\"monitor\"></rda-icon> 100% Offline / Standalone</span>";
             case 'client-server':
-                return '<span class="profile-badge profile-client-server">🔵 Nuvem RDA</span>';
+                return "<span class=\"profile-badge profile-client-server\"><rda-icon name=\"cloud\"></rda-icon> Nuvem RDA</span>";
             case 'containerized':
-                return '<span class="profile-badge profile-containerized">🟣 Compute Dedicado</span>';
+                return "<span class=\"profile-badge profile-containerized\"><rda-icon name=\"cpu\"></rda-icon> Compute Dedicado</span>";
             case 'external-gateway':
-                return '<span class="profile-badge profile-external-gateway">🟡 Integração Externa</span>';
+                return "<span class=\"profile-badge profile-external-gateway\"><rda-icon name=\"external-link\"></rda-icon> Integração Externa</span>";
             default:
                 return `<span class="profile-badge">${profile}</span>`;
         }
@@ -203,7 +204,7 @@ export default class StoreApp extends BaseApp {
         if (filtered.length === 0) {
             grid.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;">
-                    <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
+                    <div style="font-size: 32px; margin-bottom: 8px;"><rda-icon name="package"></rda-icon></div>
                     <p style="margin: 0; font-size: 14px;">Nenhum aplicativo encontrado com os filtros atuais.</p>
                 </div>
             `;
@@ -215,7 +216,7 @@ export default class StoreApp extends BaseApp {
             return `
                 <div class="app-card" data-app-id="${app.id}">
                     <div class="card-top">
-                        <div class="card-icon">${app.icon || '📦'}</div>
+                        <div class="card-icon">${iconMarkup(app.iconName || app.icon || 'package')}</div>
                         <div class="card-title">
                             <h3>${app.name}</h3>
                             <span class="author">${app.authorName || 'Comunidade RDA'} • v${app.version || '1.0.0'}</span>
@@ -226,7 +227,7 @@ export default class StoreApp extends BaseApp {
                     <div class="card-bottom">
                         <span style="font-size: 11px; color: #64748b;">Tier: ${app.requiredTier || 'guest'}</span>
                         <button class="install-btn ${isInstalled ? 'installed' : ''}" data-action="install" data-app-id="${app.id}">
-                            ${isInstalled ? '✓ Instalado' : 'Instalar'}
+                            ${isInstalled ? " Instalado" : 'Instalar'}
                         </button>
                     </div>
                 </div>
@@ -277,7 +278,7 @@ export default class StoreApp extends BaseApp {
             } catch {}
 
             this.installedAppIds.add(appId);
-            btn.textContent = '✓ Instalado';
+            btn.textContent = " Instalado";
             btn.className = 'install-btn installed';
             btn.disabled = false;
             console.log(`[Marketplace] Aplicativo ${appItem.name} instalado com sucesso em ${appPath}`);
@@ -299,7 +300,7 @@ export default class StoreApp extends BaseApp {
 
         body.innerHTML = `
             <div style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px;">
-                <div style="font-size: 36px; background: #0f172a; padding: 12px; border-radius: 10px;">${appItem.icon || '📦'}</div>
+                <div style="font-size: 36px; background: #0f172a; padding: 12px; border-radius: 10px;">${appItem.icon || "package"}</div>
                 <div>
                     <h2 style="margin: 0 0 4px 0; font-size: 18px; color: #f8fafc;">${appItem.name}</h2>
                     <span style="font-size: 12px; color: #94a3b8;">Por ${appItem.authorName || 'Comunidade RDA'} • Versão ${appItem.version || '1.0.0'}</span>
@@ -313,7 +314,7 @@ export default class StoreApp extends BaseApp {
             </div>
             <div style="display: flex; justify-content: flex-end;">
                 <button class="install-btn ${isInstalled ? 'installed' : ''}" id="modalInstallBtn">
-                    ${isInstalled ? '✓ Instalado' : 'Instalar no unkayOS'}
+                    ${isInstalled ? " Instalado" : 'Instalar no unkayOS'}
                 </button>
             </div>
         `;

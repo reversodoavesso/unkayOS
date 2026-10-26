@@ -8,5 +8,7 @@
   "autorun": false,
   "hidden": false,
   "width": "600px",
-  "height": "400px"
+  "height": "400px",
+  "icon_name": "activity",
+  "short_name": "Processos"
 }

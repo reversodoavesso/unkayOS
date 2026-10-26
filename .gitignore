@@ -36,3 +36,10 @@ coverage/
 # IDE and tool configs
 .kiro/
 .vscode/
+
+# Generated from the pinned DOMPurify package by sync:vendor.
+core/vendor/
+review-*.log
+review-*.json
+
+/public/build-info.json

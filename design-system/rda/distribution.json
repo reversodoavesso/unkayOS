@@ -1,0 +1,21 @@
+{
+  "package": "@reversodoavesso/design-system",
+  "version": "3.5.0",
+  "sourceSha256": "8d301faf873cdc6ce15ca7e98b1a0f3e37129d518a578741a5bbf4828fd489d8",
+  "files": {
+    "design-system.css": "712b684b3e1e1d9857204b4ea9c99beb3fb0e8f4bc8eeaf22fa97a088beb1f2b",
+    "unkayos.css": "57db6daf9dd1e1a1131d27a8539db2267e1a3759080629b0a7492aaa4e83d5b5",
+    "web/icons.js": "c05f2e508ca75554edda29077326eb9d6d5e8a4f96bf1a99451ea199e85bf9e1",
+    "web/icons.js.map": "4571d7aa7666a39cbb64ebc5b31205955495d96a5f56ab118e60ec2f88514e17",
+    "components/Icon/icons-data.js": "94b1ffcf397bbc7d5b6feda334974c6371d24cba7941a4d593bc8007efedd54f",
+    "components/Icon/icons-data.js.map": "e9bb649fdd40c1cca2712bfeecbd88953488e36de805869ca7c4d5b64e85393a",
+    "accents.js": "48c87df037b64ec4533cb0721e053f45a89a9f88a351c8531b072ab0317b0ca2",
+    "icons/sprite.svg": "ed98b541641c4d6f38e5e3addf71b99ef5c48782dfd62998d0403723c2aca07e",
+    "icons/manifest.json": "07ccea5947e4222e14660daf4e538ef193a9a6b0717f83c12b1b7ca89dc0d162",
+    "icons/guidelines.json": "6f6f4a0e1ebb6c2df3fb1a0430cda1c74cb4421e155fa2e33499533987d27803",
+    "icons/LICENSE-lucide.txt": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
+    "tools/icon-author.mjs": "42bcca75f17f9903b8b632105c04d3f0c7465d4d7a75c499ec09049d13eab9aa",
+    "tools/lib/icon-authoring.mjs": "8cec773bbf7cb0b625ee657a1004e8a80f5c359dbcfe0ceaeed69221542ece43",
+    "tools/lib/icon-authoring.d.mts": "9972d550a1db2eb39820b8d0db6946d5e26a1e190fe33b30ad2ebfd6d3f42528"
+  }
+}

@@ -43,6 +43,7 @@ export class LoadingManager {
         }
 
         const state = this.loadingStates.get(instanceId);
+        state.isLoading = true;
         state.resources.set(resourceType, {
             status: 'loading',
             url: resourceUrl,
@@ -86,18 +87,9 @@ export class LoadingManager {
                 state.isLoading = false;
                 state.totalLoadTime = performance.now() - state.startTime;
                 
-                setTimeout(() => {
-                    eventBus.emit('loading:complete', {
-                        instanceId,
-                        loadTime: state.totalLoadTime,
-                        stats: this.getLoadingStats(instanceId)
-                    });
-                    
-                    // Remove o estado após um tempo para limpeza de memória
-                    setTimeout(() => {
-                        this.loadingStates.delete(instanceId);
-                    }, 5000);
-                }, 500); // Pequeno delay para mostrar o 100%
+                eventBus.emit('loading:complete', {
+                    instanceId, loadTime: state.totalLoadTime, stats: this.getLoadingStats(instanceId)
+                });
             }
 
             eventBus.emit('loading:state:changed', {
@@ -106,7 +98,7 @@ export class LoadingManager {
             });
         }
 
-        console.log(`[LoadingManager] Loading de ${resourceType} concluído para ${instanceId}`);
+        if (state && !state.isLoading) this.loadingStates.delete(instanceId);
     }
 
     errorLoading(instanceId, error, resourceType) {
@@ -187,6 +179,8 @@ export class LoadingManager {
         }
         return 'Finalizando...';
     }
+
+    clearInstance(instanceId) { this.loadingStates.delete(instanceId); }
 
     // Método para pré-carregar recursos
     async preloadResource(url, type = 'generic') {

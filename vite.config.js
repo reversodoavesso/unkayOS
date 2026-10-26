@@ -85,6 +85,11 @@ export default {
   },
   appType: 'mpa',
   server: {
+    proxy: {
+      '/api/proxy': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', changeOrigin: true },
+      '/api/compute/health': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', rewrite: () => '/health' },
+      '/ws/browser': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', ws: true }
+    },
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'credentialless'
