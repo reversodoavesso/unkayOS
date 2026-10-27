@@ -1,12 +1,12 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const auth = vi.hoisted(() => ({getTier:vi.fn(),getToken:vi.fn()}));
+const auth = vi.hoisted(() => ({getTier:vi.fn(),getToken:vi.fn(),getUser:vi.fn()}));
 vi.mock('../core/sdk/unkay.js', () => ({ unkay: { auth } }));
 import { ComputeBridge } from '../apps/terminal/compute-bridge.js';
 
 describe('canonical compute authorization bridge', () => {
   const ticket = '11111111-1111-4111-8111-111111111111';
-  beforeEach(() => {auth.getTier.mockReturnValue('sysadmin');auth.getToken.mockReturnValue('synthetic-bearer');});
+  beforeEach(() => {auth.getTier.mockReturnValue('sysadmin');auth.getToken.mockReturnValue('synthetic-bearer');auth.getUser.mockReturnValue({sub:'owner-a'});});
   afterEach(() => {vi.useRealTimers();vi.unstubAllGlobals();});
   it('denies guest and standard users before requesting a ticket', async () => {
     const fetch=vi.fn(),writeLine=vi.fn();vi.stubGlobal('fetch',fetch);
@@ -64,5 +64,14 @@ describe('canonical compute authorization bridge', () => {
     const connecting=bridge.connect({writeLine:vi.fn(),confirmCompute:()=>new Promise(done=>{resolve=done;})});
     bridge.disconnect();resolve('retained');await connecting;
     expect(fetch).not.toHaveBeenCalled();expect(bridge.isConnected).toBe(false);
+  });
+  it('disconnects on account switches even if both accounts have the same privileged tier',async()=>{
+    const fetch=vi.fn().mockResolvedValue(Response.json({ticket,success:true}));vi.stubGlobal('fetch',fetch);
+    let socket;vi.stubGlobal('WebSocket',class {static OPEN=1;constructor(){this.readyState=1;socket=this;}close(){}});
+    const bridge=new ComputeBridge();await bridge.connect({writeLine:vi.fn(),confirmCompute:async()=> 'retained'});
+    socket.onmessage({data:JSON.stringify({type:'ready',sessionId:'synthetic'})});
+    expect(bridge.disconnectIfIdentityChanged()).toBe(false);
+    auth.getUser.mockReturnValue({sub:'owner-b'});
+    expect(bridge.disconnectIfIdentityChanged()).toBe(true);expect(bridge.isConnected).toBe(false);expect(bridge.ownerId).toBeNull();
   });
 });

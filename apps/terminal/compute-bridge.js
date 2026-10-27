@@ -3,6 +3,7 @@
 
 import { unkay } from '../../core/sdk/unkay.js';
 const escapeText = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+const ownerKey = user => user?.platform_user_id || user?.platformUserId || user?.id || user?.sub || null;
 
 export class ComputeBridge {
     constructor({ onStateChange = () => {} } = {}) {
@@ -15,6 +16,7 @@ export class ComputeBridge {
         this.abortController = null;
         this.terminal = null;
         this.generation = 0;
+        this.ownerId = null;
     }
 
     /**
@@ -41,6 +43,7 @@ export class ComputeBridge {
             return;
         }
         this.terminal = terminal;
+        this.ownerId=ownerKey(unkay.auth.getUser?.());
         const generation=++this.generation;
         this.abortController=new AbortController();
         const requestController=this.abortController;
@@ -125,6 +128,11 @@ export class ComputeBridge {
         }
     }
 
+    disconnectIfIdentityChanged() {
+        if(this.ownerId && ownerKey(unkay.auth.getUser?.())!==this.ownerId){this.disconnect();return true;}
+        return false;
+    }
+
     disconnect() {
         const socket = this.ws;
         this.cleanup();
@@ -133,6 +141,7 @@ export class ComputeBridge {
 
     cleanup() {
         this.generation++;
+        this.ownerId=null;
         if (this.readyTimer) clearTimeout(this.readyTimer);
         this.readyTimer = null;
         this.isConnected = false;

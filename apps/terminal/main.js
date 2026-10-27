@@ -219,6 +219,10 @@ export default class TerminalApp extends BaseApp {
         if (api && typeof api.on === 'function') {
             this._authChangeHandler = () => {
                 this.computeSetupController?.abort();
+                if(this.computeBridge.disconnectIfIdentityChanged()){
+                    this.clearTerminal();this.commandHistory=[];this.historyIndex=-1;
+                    this.writeLine('Conta alterada. O ambiente remoto anterior foi desconectado. Conecte novamente com sua conta.', 'system');
+                }
                 const auth = this.unkay?.auth;
                 if (!auth?.getToken() || !['sysadmin','demiurge'].includes(auth.getTier())) this.computeBridge.disconnect();
                 this.updatePrompt();

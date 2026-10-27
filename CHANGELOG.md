@@ -2,6 +2,13 @@
 
 O contador de releases começa em 1 com a versão 2.0.0-alpha.2. Builds da mesma versão preservam o número; cada release preparada incrementa o contador.
 
+## 2.0.0-alpha.9 · Release 8 · 2026-10-27
+
+Compute vinculado à identidade da sessão
+
+- A troca de conta desconecta o Compute e limpa a saída do terminal anterior, inclusive entre contas com o mesmo perfil privilegiado.
+- A confirmação de conexão, o workspace preservado e os limites de recursos continuam disponíveis para a conta autorizada.
+
 ## 2.0.0-alpha.8 · Release 7 · 2026-10-27
 
 Compute com confirmação e workspace preservado

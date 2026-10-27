@@ -2,6 +2,16 @@
   "schemaVersion": 1,
   "releases": [
     {
+      "version": "2.0.0-alpha.9",
+      "number": 8,
+      "date": "2026-10-27",
+      "title": "Compute vinculado à identidade da sessão",
+      "changes": [
+        "A troca de conta desconecta o Compute e limpa a saída do terminal anterior, inclusive entre contas com o mesmo perfil privilegiado.",
+        "A confirmação de conexão, o workspace preservado e os limites de recursos continuam disponíveis para a conta autorizada."
+      ]
+    },
+    {
       "version": "2.0.0-alpha.8",
       "number": 7,
       "date": "2026-10-27",
