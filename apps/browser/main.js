@@ -50,6 +50,7 @@ export default class TheOrbApp extends BaseApp {
     socketUrl.protocol = socketUrl.protocol === 'https:' ? 'wss:' : 'ws:';
     this.rbiWsUrl = socketUrl.href;
     this.rbiSocket = null;
+    this.proxySessionExpiresAt = 0;
     this.fileSystem = this.wasmFileSystem || this.fileSystem;
 
     // Domínios conhecidos com proteção anti-framing estrita (X-Frame-Options)
@@ -63,8 +64,7 @@ export default class TheOrbApp extends BaseApp {
       'instagram.com',
       'linkedin.com',
       'reddit.com',
-      'notion.so',
-      'youtube.com'
+      'notion.so'
     ];
 
     // Bindings de manipuladores
@@ -94,6 +94,7 @@ export default class TheOrbApp extends BaseApp {
     this.newTabBtn = this.$('#newTabBtn');
     this.readerModeBtn = this.$('#readerModeBtn');
     this.saveClipBtn = this.$('#saveClipBtn');
+    this.openExternalBtn = this.$('#openExternalBtn');
     this.browserTierBadge = this.$('#browserTierBadge');
     this.tabsContainer = this.$('#tabsContainer');
 
@@ -125,6 +126,10 @@ export default class TheOrbApp extends BaseApp {
     this.detectUserTier();
     this.authChanged = () => {
       this.detectUserTier();
+      this.proxySessionExpiresAt = 0;
+      if (this.currentTier === 'guest') {
+        void fetch(new URL('/api/proxy/session', window.location.origin), { method: 'DELETE' }).catch(() => {});
+      }
       const tab = this.getActiveTab();
       if (tab?.url) this.routeByTier(tab.url);
     };
@@ -203,7 +208,7 @@ export default class TheOrbApp extends BaseApp {
         bannerDesc.textContent = 'Navegação contínua com Streaming Proxy, contornando X-Frame-Options e CSP sem consumo excessivo de RAM no servidor.';
       } else {
         bannerTitle.textContent = 'Modo Convidado (Guest) Ativo';
-        bannerDesc.textContent = 'Sites que proíbem frames externos abrem em Modo Leitor RDA ou no navegador hospedeiro. Faça login para Streaming Proxy completo.';
+        bannerDesc.textContent = 'A navegação Guest abre sites compatíveis diretamente. Sites que bloqueiam quadros oferecem Modo Leitor RDA ou abertura no navegador hospedeiro.';
       }
     }
   }
@@ -230,6 +235,10 @@ export default class TheOrbApp extends BaseApp {
     if (this.newTabBtn) this.newTabBtn.addEventListener('click', this.handleNewTabClick);
     if (this.readerModeBtn) this.readerModeBtn.addEventListener('click', this.handleReaderToggle);
     if (this.saveClipBtn) this.saveClipBtn.addEventListener('click', this.handleSaveClip);
+    if (this.openExternalBtn) this.openExternalBtn.addEventListener('click', () => {
+      const activeTab = this.getActiveTab();
+      if (activeTab?.url) window.open(activeTab.url, '_blank', 'noopener,noreferrer');
+    });
 
     // Ações do Fallback Card
     if (this.openExternalTabBtn) {
@@ -426,6 +435,10 @@ export default class TheOrbApp extends BaseApp {
       }
     });
 
+    if (viewName !== 'proxy' && this.browserProxyIframe) {
+      this.browserProxyIframe.removeAttribute('src');
+    }
+
     const activeTab = this.getActiveTab();
     if (activeTab) {
       activeTab.view = viewName;
@@ -513,25 +526,71 @@ export default class TheOrbApp extends BaseApp {
         this.switchView('fallback');
         return;
       }
-    }
 
-    // 2. STANDARD / SYSADMIN TIER: Utiliza Streaming Proxy
-    if (this.currentTier === 'standard' || this.currentTier === 'sysadmin') {
-      const proxyUrl = `${this.proxyServiceUrl}?url=${encodeURIComponent(url)}`;
-
-      if (this.browserProxyIframe) {
-        this.browserProxyIframe.src = proxyUrl;
-      }
+      // Guest browsing is direct so ordinary pages do not depend on a server proxy.
+      if (this.browserProxyIframe) this.browserProxyIframe.src = this.getGuestEmbedUrl(url) || url;
       this.switchView('proxy');
       return;
     }
 
-    // Se for guest mas o site não for anti-framing restrito, tenta iframe ou fallback
-    const proxyUrl = `${this.proxyServiceUrl}?url=${encodeURIComponent(url)}`;
-    if (this.browserProxyIframe) {
-      this.browserProxyIframe.src = proxyUrl;
+    // 2. STANDARD / SYSADMIN TIER: Utiliza Streaming Proxy
+    if (this.currentTier === 'standard' || this.currentTier === 'sysadmin') {
+      this.switchView('proxy');
+      if (this.browserProxyIframe) this.browserProxyIframe.removeAttribute('src');
+      const tab = this.getActiveTab();
+      void this.loadMemberProxy(url, tab?.id);
+      return;
     }
+
+    if (this.browserProxyIframe) this.browserProxyIframe.src = this.getGuestEmbedUrl(url) || url;
     this.switchView('proxy');
+  }
+
+  getGuestEmbedUrl(url) {
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+      let videoId = '';
+      if (host === 'youtu.be') videoId = parsed.pathname.split('/').filter(Boolean)[0] || '';
+      else if (host === 'youtube.com' || host === 'm.youtube.com') {
+        if (parsed.pathname === '/watch') videoId = parsed.searchParams.get('v') || '';
+        else if (/^\/(?:shorts|embed|live)\//.test(parsed.pathname)) videoId = parsed.pathname.split('/')[2] || '';
+      }
+      return /^[\w-]{11}$/.test(videoId)
+        ? 'https://www.youtube-nocookie.com/embed/' + videoId
+        : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async ensureProxySession() {
+    if (this.proxySessionExpiresAt > Date.now() + 15_000) return;
+    const token = this.standardAPIs.auth?.getAuthToken?.() || this.unkay?.auth?.getToken?.();
+    if (!token) throw new Error('Entre com uma conta para usar o Streaming Proxy.');
+    const response = await fetch(new URL('/api/proxy/session', window.location.origin), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Não foi possível iniciar a sessão segura do proxy.');
+    const session = await response.json();
+    this.proxySessionExpiresAt = Number(session.expiresAt) || Date.now() + 5 * 60 * 1000;
+  }
+
+  async loadMemberProxy(url, tabId) {
+    try {
+      await this.ensureProxySession();
+      const tab = this.getActiveTab();
+      if (!['standard', 'sysadmin'].includes(this.currentTier) ||
+          !tab || tab.id !== tabId || tab.url !== url || tab.view !== 'proxy') return;
+      if (this.browserProxyIframe) {
+        this.browserProxyIframe.src = `${this.proxyServiceUrl}?url=${encodeURIComponent(url)}&_t=${Date.now()}`;
+      }
+    } catch (error) {
+      if (!['standard', 'sysadmin'].includes(this.currentTier) || this.getActiveTab()?.id !== tabId) return;
+      if (this.browserProxyIframe) this.browserProxyIframe.removeAttribute('src');
+      this.showToast(error.message || 'Falha ao iniciar a navegação protegida.');
+    }
   }
 
   /**
@@ -546,8 +605,11 @@ export default class TheOrbApp extends BaseApp {
     if (this.readerArticleTitle) this.readerArticleTitle.textContent = 'Carregando modo leitor...';
     if (this.readerArticleBody) this.readerArticleBody.textContent = 'Extraindo conteúdo...';
     try {
-      const res = await fetch(`${this.proxyServiceUrl}?url=${encodeURIComponent(url)}`, { signal: controller.signal });
+      const readerUrl = new URL('/api/reader', window.location.origin);
+      readerUrl.searchParams.set('url', url);
+      const res = await fetch(readerUrl, { signal: controller.signal });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const finalUrl = res.headers.get('X-Orb-Final-URL') || url;
       const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
       if (controller.signal.aborted || this.getActiveTab() !== tab || tab?.url !== url || tab.view !== 'reader') return;
       const title = doc.querySelector('title, h1')?.textContent || this.getHostname(url);
@@ -557,7 +619,7 @@ export default class TheOrbApp extends BaseApp {
       doc.querySelectorAll('p, h2, h3, h4, blockquote, pre, img').forEach(node => {
         if (node.tagName === 'IMG') {
           try {
-            const src = new URL(node.getAttribute('src') || '', url);
+            const src = new URL(node.getAttribute('src') || '', finalUrl);
             if (!['http:', 'https:'].includes(src.protocol)) return;
             const image = document.createElement('img');
             image.src = src.href;
@@ -629,7 +691,9 @@ ${content}
       .replace(/-+/g, '-')
       .slice(0, 40) || 'artigo';
 
-    const targetDir = '/home/user/documents/web-clips';
+    const targetDir = this.currentTier === 'guest'
+      ? '/home/guest/Documents/web-clips'
+      : '/home/user/documents/web-clips';
     const targetFile = `${targetDir}/${slug}.md`;
 
     try {
@@ -748,7 +812,7 @@ ${content}
     const activeTab = this.getActiveTab();
     if (activeTab?.url) {
       if (activeTab.view === 'proxy' && this.browserProxyIframe) {
-        this.browserProxyIframe.src = `${this.proxyServiceUrl}?url=${encodeURIComponent(activeTab.url)}&_t=${Date.now()}`;
+        this.routeByTier(activeTab.url);
       } else if (activeTab.view === 'reader') {
         this.loadReaderMode(activeTab.url);
       }

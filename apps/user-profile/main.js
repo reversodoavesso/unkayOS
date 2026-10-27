@@ -440,7 +440,10 @@ export default class UserProfileApp extends BaseApp {
         const homeList = await this.fileSystem.readdir('/home/user') || [];
         filesCount = homeList.length;
 
-        const clipsList = await this.fileSystem.readdir('/home/user/documents/web-clips') || [];
+        const clipPath = this.userData.tier === 'guest'
+          ? '/home/guest/Documents/web-clips'
+          : '/home/user/documents/web-clips';
+        const clipsList = await this.fileSystem.readdir(clipPath) || [];
         webClipsCount = clipsList.length;
       }
     } catch (_) {}

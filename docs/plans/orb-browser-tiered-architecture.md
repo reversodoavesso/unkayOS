@@ -36,17 +36,18 @@ O Orb Browser v2.0 detecta a identidade e o tier do usuário via `unkay.auth.get
 ### Camada 1: Visitante / Guest (Zero Custo de Servidor)
 * **Objetivo**: Garantir leitura, documentação e multimídia integrada sem consumir RAM do servidor nem sofrer com telas brancas de erro.
 * **Mecanismos**:
-  1. **Modo Leitor RDA (Client Wasm)**: Extrator de conteúdo baseado no algoritmo Readability, formatado com tokens do RDA DS (`#0a0a0a`, Archivo, Inter, Cyan).
-  2. **Exportação VFS**: Salva artigos, páginas e notas com 1 clique em Markdown em `/home/user/documents/web-clips/`.
-  3. **OEmbed Seguro**: Embed nativo de YouTube, Vimeo, CodePen, Soundcloud, etc.
-  4. **Fallback Card RDA**: Quando o site proíbe framing (ex.: Google/GitHub), exibe um card nativo com opção de abrir em nova aba externa ou alternar para o Modo Leitor.
+  1. **Navegação direta**: Abre no iframe isolado os sites que permitem incorporação; vídeos do YouTube usam o player youtube-nocookie.
+  2. **Modo Leitor RDA**: Extrai texto pelo endpoint de leitura, que só aceita destinos HTTP(S) públicos, revalida redirecionamentos, limita duração e tamanho da resposta, aplica limite de requisições e não interpreta o HTML capturado como código da aplicação.
+  3. **Exportação VFS**: Salva Web Clips em Markdown. No Guest, usa `/home/guest/Documents/web-clips/`; em perfis autenticados, mantém `/home/user/documents/web-clips/`.
+  4. **Fallback Card RDA**: Quando o site bloqueia incorporação (ex.: Google/GitHub), oferece o Modo Leitor e a abertura no navegador hospedeiro.
 
 ### Camada 2: Membro Standard Autenticado (`auth:session`)
 * **Objetivo**: Navegação web funcional sem bloqueios de `X-Frame-Options` e CSP.
 * **Mecanismo**: **Streaming Reverse Proxy** no `compute-service` (`/api/proxy?url=...`):
+  * O iframe recebe uma sessão curta emitida após validação do token do usuário; Guest só pode chamar o modo leitor limitado.
   * O servidor apenas faz o repasse de tráfego HTTP/HTTPS.
-  * Remove cabeçalhos restritivos (`X-Frame-Options`, `Content-Security-Policy`).
-  * Injeta `<base href="...">` e reescreve links relativos.
+  * Aceita somente hosts públicos nas portas 80/443, revalida redirecionamentos e limita tempo e tamanho da resposta.
+  * Remove políticas de frame e injeta `<base href="...">` usando a URL final após redirecionamentos.
   * Consumo insignificante (~20 KB de RAM por conexão, sem rodar Chromium).
 
 ### Camada 3: Curador / Sysadmin (`compute:websocket` / `compute:remote`)

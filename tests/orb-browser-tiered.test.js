@@ -121,15 +121,26 @@ describe('The Orb Browser v2.0 - Adaptive Tiered Engine', () => {
     expect(rootElement.querySelector('#restrictedDomainName').textContent).toBe('github.com');
   });
 
-  it('should route unrestricted or member sessions through the streaming proxy endpoint', () => {
+  it('should route unrestricted or member sessions through an authenticated streaming proxy session', async () => {
+    mockStandardAPIs.auth.getAuthToken = vi.fn(() => 'test-auth-token');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ expiresAt: Date.now() + 5 * 60 * 1000 })
+    }));
     mockStandardAPIs.auth.getTier.mockReturnValue('standard');
     const app = new TheOrbApp(mockCORE, mockStandardAPIs, rootElement);
     app.onRun();
 
     app.navigateToUrl('https://github.com/trending');
 
+    await vi.waitFor(() => expect(app.browserProxyIframe.src).toContain('/api/proxy?url='));
     expect(app.proxyView.style.display).toBe('flex');
-    expect(app.browserProxyIframe.src).toBe(new URL('/api/proxy?url=https%3A%2F%2Fgithub.com%2Ftrending', window.location.origin).href);
+    expect(app.browserProxyIframe.src).toContain('url=https%3A%2F%2Fgithub.com%2Ftrending');
+    expect(app.browserProxyIframe.src).not.toContain('ticket=');
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      new URL('/api/proxy/session', window.location.origin),
+      expect.objectContaining({ method: 'POST' })
+    );
   });
 
   it('should manage multiple tabs (create, switch, close)', () => {

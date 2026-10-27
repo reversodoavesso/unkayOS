@@ -74,7 +74,7 @@ describe('unkayOS 2.0 Production Readiness (Phase 7)', () => {
 
         // Required headers for SharedArrayBuffer, Wasm multithreading & OPFS
         expect(nginxConf).toContain('Cross-Origin-Opener-Policy "same-origin"');
-        expect(nginxConf).toContain('Cross-Origin-Embedder-Policy "require-corp"');
+        expect(nginxConf).toContain('Cross-Origin-Embedder-Policy "credentialless"');
         expect(nginxConf).toContain('application/wasm');
         expect(nginxConf).toContain('/health');
     });
