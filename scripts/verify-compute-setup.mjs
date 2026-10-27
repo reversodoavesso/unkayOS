@@ -22,6 +22,7 @@ try{
  assert(requests.every(request=>request.method==='GET'),'Opening/cancelling setup attempted an allocation');
  pending=confirm();await page.locator('.compute-setup[open]').waitFor();
  await page.locator('input[value="retained"]').check();await page.screenshot({path:resolve(output,'compute-confirmation-dark.png')});
+ const centered=await page.locator('.compute-setup').evaluate(el=>{const rect=el.getBoundingClientRect();return Math.abs(rect.left+rect.width/2-innerWidth/2)<2&&Math.abs(rect.top+rect.height/2-innerHeight/2)<2;});assert(centered,'Compute confirmation is not centered');
  await page.locator('[data-compute="connect"]').click();assert(await pending==='retained','Retained consent was not returned');
  caps={...caps,canConnect:false,requiresMfa:true};pending=confirm();await page.locator('.compute-setup[open]').waitFor();
  assert(await page.locator('[data-compute="connect"]').isDisabled(),'Missing MFA did not block Connect');

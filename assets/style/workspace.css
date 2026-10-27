@@ -321,7 +321,7 @@ dialog.menu_apps::backdrop, dialog.workspace-setup::backdrop { background: var(-
   background: var(--unkay-accent-subtle);
 }
 /* Authenticated Compute setup belongs to the workspace, including invitation after login. */
-.compute-setup { width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box;border:1px solid var(--rda-border-primary,#555);border-radius:18px;background:var(--rda-surface-primary,#151515);color:var(--rda-content-primary,#eee);padding:0; }
+.compute-setup { position:fixed;inset:0;margin:auto;width:min(620px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box;border:1px solid var(--rda-border-primary,#555);border-radius:18px;background:var(--rda-surface-primary,#151515);color:var(--rda-content-primary,#eee);padding:0; }
 .compute-setup::backdrop {background:rgba(0,0,0,.65);}
 .compute-setup__body {padding:24px;}.compute-setup h1{font-size:26px;margin:8px 0 16px;}.compute-setup p{line-height:1.5;}
 .compute-resources{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0;}.compute-resources div{padding:10px;border:1px solid #7774;border-radius:8px;}.compute-resources dt{font-size:12px;opacity:.7;}.compute-resources dd{margin:5px 0 0;font-weight:600;}
