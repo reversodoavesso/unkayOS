@@ -29,6 +29,16 @@ try {
     assert(api.ok() && (await api.json()).success, 'Marketplace proxy/API unavailable');
     let store = await startStore();
     assert(await store.root.locator('.app-card[data-app-id="openui"]').count() === 1, 'Bundled Studio is duplicated');
+    await page.locator(`.app[data-instance-id="${store.id}"]`).getByRole('button', { name: 'Maximizar/Restaurar', exact: true }).click();
+    const maximizedLayout = await store.root.evaluate(element => {
+        const width = node => Math.round(node.getBoundingClientRect().width);
+        return { storeWidth: width(element), contentWidth: width(element.parentElement),
+            headerWidth: width(element.querySelector('.store-header')),
+            columns: getComputedStyle(element.querySelector('.apps-grid')).gridTemplateColumns.split(/\s+/).length };
+    });
+    assert(Math.abs(maximizedLayout.storeWidth - maximizedLayout.contentWidth) <= 2 &&
+        Math.abs(maximizedLayout.headerWidth - maximizedLayout.storeWidth) <= 2 && maximizedLayout.columns >= 3,
+        'Maximized Store does not fill its window: ' + JSON.stringify(maximizedLayout));
     await page.screenshot({ path: resolve(output, 'store-dark.png') });
     await store.root.locator('[data-view="blocked"]').click();
     const blocked = store.root.locator('.app-card').first();
@@ -88,7 +98,7 @@ try {
     await page.screenshot({ path: resolve(output, 'store-mobile-details.png') });
     assert(!errors.length, 'Unhandled browser errors: ' + errors.join('; '));
     const report = { api: true, remoteInstall: remoteId || null, localImport: true, sanitized: true, restoredAfterReload: true,
-        uninstallPreservesData: true, narrowOverflow: overflow, errors };
+        uninstallPreservesData: true, maximizedLayout, narrowOverflow: overflow, errors };
     await writeFile(resolve(output, 'validation.json'), JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report));
 } finally { await browser.close(); }
