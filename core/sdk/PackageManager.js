@@ -151,7 +151,7 @@ export class PackageManager {
         const pkg = AppPackageLoader.loadPackage(app.manifest);
         this.appManager.loadedAppDetails.set(app.id, {
             id: app.id, packageId: app.id, app_name: app.name, description: app.description,
-            mode: 'system_window', jsFile: '/core/sdk/InstalledPackageApp.js', icon_name: 'package',
+            mode: 'system_window', category: pkg.category, jsFile: '/core/sdk/InstalledPackageApp.js', icon_name: 'package',
             icon_url: '/assets/icons/apps/generic_app_icon.svg', hidden: false, autorun: false,
             width: `${pkg.window.width}px`, height: `${pkg.window.height}px`,
             minWidth: pkg.window.minWidth, minHeight: pkg.window.minHeight, resizable: pkg.window.resizable,

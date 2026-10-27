@@ -1,11 +1,13 @@
 // apps/terminal/compute-bridge.js - unkayOS 2.0 Compute Bridge (Tier 2 SysAdmin/Demiurge)
-// Bidirectional WebSocket TTY bridge to ephemeral Docker compute container on Pi
+// Line-oriented WebSocket bridge to an ephemeral Docker container on Pi.
 
 import { unkay } from '../../core/sdk/unkay.js';
 const escapeText = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 
 export class ComputeBridge {
-    constructor() {
+    constructor({ onStateChange = () => {} } = {}) {
+        this.onStateChange = onStateChange;
+        this.readyTimer = null;
         this.ws = null;
         this.heartbeatTimer = null;
         this.isConnected = false;
@@ -28,7 +30,7 @@ export class ComputeBridge {
         const tier = unkay.auth.getTier();
         if (tier !== 'sysadmin' && tier !== 'demiurge') {
             terminal.writeLine('<span class="red">Acesso negado: Recursos de computação em nuvem (Tier 2) exigem permissão SysAdmin ou Demiurge.</span>');
-            terminal.writeLine('<span class="gray">Você continuará operando no kernel WASI 100% local (custo zero).</span>');
+            terminal.writeLine('<span class="gray">O terminal permanece local. Comandos locais e módulos WASI continuam disponíveis.</span>');
             return;
         }
 
@@ -39,6 +41,7 @@ export class ComputeBridge {
         }
         this.terminal = terminal;
         this.isConnecting = true;
+        this.onStateChange();
         try {
             const expected = new URL('/ws/terminal', window.location.href);
             expected.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -58,24 +61,30 @@ export class ComputeBridge {
             target.searchParams.set('ticket', result.ticket);
             terminal.writeLine('<span class="gray">Conectando ao container Docker no Raspberry Pi...</span>');
             this.ws = new WebSocket(target.href);
+            const socket = this.ws;
+            this.readyTimer = setTimeout(() => {
+                if (this.ws !== socket || this.isConnected) return;
+                terminal.writeLine('<span class="red">Compute não confirmou a inicialização. Retornando ao modo local.</span>');
+                this.disconnect();
+            }, 20000);
 
             this.ws.onopen = () => {
-                this.isConnected = true;
-                this.isConnecting = false;
-                terminal.writeLine('<span class="green">[Compute] Sessão TTY estabelecida com container Linux (cgroups: 256MB / 0.5 CPU).</span>');
-                terminal.writeLine('<span class="gray">Comandos reais habilitados (node, git, rda). Digite `exit` para desconectar.</span>');
-
-                // Heartbeat to keep Cloudflare Tunnel alive (25s ping)
-                this.heartbeatTimer = setInterval(() => {
-                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                        this.ws.send(JSON.stringify({ type: 'ping' }));
-                    }
-                }, 25000);
+                // An upgraded WebSocket is not proof of authorization or a running container.
             };
 
             this.ws.onmessage = (event) => {
+                if (this.ws !== socket) return;
                 try {
                     const msg = JSON.parse(event.data);
+                    if (msg.type === 'ready' && !this.isConnected) {
+                        clearTimeout(this.readyTimer); this.readyTimer = null;
+                        this.isConnected = true; this.isConnecting = false;
+                        terminal.writeLine('<span class="green">[Compute] Linux remoto autorizado e iniciado. Digite exit ou mode local para desconectar.</span>');
+                        this.heartbeatTimer = setInterval(() => {
+                            if (this.ws === socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'ping' }));
+                        }, 25000);
+                        this.onStateChange(); return;
+                    }
                     if (msg.type === 'pong') return;
                     if (msg.type === 'output') {
                         terminal.writeLine(escapeText(msg.data));
@@ -86,10 +95,12 @@ export class ComputeBridge {
             };
 
             this.ws.onerror = (err) => {
+                if (this.ws !== socket) return;
                 terminal.writeLine(`<span class="red">[Compute Error] Conexão WebSocket recusada ou indisponível: ${escapeText(err.message || 'Host ocupado ou offline')}</span>`);
             };
 
             this.ws.onclose = () => {
+                if (this.ws !== socket) return;
                 this.cleanup();
                 terminal.writeLine('<span class="yellow">[Compute] Conexão com o container encerrada. Retornando ao shell local.</span>');
             };
@@ -107,13 +118,14 @@ export class ComputeBridge {
     }
 
     disconnect() {
-        if (this.ws) {
-            this.ws.close();
-        }
+        const socket = this.ws;
         this.cleanup();
+        socket?.close();
     }
 
     cleanup() {
+        if (this.readyTimer) clearTimeout(this.readyTimer);
+        this.readyTimer = null;
         this.isConnected = false;
         this.isConnecting = false;
         this.abortController?.abort();
@@ -123,6 +135,7 @@ export class ComputeBridge {
             this.heartbeatTimer = null;
         }
         this.ws = null;
+        this.onStateChange();
     }
 }
 

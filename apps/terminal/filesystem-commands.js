@@ -1,9 +1,10 @@
 // apps/terminal/filesystem-commands.js - v1.0.0
 // Comandos de sistema de arquivos para o terminal
 
-import { fs } from '../../core/FileSystem.js';
+import { fs as defaultFs } from '../../core/FileSystem.js';
 
-export const filesystemCommands = {
+export function createFilesystemCommands(fs) {
+const filesystemCommands = {
     pwd: {
         description: "Exibe o diretório atual.",
         action: () => {
@@ -1035,3 +1036,6 @@ Estado: Funcionando corretamente`;
         }
     }
 };
+return filesystemCommands;
+}
+export const filesystemCommands = createFilesystemCommands(defaultFs);

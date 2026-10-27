@@ -3,6 +3,7 @@ import { filesystemCommands } from './filesystem-commands.js';
 import { wasmTerminalCommands } from './wasm-commands.js';
 import { fullscreenManager } from '../../core/FullscreenManager.js';
 import { keyboardManager } from '../../core/KeyboardManager.js';
+import { escapeHtml } from '../../core/workspace/preferences.js';
 
 function formatKeybindsOutput() {
     const mgr = (typeof window !== 'undefined' && window.keyboardManager) || keyboardManager;
@@ -70,7 +71,7 @@ export const commands = {
     echo: {
         description: "Exibe o texto digitado.",
         action: (args) => {
-            return args.join(' ');
+            return escapeHtml(args.join(' '));
         }
     },
     clear: {

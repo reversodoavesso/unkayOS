@@ -60,8 +60,17 @@ try {
     const pkg = { format: 'unkayapp-v1', manifest: { id: localId, name: 'Caderno de teste', version: '1.0.0', type: 'openui',
         runtime_profile: 'client-only', required_tier: 'guest', category: 'productivity', permissions: ['storage:local'], description: 'Interface instalada para validação.' },
         files: { 'spec.openui': '<h3>Caderno restaurado</h3><p>Meu conteúdo local</p><script>throw new Error("unsafe")</script><img src=x onerror="alert(1)">' } };
+    await page.locator('.taskbar__start_menu').click();
+    const launcher = page.locator('#menu_apps');
+    await launcher.locator('[data-category="create"]').click();
+    await launcher.locator('input[type="search"]').fill('caderno');
     await store.root.locator('#importPackage').setInputFiles({ name: 'caderno.unkayapp', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(pkg)) });
     await page.waitForFunction(id => window.unkay.packages.status(id).canOpen, localId);
+    await launcher.locator(`[data-app="${localId}"]`).waitFor();
+    assert(await launcher.locator('input[type="search"]').inputValue() === 'caderno', 'Package change cleared launcher search');
+    await launcher.locator(`[data-pin="${localId}"]`).click();
+    await page.locator(`.taskbar__pinned [data-app-id="${localId}"]`).waitFor();
+    await launcher.locator('[data-launcher-action="close"]').click();
     await page.evaluate(async id => { await window.unkay.fs.writeFile(`/home/user/apps/${id}/data/note.txt`, 'Dados preservados'); await window.unkay.fs.flush(); }, localId);
     await store.root.locator('#storeSearchInput').fill('caderno de teste');
     await store.root.locator(`[data-action="open"][data-app-id="${localId}"]`).click();
@@ -76,6 +85,7 @@ try {
     await page.evaluate(id => window.appManager.stopApp(id), packageState.instanceId);
     await page.reload(); await ready();
     assert(await page.evaluate(id => window.unkay.packages.status(id).canOpen, localId), 'Installation did not survive a reload');
+    await page.locator(`.taskbar__pinned [data-app-id="${localId}"]`).waitFor();
     store = await startStore();
     await store.root.locator('#storeSearchInput').fill('caderno de teste');
     await store.root.locator('[data-action="details"]').first().click();
@@ -84,6 +94,10 @@ try {
     await page.waitForFunction(id => !window.unkay.packages.status(id).installed, localId);
     assert(await page.evaluate(id => window.unkay.fs.readText(`/home/user/apps/${id}/data/note.txt`), localId) === 'Dados preservados', 'Uninstall erased personal data');
     assert(!await page.evaluate(id => window.loadedAppDetails.has(id), localId), 'Uninstalled app is still registered');
+    assert(await page.locator(`.taskbar__pinned [data-app-id="${localId}"]`).count() === 0, 'Removed package is still pinned visibly');
+    await page.locator('.taskbar__start_menu').click();
+    assert(await launcher.locator(`[data-app="${localId}"]`).count() === 0, 'Removed package is still in the launcher');
+    await launcher.locator('[data-launcher-action="close"]').click();
     await store.root.locator('#storeSearchInput').fill('');
     await page.evaluate(() => window.workspaceSession.update({ appearance: { theme: 'light' } }));
     await page.waitForTimeout(250); // allow the theme transition to finish before capture
@@ -98,7 +112,7 @@ try {
     await page.screenshot({ path: resolve(output, 'store-mobile-details.png') });
     assert(!errors.length, 'Unhandled browser errors: ' + errors.join('; '));
     const report = { api: true, remoteInstall: remoteId || null, localImport: true, sanitized: true, restoredAfterReload: true,
-        uninstallPreservesData: true, maximizedLayout, narrowOverflow: overflow, errors };
+        uninstallPreservesData: true, liveLauncherCategories: true, livePins: true, restoredPins: true, removedFromMenus: true, maximizedLayout, narrowOverflow: overflow, errors };
     await writeFile(resolve(output, 'validation.json'), JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report));
 } finally { await browser.close(); }

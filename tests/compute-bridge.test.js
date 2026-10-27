@@ -20,6 +20,8 @@ describe('canonical compute authorization bridge', () => {
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({ticket,success:true})));
     vi.stubGlobal('WebSocket',class {static OPEN=1;constructor(){this.readyState=1;this.send=send;socket=this;}close(){this.onclose();}});
     const bridge=new ComputeBridge();await bridge.connect({writeLine:vi.fn()});socket.onopen();
+    expect(bridge.isConnected).toBe(false);
+    socket.onmessage({data:JSON.stringify({type:'ready',sessionId:'synthetic-session'})});
     expect(bridge.isConnected).toBe(true);bridge.sendInput('pwd\n');
     expect(send).toHaveBeenCalledWith(JSON.stringify({type:'input',data:'pwd\n'}));
     await vi.advanceTimersByTimeAsync(25000);

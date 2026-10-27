@@ -11,7 +11,7 @@ const getVfs = () => (typeof window !== 'undefined' && window.wasmFileSystem) ||
 export const wasmTerminalCommands = {
     unkay: {
         description: "CLI do unkayOS (info, tier, run, packages, ai, cloud, compute, vfs).",
-        action: async (args, appendToTerminal) => {
+        action: async (args, appendToTerminal, _output, _initial, _commands, _apps, context = {}) => {
             const sub = args[0] || 'info';
             switch (sub) {
                 case 'run': {
@@ -30,7 +30,7 @@ export const wasmTerminalCommands = {
                         if (action === 'status') return escapeHtml(JSON.stringify(unkay.packages.status(id), null, 2));
                         if (action === 'install') { await unkay.packages.refresh(); await unkay.packages.install(id); }
                         else if (action === 'remove') await unkay.packages.uninstall(id);
-                        else if (action === 'import') await unkay.packages.installLocal(await unkay.fs.readText(id));
+                        else if (action === 'import') await unkay.packages.installLocal(await unkay.fs.readText(context.terminal?.fs.resolve(id) || id));
                         else return 'Operação de pacotes desconhecida.';
                         return 'Operação concluída.';
                     } catch (error) { return `<span class="red">${escapeHtml(error.message)}</span>`; }
@@ -80,18 +80,17 @@ export const wasmTerminalCommands = {
                     return '<span class="yellow">Uso: unkay cloud sync</span>';
                 }
                 case 'compute': {
+                    const computeBridge = context.computeBridge;
+                    if (!computeBridge) return 'Use os controles Compute em uma janela do Terminal.';
                     const action = args[1] || 'status';
                     if (action === 'status') {
-                        const { computeBridge } = await import('./compute-bridge.js');
-                        return `<span class="cyan">[Compute] Status da conexão:</span> <span class="${computeBridge.isConnected ? 'green' : 'gray'}">${computeBridge.isConnected ? 'Conectado (Container Pi)' : 'Desconectado (WASI Local)'}</span>`;
+                        return `<span class="cyan">[Compute] Status da conexão:</span> <span class="${computeBridge.isConnected ? 'green' : 'gray'}">${computeBridge.isConnected ? 'Conectado (Container Pi)' : computeBridge.isConnecting ? 'Conectando' : 'Desconectado (Terminal local)'}</span>`;
                     }
                     if (action === 'connect') {
-                        const { computeBridge } = await import('./compute-bridge.js');
-                        computeBridge.connect({ writeLine: (txt) => appendToTerminal(txt) }, args[2] || null);
+                        await computeBridge.connect(context.terminal || { writeLine: (txt) => appendToTerminal?.(txt) }, args[2] || null);
                         return '';
                     }
                     if (action === 'disconnect') {
-                        const { computeBridge } = await import('./compute-bridge.js');
                         computeBridge.disconnect();
                         return '<span class="yellow">[Compute] Desconectado.</span>';
                     }
@@ -124,8 +123,8 @@ export const wasmTerminalCommands = {
                 const bytes = await getVfs().readFile(wasmPath, { encoding: 'binary' });
                 const runner = new WasiRunner({
                     args: [wasmPath, ...wasmArgs],
-                    stdout: (txt) => appendToTerminal && appendToTerminal(`<span class="white">${txt}</span>`),
-                    stderr: (txt) => appendToTerminal && appendToTerminal(`<span class="red">${txt}</span>`)
+                    stdout: (txt) => appendToTerminal && appendToTerminal(`<span class="white">${escapeHtml(txt)}</span>`),
+                    stderr: (txt) => appendToTerminal && appendToTerminal(`<span class="red">${escapeHtml(txt)}</span>`)
                 });
                 const res = await runner.run(bytes);
                 return `<span class="green">Processo finalizado com exit code ${res.exitCode}.</span>`;
@@ -170,11 +169,11 @@ export const wasmTerminalCommands = {
                 const text = await getVfs().readFile(filePath, { encoding: 'utf8' });
                 const parsed = JSON.parse(text);
                 if (filter === '.' || filter === '') {
-                    return `<pre>${JSON.stringify(parsed, null, 2)}</pre>`;
+                    return `<pre>${escapeHtml(JSON.stringify(parsed, null, 2))}</pre>`;
                 }
                 const key = filter.replace(/^\./, '');
                 const result = key ? parsed[key] : parsed;
-                return `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+                return `<pre>${escapeHtml(JSON.stringify(result, null, 2) ?? 'undefined')}</pre>`;
             } catch (e) {
                 return `<span class="red">jq: ${e.message}</span>`;
             }

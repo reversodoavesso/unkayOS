@@ -1,6 +1,6 @@
 {
   "name": "unkayos",
-  "version": "2.0.0-alpha.6",
+  "version": "2.0.0-alpha.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -33,6 +33,7 @@
     "build:info": "node scripts/build-info.mjs",
     "verify:browser": "node scripts/verify-browser.mjs",
     "verify:store": "node scripts/verify-store.mjs",
+    "verify:terminal": "node scripts/verify-terminal.mjs",
     "verify:wallpapers": "node scripts/verify-wallpapers.mjs"
   },
   "devDependencies": {

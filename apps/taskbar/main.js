@@ -26,6 +26,7 @@ export default class TaskbarApp extends BaseApp {
     eventBus.on('app:stopped', this.stopped);
     eventBus.on('app:icon:update', this.changed);
     eventBus.on('settings:updated', this.preferencesChanged);
+    eventBus.on('packages:changed', this.preferencesChanged);
     eventBus.on('system:fullscreen:changed', this.fullscreenChanged);
     this.renderPinned();
     const { menuApps } = await import('../../core/MenuApps.js');
@@ -109,6 +110,7 @@ export default class TaskbarApp extends BaseApp {
     eventBus.off('app:started', this.started); eventBus.off('app:stopped', this.stopped);
     eventBus.off('app:start:error', this.failed);
     eventBus.off('app:icon:update', this.changed); eventBus.off('settings:updated', this.preferencesChanged);
+    eventBus.off('packages:changed', this.preferencesChanged);
     eventBus.off('system:fullscreen:changed', this.fullscreenChanged);
   }
   static runCli(args, writeLine) { window.appManager?.runApp('taskbar'); writeLine('Trilha de aplicativos disponível.'); }

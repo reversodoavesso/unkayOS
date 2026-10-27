@@ -8,6 +8,7 @@ const categories = { theorb: 'explore', about: 'system', terminal: 'create', 'pr
 const descriptions = { theorb: 'Um novo caminho pela web', terminal: 'Comandos, ideias e possibilidades', about: 'Conheça o seu ambiente', 'process-manager': 'O que está em movimento', 'file-manager': 'Tudo o que você guarda', 'text-editor': 'Transforme ideias em palavras', openui: 'Crie novas interfaces', store: 'Descubra novas ferramentas', 'user-profile': 'Sua conta e identidade', settings: 'Deixe o espaço com a sua cara' };
 const focus = element => { if (element instanceof HTMLElement) element.focus(); };
 const groups = [['all', 'Todos'], ['create', 'Criar'], ['explore', 'Explorar'], ['system', 'Sistema'], ['pinned', 'Fixados']];
+const packageGroups = { ai: 'create', productivity: 'create', developer: 'create', audio: 'explore', media: 'explore', utilities: 'explore' };
 
 export class menuApps {
   constructor(desktop) { this.desktop = desktop; this.category = 'all'; this.visibilityFlag = false; this.allApps = []; }
@@ -32,6 +33,8 @@ export class menuApps {
   }
   refresh() {
     const query = this.searchInput?.value || '';
+    const active = document.activeElement;
+    const focused = this.menuElement.contains(active) ? { app: active.dataset.app, pin: active.dataset.pin, search: active === this.searchInput, start: this.searchInput?.selectionStart } : null;
     this.allApps = [...(window.loadedAppDetails || new Map()).values()].filter(app => !app.hidden && !app.widget).sort((a,b) => a.app_name.localeCompare(b.app_name, 'pt-BR'));
     const session = getWorkspace(), name = session?.settings.onboarding.displayName;
     this.menuElement.innerHTML = `<header class="launcher-header"><div><span class="workspace-eyebrow">${name ? `OLÁ, ${escapeHtml(name)}` : 'SEU ESPAÇO ESTÁ ABERTO'}</span><h1 id="launcherTitle">O que vamos<br><em>colocar em movimento?</em></h1></div><button type="button" class="workspace-icon-button" data-launcher-action="close" aria-label="Fechar aplicativos">${iconMarkup('x', { size: 20 })}</button></header>
@@ -41,12 +44,14 @@ export class menuApps {
       <footer class="launcher-footer"><span>${iconMarkup(workspaceIcon, { size: 20 })}unkayOS <span>•</span> ${session?.auth.getCurrentUser() ? 'Conta conectada' : 'Este dispositivo'}</span><button type="button" data-launcher-action="settings">${iconMarkup('settings', { size: 16 })} Personalizar espaço ${iconMarkup('arrow-right', { size: 14 })}</button></footer>`;
     this.searchInput = this.menuElement.querySelector('input'); this.searchInput.value = query;
     this.appsContainer = this.menuElement.querySelector('.menu_apps__container'); this.renderApps();
+    if (focused?.search) { this.searchInput.focus(); this.searchInput.setSelectionRange(focused.start ?? query.length, focused.start ?? query.length); }
+    else if (focused) focus([...this.menuElement.querySelectorAll('button')].find(button => focused.app ? button.dataset.app === focused.app : focused.pin && button.dataset.pin === focused.pin) || this.searchInput);
   }
   renderApps() {
     const query = this.searchInput.value.trim().toLocaleLowerCase('pt-BR');
     const pinned = getWorkspace()?.settings.shell.pinned || DEFAULT_SHELL.pinned;
     const running = new Set([...(window.appManager?.runningApps.values() || [])].filter(app => !app.CORE.launchFailed).map(app => app.CORE.id));
-    const apps = this.allApps.filter(app => (this.category === 'all' || (this.category === 'pinned' ? pinned.includes(app.id) : categories[app.id] === this.category)) && `${app.app_name} ${app.description || ''} ${descriptions[app.id] || ''}`.toLocaleLowerCase('pt-BR').includes(query));
+    const apps = this.allApps.filter(app => (this.category === 'all' || (this.category === 'pinned' ? pinned.includes(app.id) : (categories[app.id] || packageGroups[app.category]) === this.category)) && `${app.app_name} ${app.description || ''} ${descriptions[app.id] || ''}`.toLocaleLowerCase('pt-BR').includes(query));
     this.appsContainer.innerHTML = apps.length ? apps.map(app => `<article class="launcher-tile rda-unkay-app-card"><button type="button" class="menu_apps__app rda-action-card rda-unkay-app-card__launch" id="${escapeHtml(app.id)}-launcher" data-app="${escapeHtml(app.id)}" aria-label="Abrir ${escapeHtml(app.app_name)}"><span class="launcher-app-icon rda-unkay-app-card__icon">${iconMarkup(app.icon_name || 'package', { size: 30 })}</span><span class="launcher-app-copy rda-unkay-app-card__copy"><strong class="rda-action-card__title">${escapeHtml(app.app_name)}</strong><span class="rda-action-card__description">${escapeHtml(descriptions[app.id] || app.description || 'Um novo lugar para suas ideias')}</span>${running.has(app.id) ? '<small class="rda-unkay-app-card__state">Em curso</small>' : ''}</span></button><button type="button" class="launcher-pin rda-unkay-app-card__pin workspace-icon-button" data-pin="${escapeHtml(app.id)}" aria-pressed="${pinned.includes(app.id)}" aria-label="${pinned.includes(app.id) ? 'Desafixar' : 'Fixar'} ${escapeHtml(app.app_name)}" title="${pinned.includes(app.id) ? 'Desafixar da trilha' : 'Fixar na trilha'}">${iconMarkup('star', { size: 16 })}</button></article>`).join('') : '<p class="launcher-empty">Nenhum app por aqui. Experimente outra busca ou categoria.</p>';
     this.menuElement.querySelector('#launcherCount').textContent = `${apps.length} ${apps.length === 1 ? 'aplicativo' : 'aplicativos'}`;
   }

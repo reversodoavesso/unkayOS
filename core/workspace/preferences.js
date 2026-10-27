@@ -19,7 +19,7 @@ export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => 
 
 export function normalizeShell(value) {
   const shell = object(value);
-  return { bar: shell.bar === 'edge' ? 'edge' : 'floating', launcher: shell.launcher === 'compact' ? 'compact' : 'atlas', showLabels: shell.showLabels === true, pinned: Array.isArray(shell.pinned) ? [...new Set(shell.pinned.filter(id => typeof id === 'string' && /^[a-z][a-z0-9-]*$/.test(id)))].slice(0, 8) : [...DEFAULT_SHELL.pinned] };
+  return { bar: shell.bar === 'edge' ? 'edge' : 'floating', launcher: shell.launcher === 'compact' ? 'compact' : 'atlas', showLabels: shell.showLabels === true, pinned: Array.isArray(shell.pinned) ? [...new Set(shell.pinned.filter(id => typeof id === 'string' && /^[a-z0-9][a-z0-9_-]{0,79}$/.test(id)))].slice(0, 8) : [...DEFAULT_SHELL.pinned] };
 }
 
 /**

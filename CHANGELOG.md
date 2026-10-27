@@ -2,6 +2,15 @@
 
 O contador de releases começa em 1 com a versão 2.0.0-alpha.2. Builds da mesma versão preservam o número; cada release preparada incrementa o contador.
 
+## 2.0.0-alpha.7 · Release 6 · 2026-10-27
+
+Menus sincronizados e terminal com modos isolados
+
+- Instalação e remoção de pacotes atualizam categorias, busca e fixados sem recarregar o ambiente.
+- Cada janela de terminal mantém seu diretório e sua conexão Compute; os modos Local, WASI e Compute ficam explícitos.
+- Compute exige ticket de uso único, perfil autorizado e MFA; a interface aguarda a inicialização real do contêiner.
+- A saída do terminal é sanitizada e caminhos com espaços podem ser usados entre aspas.
+
 ## 2.0.0-alpha.6 · Release 5 · 2026-10-27
 
 SSO e computação autenticada
