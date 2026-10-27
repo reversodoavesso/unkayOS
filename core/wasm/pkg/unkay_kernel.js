@@ -199,6 +199,38 @@ if (Symbol.dispose) UnkayKernel.prototype[Symbol.dispose] = UnkayKernel.prototyp
 export function init_panic_hook() {
     wasm.init_panic_hook();
 }
+
+/**
+ * Native Rust/WebAssembly Oklab Manifold Color Grading entry point.
+ * @param {Uint8Array} rgba
+ * @param {Float32Array} a_luts_flat
+ * @param {Float32Array} b_luts_flat
+ * @param {number} num_groups
+ * @param {number} primary_mean_angle
+ * @param {number} primary_chroma
+ * @param {number} strategy_code
+ * @param {number} theme_code
+ * @param {number} temperature
+ * @param {number} chroma_boost
+ * @param {number} intensity
+ * @param {boolean} align_dominant_hue
+ * @returns {Uint8Array}
+ */
+export function remap_rgba_oklab_wasm(rgba, a_luts_flat, b_luts_flat, num_groups, primary_mean_angle, primary_chroma, strategy_code, theme_code, temperature, chroma_boost, intensity, align_dominant_hue) {
+    const ptr0 = passArray8ToWasm0(rgba, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArrayF32ToWasm0(a_luts_flat, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passArrayF32ToWasm0(b_luts_flat, wasm.__wbindgen_malloc);
+    const len2 = WASM_VECTOR_LEN;
+    const ret = wasm.remap_rgba_oklab_wasm(ptr0, len0, ptr1, len1, ptr2, len2, num_groups, primary_mean_angle, primary_chroma, strategy_code, theme_code, temperature, chroma_boost, intensity, align_dominant_hue);
+    if (ret[3]) {
+        throw takeFromExternrefTable0(ret[2]);
+    }
+    var v4 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    return v4;
+}
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
@@ -275,6 +307,14 @@ function getDataViewMemory0() {
     return cachedDataViewMemory0;
 }
 
+let cachedFloat32ArrayMemory0 = null;
+function getFloat32ArrayMemory0() {
+    if (cachedFloat32ArrayMemory0 === null || cachedFloat32ArrayMemory0.byteLength === 0) {
+        cachedFloat32ArrayMemory0 = new Float32Array(wasm.memory.buffer);
+    }
+    return cachedFloat32ArrayMemory0;
+}
+
 function getStringFromWasm0(ptr, len) {
     return decodeText(ptr >>> 0, len);
 }
@@ -299,6 +339,13 @@ function handleError(f, args) {
 function passArray8ToWasm0(arg, malloc) {
     const ptr = malloc(arg.length * 1, 1) >>> 0;
     getUint8ArrayMemory0().set(arg, ptr / 1);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
+}
+
+function passArrayF32ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 4, 4) >>> 0;
+    getFloat32ArrayMemory0().set(arg, ptr / 4);
     WASM_VECTOR_LEN = arg.length;
     return ptr;
 }
@@ -381,6 +428,7 @@ function __wbg_finalize_init(instance, module) {
     wasm = instance.exports;
     wasmModule = module;
     cachedDataViewMemory0 = null;
+    cachedFloat32ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
     wasm.__wbindgen_start();
     return wasm;

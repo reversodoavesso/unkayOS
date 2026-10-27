@@ -72,20 +72,169 @@
 
       <div class="settings-card">
         <h3 class="card-heading">Papel de Parede do Desktop</h3>
+        <p class="card-subtext">Coleção Intervalos e fundos do sistema. Escolha uma imagem e combine as cores com a aparência do seu espaço.</p>
         <div class="wallpaper-grid" id="wallpaperPicker">
-          <button type="button" class="wallpaper-thumb active" data-wp="/assets/images/wallpaper_01.jpg" aria-pressed="true">
-            <span class="wp-label">Montanhas</span>
+          <button type="button" class="wallpaper-thumb active" data-wp="/assets/images/wallpapers/01-horizonte-limpo-v2.jpg" aria-pressed="true">
+            <span class="wp-label">Horizonte Limpo</span>
           </button>
-          <button type="button" class="wallpaper-thumb" data-wp="radial-gradient(circle at 50% 50%, #164e63 0%, #0a0a0a 100%)" aria-pressed="false">
-            <span class="wp-label">Nebulosa RDA</span>
+          <button type="button" class="wallpaper-thumb" data-wp="radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--unkay-accent-border) 38%, var(--unkay-accent-subtle)) 0%, var(--unkay-accent-subtle) 48%, var(--rda-surface-primary) 100%)" aria-pressed="false">
+            <span class="wp-label">Nebulosa</span>
           </button>
           <button type="button" class="wallpaper-thumb" data-wp="#0a0a0a" aria-pressed="false">
-            <span class="wp-label">Obsidian Puro</span>
+            <span class="wp-label">Obsidian</span>
           </button>
         </div>
+
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong id="adaptWallpaperLabel">Combinar imagem com a aparência</strong>
+            <p>Ajusta as cores da imagem ao destaque e ao tema escolhidos. Desative para manter a imagem original.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggleAdaptWallpaper" aria-labelledby="adaptWallpaperLabel" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <details id="oklabAdvancedMenu" class="oklab-advanced-menu">
+          <summary class="oklab-advanced-summary">
+            <span class="oklab-summary-left">
+              <rda-icon name="sparkles"></rda-icon>
+              <span>Ajustes de cor</span>
+            </span>
+            <span class="oklab-summary-right">
+              <span id="oklabActivePresetBadge" class="oklab-preset-badge">Preset Automático</span>
+              <rda-icon name="chevron-down" class="oklab-summary-chevron"></rda-icon>
+            </span>
+          </summary>
+
+          <div class="oklab-advanced-body">
+            <div class="setting-toggle-row">
+              <div class="toggle-info">
+                <label for="selectWallpaperPresetMode" class="rda-select__label">Modo de ajuste</label>
+                <p id="oklabPresetSummaryText">Ajusta automaticamente saturação, temperatura e curva de luz conforme a imagem, o destaque e o tema claro/escuro.</p>
+              </div>
+              <div class="rda-select settings-select">
+                <div class="rda-select__field-wrapper">
+                  <select id="selectWallpaperPresetMode" class="rda-select__field rda-select__field--md">
+                    <option value="auto" selected>Automático</option>
+                    <option value="custom">Personalizado</option>
+                  </select>
+                  <span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-toggle-row">
+              <div class="toggle-info">
+                <label for="selectWallpaperRemapStrategy" class="rda-select__label">Distribuição das cores</label>
+                <p>Escolha como a cor de destaque se mistura aos tons da imagem.</p>
+              </div>
+              <div class="rda-select settings-select">
+                <div class="rda-select__field-wrapper">
+                  <select id="selectWallpaperRemapStrategy" class="rda-select__field rda-select__field--md">
+                    <option value="affinity" selected>Cor seletiva</option>
+                    <option value="relative">Contraste de cores</option>
+                    <option value="split-tone">Sombras e luzes</option>
+                  </select>
+                  <span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-toggle-row">
+              <div class="toggle-info">
+                <label for="selectWallpaperRemapTheme" class="rda-select__label">Luminosidade</label>
+                <p>Preserve a luz original ou ajuste a imagem para uma aparência clara ou escura.</p>
+              </div>
+              <div class="rda-select settings-select">
+                <div class="rda-select__field-wrapper">
+                  <select id="selectWallpaperRemapTheme" class="rda-select__field rda-select__field--md">
+                    <option value="preserve" selected>Preservar Original (Padrão)</option>
+                    <option value="dark">Curva Escura Obsidian</option>
+                    <option value="light">Curva Clara Minimalista</option>
+                  </select>
+                  <span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="oklab-sliders-grid" id="wallpaperOklabSliders">
+              <div class="oklab-slider-field">
+                <div class="oklab-slider-header">
+                  <label for="rangeWallpaperRemapIntensity">Intensidade</label>
+                  <output id="labelWallpaperRemapIntensity" for="rangeWallpaperRemapIntensity">100%</output>
+                </div>
+                <input type="range" id="rangeWallpaperRemapIntensity" class="oklab-range" min="0" max="100" step="5" value="100" />
+                <small>Mistura entre as cores originais (0%) e a projeção Oklab completa (100%).</small>
+              </div>
+
+              <div class="oklab-slider-field">
+                <div class="oklab-slider-header">
+                  <label for="rangeWallpaperChromaBoost">Saturação do Destaque (Chroma Boost)</label>
+                  <output id="labelWallpaperChromaBoost" for="rangeWallpaperChromaBoost">1.00x</output>
+                </div>
+                <input type="range" id="rangeWallpaperChromaBoost" class="oklab-range" min="0.20" max="2.00" step="0.05" value="1.00" />
+                <small>Multiplica o croma da paleta RDA (1.0x = fiel ao token, &gt;1.0x = mais vibrante).</small>
+              </div>
+
+              <div class="oklab-slider-field">
+                <div class="oklab-slider-header">
+                  <label for="rangeWallpaperRemapTemperature">Suavidade de Transição (Temperatura Softmax)</label>
+                  <output id="labelWallpaperRemapTemperature" for="rangeWallpaperRemapTemperature">0.025</output>
+                </div>
+                <input type="range" id="rangeWallpaperRemapTemperature" class="oklab-range" min="0.005" max="0.150" step="0.001" value="0.025" />
+                <small>Valores baixos separam melhor neutro e destaque; valores altos difundem a cor.</small>
+              </div>
+            </div>
+
+            <div class="oklab-actions-bar">
+              <span class="oklab-engine-badge"><rda-icon name="zap"></rda-icon> Processamento local</span>
+              <button id="resetWallpaperRemapParamsBtn" type="button" class="rda-button rda-button--sm" data-color="ghost">
+                <rda-icon name="refresh-cw"></rda-icon> Restaurar ajuste automático
+              </button>
+            </div>
+          </div>
+        </details>
+
         <div class="custom-wp-row">
-          <input type="text" id="customWallpaperUrl" class="flex-1 rda-input rda-input--md" placeholder="URL ou caminho VFS (/home/user/pictures/wallpaper.png)" />
-          <button id="applyCustomWallpaperBtn" class="rda-button rda-button--md" data-color="secondary">Aplicar</button>
+          <input type="text" id="customWallpaperUrl" aria-label="URL ou caminho de uma imagem" class="flex-1 rda-input rda-input--md" placeholder="URL ou caminho VFS (/home/user/pictures/wallpaper.png)" />
+          <button id="applyCustomWallpaperBtn" type="button" class="rda-button rda-button--md" data-color="secondary">Aplicar</button>
+          <input type="file" id="uploadCustomWallpaperInput" accept="image/*" hidden />
+          <button id="uploadCustomWallpaperBtn" type="button" class="rda-button rda-button--md" data-color="secondary">
+            <rda-icon name="upload"></rda-icon> Carregar Imagem
+          </button>
+        </div>
+
+        <div id="wallpaperRemapPrompt" class="wallpaper-remap-prompt" role="region" aria-label="Prévia do ajuste de cor" hidden>
+          <div class="remap-prompt-header">
+            <span class="remap-prompt-icon"><rda-icon name="sparkles"></rda-icon></span>
+            <div class="remap-prompt-copy">
+              <strong>Combinar esta imagem com a aparência do sistema?</strong>
+              <p>Compare a imagem original com a prévia. O ajuste combina cores e luminosidade com a aparência escolhida.</p>
+            </div>
+          </div>
+          <div class="remap-preview-grid">
+            <div class="remap-preview-item">
+              <div id="remapPreviewOriginal" class="remap-preview-box"></div>
+              <span class="remap-preview-caption">Imagem Original</span>
+            </div>
+            <div class="remap-preview-item">
+              <div id="remapPreviewAdapted" class="remap-preview-box"></div>
+              <span class="remap-preview-caption">Com ajuste de cor</span>
+            </div>
+          </div>
+          <div class="remap-prompt-actions">
+            <button id="confirmRemappedWallpaperBtn" type="button" class="rda-button rda-button--md" data-color="primary">
+              <rda-icon name="sparkles"></rda-icon> Aplicar ajuste de cor
+            </button>
+            <button id="confirmOriginalWallpaperBtn" type="button" class="rda-button rda-button--md" data-color="secondary">
+              <rda-icon name="image"></rda-icon> Usar imagem original
+            </button>
+            <button id="cancelWallpaperPromptBtn" type="button" class="rda-button rda-button--md" data-color="ghost">
+              <rda-icon name="x"></rda-icon> Cancelar
+            </button>
+          </div>
         </div>
       </div>
 

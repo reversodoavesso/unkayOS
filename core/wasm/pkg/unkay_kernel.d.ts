@@ -21,12 +21,18 @@ export class UnkayKernel {
 
 export function init_panic_hook(): void;
 
+/**
+ * Native Rust/WebAssembly Oklab Manifold Color Grading entry point.
+ */
+export function remap_rgba_oklab_wasm(rgba: Uint8Array, a_luts_flat: Float32Array, b_luts_flat: Float32Array, num_groups: number, primary_mean_angle: number, primary_chroma: number, strategy_code: number, theme_code: number, temperature: number, chroma_boost: number, intensity: number, align_dominant_hue: boolean): Uint8Array;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_unkaykernel_free: (a: number, b: number) => void;
     readonly init_panic_hook: () => void;
+    readonly remap_rgba_oklab_wasm: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number) => [number, number, number, number];
     readonly unkaykernel_exists: (a: number, b: number, c: number) => number;
     readonly unkaykernel_export_tree_json: (a: number) => [number, number, number, number];
     readonly unkaykernel_import_legacy_tree_json: (a: number, b: number, c: number) => [number, number, number];

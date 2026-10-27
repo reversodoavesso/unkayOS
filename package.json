@@ -31,7 +31,8 @@
     "release:sync": "node scripts/release.mjs sync",
     "release:check": "node scripts/release.mjs check",
     "build:info": "node scripts/build-info.mjs",
-    "verify:browser": "node scripts/verify-browser.mjs"
+    "verify:browser": "node scripts/verify-browser.mjs",
+    "verify:wallpapers": "node scripts/verify-wallpapers.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

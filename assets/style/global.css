@@ -76,7 +76,8 @@ body {
   background-color: var(--color-dark-secondary);
   top: 0;
   left: 0;
-  overflow: hidden;
+  /* Keep focus changes inside apps from scrolling the desktop canvas. */
+  overflow: clip;
 }
 
 /* Menu de aplicativos */

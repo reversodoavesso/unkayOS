@@ -1,3 +1,5 @@
+import { shouldAdaptWallpaper } from '../../core/ui/wallpaperAppearance.js';
+import { isImageWallpaper } from '../../core/ui/wallpaperPaletteRemap.js';
 // apps/settings/main.js - Configurações Gerais do Sistema unkayOS 2.0
 
 import { BaseApp } from '../../core/BaseApp.js';
@@ -5,7 +7,7 @@ import { currentRelease } from '../../core/release-info.js';
 import { renderReleaseNotes } from '../../core/ui/releaseNotes.js';
 import eventBus from '../../core/eventBus.js';
 import { accentPresets, iconMarkup } from '../../core/ui/designSystem.js';
-import { readPreferences, writePreferences, applyAppearance, applyWallpaperStyle, applyWindowing, clearTemporaryFiles, normalizeAppearance } from '../../core/utils/appPreferences.js';
+import { readPreferences, writePreferences, applyAppearance, applyWallpaperStyle, applyWindowing, clearTemporaryFiles, normalizeAppearance, resolveEffectiveRemapParams } from '../../core/utils/appPreferences.js';
 import { getWorkspace } from '../../core/workspace/WorkspaceSession.js';
 import { normalizeWorkspace, changedSettings, applyShell, accentChoices, WALLPAPERS, validateWidget, WIDGET_EXAMPLE, escapeHtml } from '../../core/workspace/preferences.js';
 
@@ -82,8 +84,31 @@ export default class SettingsApp extends BaseApp {
     const wallpaperPicker = this.$('#wallpaperPicker');
     if (wallpaperPicker) wallpaperPicker.innerHTML = WALLPAPERS.map(wp => `<button type="button" class="wallpaper-thumb" data-wp="${escapeHtml(wp.value)}" aria-pressed="false"><span class="wp-label">${wp.name}</span></button>`).join('');
     this.wallpaperThumbs = this.$$('.wallpaper-thumb');
-    this.customWallpaperUrl = this.$('#customWallpaperUrl');
+    this.customWallpaperUrl = /** @type {HTMLInputElement} */ (this.$('#customWallpaperUrl'));
     this.applyCustomWallpaperBtn = this.$('#applyCustomWallpaperBtn');
+    this.uploadCustomWallpaperInput = /** @type {HTMLInputElement} */ (this.$('#uploadCustomWallpaperInput'));
+    this.uploadCustomWallpaperBtn = /** @type {HTMLButtonElement} */ (this.$('#uploadCustomWallpaperBtn'));
+    this.toggleAdaptWallpaper = /** @type {HTMLInputElement} */ (this.$('#toggleAdaptWallpaper'));
+    this.oklabAdvancedMenu = this.$('#oklabAdvancedMenu');
+    this.oklabActivePresetBadge = this.$('#oklabActivePresetBadge');
+    this.oklabPresetSummaryText = this.$('#oklabPresetSummaryText');
+    this.selectWallpaperPresetMode = /** @type {HTMLSelectElement} */ (this.$('#selectWallpaperPresetMode'));
+    this.selectWallpaperRemapStrategy = /** @type {HTMLSelectElement} */ (this.$('#selectWallpaperRemapStrategy'));
+    this.selectWallpaperRemapTheme = /** @type {HTMLSelectElement} */ (this.$('#selectWallpaperRemapTheme'));
+    this.rangeWallpaperRemapIntensity = /** @type {HTMLInputElement} */ (this.$('#rangeWallpaperRemapIntensity'));
+    this.labelWallpaperRemapIntensity = this.$('#labelWallpaperRemapIntensity');
+    this.rangeWallpaperChromaBoost = /** @type {HTMLInputElement} */ (this.$('#rangeWallpaperChromaBoost'));
+    this.labelWallpaperChromaBoost = this.$('#labelWallpaperChromaBoost');
+    this.rangeWallpaperRemapTemperature = /** @type {HTMLInputElement} */ (this.$('#rangeWallpaperRemapTemperature'));
+    this.labelWallpaperRemapTemperature = this.$('#labelWallpaperRemapTemperature');
+    this.resetWallpaperRemapParamsBtn = /** @type {HTMLButtonElement} */ (this.$('#resetWallpaperRemapParamsBtn'));
+    this.wallpaperRemapPrompt = /** @type {HTMLElement} */ (this.$('#wallpaperRemapPrompt'));
+    this.remapPreviewOriginal = this.$('#remapPreviewOriginal');
+    this.remapPreviewAdapted = this.$('#remapPreviewAdapted');
+    this.confirmRemappedWallpaperBtn = /** @type {HTMLButtonElement} */ (this.$('#confirmRemappedWallpaperBtn'));
+    this.confirmOriginalWallpaperBtn = /** @type {HTMLButtonElement} */ (this.$('#confirmOriginalWallpaperBtn'));
+    this.cancelWallpaperPromptBtn = /** @type {HTMLButtonElement} */ (this.$('#cancelWallpaperPromptBtn'));
+    this.pendingCustomWallpaper = null;
     this.toggleGlassmorphism = this.$('#toggleGlassmorphism');
     this.selectFontScale = this.$('#selectFontScale');
 
@@ -167,17 +192,172 @@ export default class SettingsApp extends BaseApp {
 
     // Wallpapers
     this.wallpaperThumbs.forEach(thumb => {
-      applyWallpaperStyle(thumb, thumb.getAttribute('data-wp'));
       thumb.addEventListener('click', () => {
         const wp = thumb.getAttribute('data-wp');
         if (wp) this.handleWallpaperClick(wp);
       });
     });
 
+    if (this.toggleAdaptWallpaper) {
+      this.toggleAdaptWallpaper.addEventListener('change', async (e) => {
+        this.systemSettings.appearance.adaptWallpaper = (/** @type {HTMLInputElement} */ (e.target)).checked;
+        if (await this.saveSettings()) this.syncUiWithSettings();
+      });
+    }
+
+    if (this.selectWallpaperPresetMode) {
+      this.selectWallpaperPresetMode.addEventListener('change', async (e) => {
+        const mode = (/** @type {HTMLInputElement|HTMLSelectElement} */ (e.target)).value === 'custom' ? 'custom' : 'auto';
+        this.systemSettings.appearance.wallpaperRemapPresetMode = mode;
+        if (mode === 'auto') {
+          delete this.systemSettings.appearance.wallpaperRemapStrategy;
+          delete this.systemSettings.appearance.wallpaperRemapTheme;
+          delete this.systemSettings.appearance.wallpaperChromaBoost;
+          delete this.systemSettings.appearance.wallpaperRemapTemperature;
+          delete this.systemSettings.appearance.wallpaperRemapIntensity;
+        }
+        if (await this.saveSettings()) this.syncUiWithSettings();
+      });
+    }
+
+    if (this.selectWallpaperRemapStrategy) {
+      this.selectWallpaperRemapStrategy.addEventListener('change', async (e) => {
+        this.systemSettings.appearance.wallpaperRemapPresetMode = 'custom';
+        this.systemSettings.appearance.wallpaperRemapStrategy = (/** @type {HTMLInputElement|HTMLSelectElement} */ (e.target)).value;
+        if (await this.saveSettings()) this.syncUiWithSettings();
+      });
+    }
+
+    if (this.selectWallpaperRemapTheme) {
+      this.selectWallpaperRemapTheme.addEventListener('change', async (e) => {
+        this.systemSettings.appearance.wallpaperRemapPresetMode = 'custom';
+        this.systemSettings.appearance.wallpaperRemapTheme = (/** @type {HTMLInputElement|HTMLSelectElement} */ (e.target)).value;
+        if (await this.saveSettings()) this.syncUiWithSettings();
+      });
+    }
+
+    if (this.rangeWallpaperRemapIntensity) {
+      this.rangeWallpaperRemapIntensity.addEventListener('input', (e) => {
+        const pct = Number((/** @type {HTMLInputElement|HTMLSelectElement} */ (e.target)).value);
+        this.systemSettings.appearance.wallpaperRemapPresetMode = 'custom';
+        this.systemSettings.appearance.wallpaperRemapIntensity = Number((pct / 100).toFixed(2));
+        if (this.labelWallpaperRemapIntensity) this.labelWallpaperRemapIntensity.textContent = `${Math.round(pct)}%`;
+        this.queueRemapPromptPreviews();
+      });
+      this.rangeWallpaperRemapIntensity.addEventListener('change', async (e) => {
+        const pct = Number((/** @type {HTMLInputElement|HTMLSelectElement} */ (e.target)).value);
+        this.systemSettings.appearance.wallpaperRemapPresetMode = 'custom';
+        this.systemSettings.appearance.wallpaperRemapIntensity = Number((pct / 100).toFixed(2));
+        if (await this.saveSettings()) this.syncUiWithSettings();
+      });
+    }
+
+    if (this.rangeWallpaperChromaBoost) {
+      this.rangeWallpaperChromaBoost.addEventListener('input', (e) => {
+        const boost = Number((/** @type {HTMLInputElement|HTMLSelectElement} */ (e.target)).value);
+        this.systemSettings.appearance.wallpaperRemapPresetMode = 'custom';
+        this.systemSettings.appearance.wallpaperChromaBoost = Number(boost.toFixed(2));
+        if (this.labelWallpaperChromaBoost) this.labelWallpaperChromaBoost.textContent = `${boost.toFixed(2)}x`;
+        this.queueRemapPromptPreviews();
+      });
+      this.rangeWallpaperChromaBoost.addEventListener('change', async (e) => {
+        const boost = Number((/** @type {HTMLInputElement|HTMLSelectElement} */ (e.target)).value);
+        this.systemSettings.appearance.wallpaperRemapPresetMode = 'custom';
+        this.systemSettings.appearance.wallpaperChromaBoost = Number(boost.toFixed(2));
+        if (await this.saveSettings()) this.syncUiWithSettings();
+      });
+    }
+
+    if (this.rangeWallpaperRemapTemperature) {
+      this.rangeWallpaperRemapTemperature.addEventListener('input', (e) => {
+        const temp = Number((/** @type {HTMLInputElement|HTMLSelectElement} */ (e.target)).value);
+        this.systemSettings.appearance.wallpaperRemapPresetMode = 'custom';
+        this.systemSettings.appearance.wallpaperRemapTemperature = Number(temp.toFixed(3));
+        if (this.labelWallpaperRemapTemperature) this.labelWallpaperRemapTemperature.textContent = temp.toFixed(3);
+        this.queueRemapPromptPreviews();
+      });
+      this.rangeWallpaperRemapTemperature.addEventListener('change', async (e) => {
+        const temp = Number((/** @type {HTMLInputElement|HTMLSelectElement} */ (e.target)).value);
+        this.systemSettings.appearance.wallpaperRemapPresetMode = 'custom';
+        this.systemSettings.appearance.wallpaperRemapTemperature = Number(temp.toFixed(3));
+        if (await this.saveSettings()) this.syncUiWithSettings();
+      });
+    }
+
+    if (this.resetWallpaperRemapParamsBtn) {
+      this.resetWallpaperRemapParamsBtn.addEventListener('click', async () => {
+        this.systemSettings.appearance.wallpaperRemapPresetMode = 'auto';
+        delete this.systemSettings.appearance.wallpaperRemapStrategy;
+        delete this.systemSettings.appearance.wallpaperRemapTheme;
+        delete this.systemSettings.appearance.wallpaperRemapIntensity;
+        delete this.systemSettings.appearance.wallpaperChromaBoost;
+        delete this.systemSettings.appearance.wallpaperRemapTemperature;
+        if (await this.saveSettings()) {
+          this.syncUiWithSettings();
+          this.showToast('Preset otimizado restaurado para a imagem, destaque e tema.');
+        }
+      });
+    }
+
     if (this.applyCustomWallpaperBtn && this.customWallpaperUrl) {
-      this.applyCustomWallpaperBtn.addEventListener('click', () => {
+      this.applyCustomWallpaperBtn.addEventListener('click', async () => {
         const url = this.customWallpaperUrl.value.trim();
-        if (url) this.handleWallpaperClick(url);
+        if (!url) return;
+        let resolved;
+        try { resolved = await this.resolveCustomWallpaperSource(url); }
+        catch (error) { this.showToast(error.message); return; }
+        if (this.wallpaperRemapPrompt && isImageWallpaper(resolved)) {
+          this.promptCustomWallpaperRemap(resolved);
+        } else {
+          await this.handleWallpaperClick(resolved);
+        }
+      });
+    }
+
+    if (this.uploadCustomWallpaperBtn && this.uploadCustomWallpaperInput) {
+      this.uploadCustomWallpaperBtn.addEventListener('click', () => {
+        this.uploadCustomWallpaperInput.click();
+      });
+      this.uploadCustomWallpaperInput.addEventListener('change', async (e) => {
+        const file = (/** @type {HTMLInputElement} */ (e.target)).files?.[0];
+        if (!file) return;
+        try {
+          const dataUrl = await this.readFileAsDataUrl(file);
+          if (this.customWallpaperUrl) this.customWallpaperUrl.value = file.name;
+          if (this.wallpaperRemapPrompt) {
+            this.promptCustomWallpaperRemap(dataUrl);
+          } else {
+            await this.handleWallpaperClick(dataUrl);
+          }
+        } catch (error) {
+          this.showToast(`Erro ao carregar imagem: ${error.message}`);
+        } finally {
+          this.uploadCustomWallpaperInput.value = '';
+        }
+      });
+    }
+
+    if (this.confirmRemappedWallpaperBtn) {
+      this.confirmRemappedWallpaperBtn.addEventListener('click', async () => {
+        if (!this.pendingCustomWallpaper) return;
+        const wp = this.pendingCustomWallpaper;
+        this.dismissCustomWallpaperPrompt();
+        await this.handleWallpaperClick(wp, { adaptWallpaper: true });
+      });
+    }
+
+    if (this.confirmOriginalWallpaperBtn) {
+      this.confirmOriginalWallpaperBtn.addEventListener('click', async () => {
+        if (!this.pendingCustomWallpaper) return;
+        const wp = this.pendingCustomWallpaper;
+        this.dismissCustomWallpaperPrompt();
+        await this.handleWallpaperClick(wp, { adaptWallpaper: false });
+      });
+    }
+
+    if (this.cancelWallpaperPromptBtn) {
+      this.cancelWallpaperPromptBtn.addEventListener('click', () => {
+        this.dismissCustomWallpaperPrompt();
       });
     }
 
@@ -342,14 +522,90 @@ export default class SettingsApp extends BaseApp {
     });
 
     if (!await this.saveSettings()) return;
+    this.syncUiWithSettings();
     this.showToast(`Tema alterado para: ${theme === 'dark' ? 'Escuro Obsidian' : 'Claro'}`);
   }
 
-  async handleWallpaperClick(wp) {
+  async handleWallpaperClick(wp, options = {}) {
     this.systemSettings.appearance.wallpaper = wp;
+    if (typeof options.adaptWallpaper === 'boolean') {
+      this.systemSettings.appearance.adaptWallpaper = options.adaptWallpaper;
+    }
     if (!await this.saveSettings()) return;
     this.syncUiWithSettings();
-    this.showToast('Papel de parede aplicado!');
+    this.showToast(
+      options.adaptWallpaper === true
+        ? 'Preferência salva. A imagem será adaptada ao destaque quando disponível.'
+        : options.adaptWallpaper === false
+          ? 'Imagem original aplicada como papel de parede!'
+          : 'Papel de parede aplicado!'
+    );
+  }
+
+  readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      if (!/^image\/(jpeg|png|webp|avif|gif)$/.test(file.type) || file.size > 20 * 1024 * 1024) { reject(new Error('Escolha uma imagem JPG, PNG, WebP, AVIF ou GIF de até 20 MB.')); return; }
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Não foi possível ler o arquivo de imagem.'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async resolveCustomWallpaperSource(inputPath) {
+    if (!/^\/home\//.test(inputPath)) return inputPath;
+    if (!this.fileSystem?.readFile) throw new Error('Sistema de arquivos indisponível.');
+    const raw = await this.fileSystem.readFile(inputPath, { encoding: 'binary' });
+    if (typeof raw === 'string' && raw.startsWith('data:image/')) return raw;
+    const ext = inputPath.split('.').pop()?.toLowerCase();
+    const mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', avif: 'image/avif', gif: 'image/gif' }[ext];
+    if (!mime || !ArrayBuffer.isView(raw)) throw new Error('O arquivo precisa ser uma imagem JPG, PNG, WebP, AVIF ou GIF.');
+    const bytes = new Uint8Array(raw.byteLength);
+    bytes.set(new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength));
+    return this.readFileAsDataUrl(new File([bytes], 'wallpaper.' + ext, { type: mime }));
+  }
+
+  promptCustomWallpaperRemap(imageSrc) {
+    this.pendingCustomWallpaper = imageSrc;
+    if (!this.wallpaperRemapPrompt) return;
+    this.wallpaperRemapPrompt.hidden = false;
+    this.refreshRemapPromptPreviews();
+    this.showToast('Compare a prévia e escolha como aplicar a imagem.');
+  }
+
+  queueRemapPromptPreviews() {
+    this.clearTimeout?.(this.remapPreviewTimer);
+    this.remapPreviewTimer = this.setTimeout(() => this.refreshRemapPromptPreviews(), 120);
+  }
+
+  refreshRemapPromptPreviews() {
+    if (!this.pendingCustomWallpaper) return;
+    const effective = resolveEffectiveRemapParams(this.systemSettings.appearance, this.pendingCustomWallpaper);
+    if (this.remapPreviewOriginal) {
+      applyWallpaperStyle(this.remapPreviewOriginal, this.pendingCustomWallpaper, {
+        adaptToAccent: false
+      });
+    }
+    if (this.remapPreviewAdapted) {
+      applyWallpaperStyle(this.remapPreviewAdapted, this.pendingCustomWallpaper, {
+        accent: effective.accent,
+        systemTheme: effective.systemTheme,
+        adaptToAccent: true,
+        strategy: effective.strategy,
+        theme: effective.theme,
+        chromaBoost: effective.chromaBoost,
+        temperature: effective.temperature,
+        intensity: effective.intensity,
+        maxDimension: 520
+      });
+    }
+  }
+
+  dismissCustomWallpaperPrompt() {
+    this.pendingCustomWallpaper = null;
+    if (this.wallpaperRemapPrompt) {
+      this.wallpaperRemapPrompt.hidden = true;
+    }
   }
 
   async loadSettings() {
@@ -383,11 +639,53 @@ export default class SettingsApp extends BaseApp {
     this.$$('.theme-option').forEach(opt => {
       opt.classList.toggle('active', opt.getAttribute('data-theme') === appearance.theme);
     });
+    const effective = resolveEffectiveRemapParams(appearance, appearance.wallpaper);
     this.wallpaperThumbs.forEach(thumb => {
-      const selected = thumb.getAttribute('data-wp') === appearance.wallpaper;
+      const wpValue = thumb.getAttribute('data-wp');
+      const selected = wpValue === appearance.wallpaper;
       thumb.classList.toggle('active', selected);
       thumb.setAttribute('aria-pressed', String(selected));
+      const thumbParams = resolveEffectiveRemapParams(appearance, wpValue);
+      applyWallpaperStyle(thumb, wpValue, {
+        accent: thumbParams.accent,
+        systemTheme: thumbParams.systemTheme,
+        adaptToAccent: shouldAdaptWallpaper(appearance),
+        strategy: thumbParams.strategy,
+        theme: thumbParams.theme,
+        chromaBoost: thumbParams.chromaBoost,
+        temperature: thumbParams.temperature,
+        intensity: thumbParams.intensity,
+        maxDimension: 360
+      });
     });
+    if (this.toggleAdaptWallpaper) this.toggleAdaptWallpaper.checked = shouldAdaptWallpaper(appearance);
+    if (this.selectWallpaperPresetMode) this.selectWallpaperPresetMode.value = effective.presetMode;
+    if (this.oklabActivePresetBadge) {
+      const accentLabel = accentPresets[effective.accent]?.label || effective.accent;
+      const themeLabel = effective.systemTheme === 'light' ? 'Claro' : 'Escuro';
+      this.oklabActivePresetBadge.textContent = effective.presetMode === 'custom'
+        ? 'Personalizado'
+        : `Automático · ${accentLabel} · ${themeLabel}`;
+    }
+    if (this.oklabPresetSummaryText) {
+      const accentLabel = accentPresets[effective.accent]?.label || effective.accent;
+      const themeLabel = effective.systemTheme === 'light' ? 'Claro Minimalista' : 'Escuro Obsidian';
+      this.oklabPresetSummaryText.textContent = effective.presetMode === 'custom'
+        ? 'Ajuste personalizado. Você pode restaurar a combinação automática a qualquer momento.'
+        : `Ajuste automático para ${effective.imageLabel}, destaque ${accentLabel} e tema ${themeLabel}.`;
+    }
+    if (this.selectWallpaperRemapStrategy) this.selectWallpaperRemapStrategy.value = effective.strategy;
+    if (this.selectWallpaperRemapTheme) this.selectWallpaperRemapTheme.value = effective.theme;
+    const intensityPct = Math.round(effective.intensity * 100);
+    if (this.rangeWallpaperRemapIntensity) this.rangeWallpaperRemapIntensity.value = String(intensityPct);
+    if (this.labelWallpaperRemapIntensity) this.labelWallpaperRemapIntensity.textContent = `${intensityPct}%`;
+    const boostVal = effective.chromaBoost;
+    if (this.rangeWallpaperChromaBoost) this.rangeWallpaperChromaBoost.value = boostVal.toFixed(2);
+    if (this.labelWallpaperChromaBoost) this.labelWallpaperChromaBoost.textContent = `${boostVal.toFixed(2)}x`;
+    const tempVal = effective.temperature;
+    if (this.rangeWallpaperRemapTemperature) this.rangeWallpaperRemapTemperature.value = tempVal.toFixed(3);
+    if (this.labelWallpaperRemapTemperature) this.labelWallpaperRemapTemperature.textContent = tempVal.toFixed(3);
+    if (this.pendingCustomWallpaper) this.refreshRemapPromptPreviews();
     if (this.toggleGlassmorphism) this.toggleGlassmorphism.checked = appearance.glassmorphism;
     if (this.selectFontScale) this.selectFontScale.value = appearance.fontScale;
 

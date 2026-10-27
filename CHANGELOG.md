@@ -4,12 +4,14 @@ O contador de releases começa em 1 com a versão 2.0.0-alpha.2. Builds da mesma
 
 ## 2.0.0-alpha.3 · Release 2 · 2026-10-26
 
-Abertura confiável e recuperação de aplicativos
+Abertura confiável e personalização do espaço
 
 - Corrigido o tipo MIME de módulos .mjs no Nginx, permitindo abrir OpenUI Studio e Marketplace.
 - Nova tela de falha com tentar novamente, fechar, recarregar o sistema e diagnóstico técnico copiável.
 - Falhas de inicialização recebem tratamento próprio; repetir cria uma instância limpa e encerra recursos anteriores.
 - Validação de produção exige instâncias inicializadas, verifica dependências ES modules e exercita o OpenUI real.
+- Coleção Intervalos com sete wallpapers e ajuste opcional de cor e luminosidade ao destaque do sistema.
+- Paletas de imagem geradas pelo DS, importação de imagens locais/VFS, cache de aparência revisado e kernel Wasm validado contra JavaScript.
 
 ## 2.0.0-alpha.2 · Release 1 · 2026-10-26
 

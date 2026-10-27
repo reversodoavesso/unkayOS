@@ -46,3 +46,11 @@ Para um widget nativo desenvolvido no repositório, registre o app com `mode: "d
 O shell usa tipografia, cor e composição do RDA DS para criar sua identidade: painel editorial, trilha com ícones e nomes, informação em uma faixa de widgets e controles neutros nas janelas. O accent acompanha foco, seleção e ações do produto. Marca, feedback e níveis de acesso mantêm seus contratos.
 
 As preferências ficam em `/etc/unkay-settings.json`. Atualizações são serializadas e aplicadas por seção, para uma alteração de aparência não apagar favoritos ou widgets recém-configurados.
+
+## Imagens e cores do espaço
+
+A coleção Intervalos reúne sete imagens, além dos fundos Atmosfera, Nebulosa e Obsidian. Imagens da coleção podem acompanhar o destaque e o tema; imagens personalizadas existentes preservam suas cores até você escolher a adaptação. Compare original e ajustada antes de confirmar. É possível carregar um arquivo de até 20 MB ou indicar um caminho de imagem no VFS.
+
+Em Ajustes de cor, escolha automático ou personalize distribuição, luminosidade, intensidade, saturação e suavidade. O processamento é local. Imagens externas precisam permitir leitura pelo navegador para adaptação; a imagem original continua sendo a alternativa quando isso não é possível.
+
+As paletas são geradas a partir dos tokens oficiais do DS. O kernel Wasm e o fallback JavaScript usam o mesmo algoritmo de cor e são comparados em testes. O cache considera a imagem inteira e os parâmetros escolhidos; a restauração inicial não reutiliza pixels de uma configuração diferente. A antiga preferência Montanhas migra para Horizonte Limpo.

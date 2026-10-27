@@ -1,10 +1,11 @@
 {
   "package": "@reversodoavesso/design-system",
   "version": "3.5.1",
-  "sourceSha256": "3aa0b28c0cb4012d61d80c8020ad3bef8177845b2c84932d1a9d08f866c9c9d5",
+  "sourceSha256": "2ab53a748297ddad76e69ff0438f7f96c7828fd7fb1762c33685c26a3ee9184e",
   "files": {
     "design-system.css": "cc661080d4c87b1379f40226739c2a52f74b5afaa33b4ab7d31fbfecc91a3275",
     "unkayos.css": "83306b4596b93546eb61d0a6f416dbd5fd5b23d684e1318f90c3d08472f557df",
+    "unkayos.palette.js": "7412cf84443dc777b2e5ed0382ebe68a719bc80fea99dc2d9c249752704af3c5",
     "web/icons.js": "c05f2e508ca75554edda29077326eb9d6d5e8a4f96bf1a99451ea199e85bf9e1",
     "web/icons.js.map": "4571d7aa7666a39cbb64ebc5b31205955495d96a5f56ab118e60ec2f88514e17",
     "components/Icon/icons-data.js": "94b1ffcf397bbc7d5b6feda334974c6371d24cba7941a4d593bc8007efedd54f",

@@ -1,6 +1,7 @@
 import { workspaceIcon } from '../deployment.js';
 import { iconMarkup } from '../ui/designSystem.js';
-import { applyWallpaperStyle } from '../utils/appPreferences.js';
+import { shouldAdaptWallpaper } from '../ui/wallpaperAppearance.js';
+import { applyWallpaperStyle, resolveEffectiveRemapParams } from '../utils/appPreferences.js';
 import { accentChoices, escapeHtml, WALLPAPERS } from './preferences.js';
 
 const STEPS = ['Bem-vindo', 'Aparência', 'Navegação', 'Widgets'];
@@ -65,7 +66,10 @@ export class WelcomeSetup {
     }
     this.dialog.innerHTML = `<aside class="setup-story"><div class="workspace-wordmark">${iconMarkup(workspaceIcon, { size: 28 })}<span>unkay<span>OS</span></span></div><ol>${STEPS.map((label, index) => `<li ${index === this.step ? 'aria-current="step"' : ''}><span>${index < this.step ? iconMarkup('check', { size: 14 }) : String(index + 1).padStart(2, '0')}</span>${label}</li>`).join('')}</ol><p>Menos ruído.<br>Mais espaço para o que vem.</p><span class="setup-story__orbit" aria-hidden="true"></span></aside>
       <section class="setup-main"><div class="setup-body">${body}</div><p class="setup-error" role="alert">${e(this.status)}</p><footer class="setup-footer"><button type="button" class="rda-button rda-button--md" data-color="ghost" data-setup="${this.step ? 'back' : 'skip'}">${this.step ? 'Voltar' : 'Pular por enquanto'}</button><span>${this.step + 1} de ${STEPS.length}</span><button type="button" class="rda-button rda-button--lg" data-color="primary" data-setup="next">${this.step === 3 ? 'Entrar no meu espaço' : 'Continuar'}${iconMarkup('arrow-right', { size: 18 })}</button></footer></section>`;
-    this.dialog.querySelectorAll('button[data-wallpaper]').forEach(button => applyWallpaperStyle(button, WALLPAPERS[Number(button.getAttribute('data-wallpaper'))].value));
+    this.dialog.querySelectorAll('button[data-wallpaper]').forEach(button => {
+      const wallpaper = WALLPAPERS[Number(button.getAttribute('data-wallpaper'))].value;
+      applyWallpaperStyle(button, wallpaper, { ...resolveEffectiveRemapParams(this.draft.appearance, wallpaper), adaptToAccent: shouldAdaptWallpaper(this.draft.appearance), maxDimension: 420 });
+    });
     if (focusSelector) this.dialog.querySelector(focusSelector)?.focus();
   }
 

@@ -230,7 +230,7 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
             <div id="panelAppearance" class="settings-panel active">
               <label class="theme-option active" data-theme="dark"></label>
               <label class="theme-option" data-theme="light"></label>
-              <button class="wallpaper-thumb active" data-wp="/assets/images/wallpaper_01.jpg"></button>
+              <button class="wallpaper-thumb active" data-wp="/assets/images/wallpapers/01-horizonte-limpo-v2.jpg"></button>
               <input type="text" id="customWallpaperUrl" />
               <button id="applyCustomWallpaperBtn"></button>
               <input type="checkbox" id="toggleGlassmorphism" checked />

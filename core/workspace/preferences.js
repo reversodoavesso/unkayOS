@@ -3,8 +3,14 @@ import { accentPresets } from '../ui/designSystem.js';
 
 export const WALLPAPERS = [
   { name: 'Atmosfera', value: 'linear-gradient(145deg, var(--rda-surface-primary) 12%, var(--unkay-accent-subtle) 64%, var(--rda-surface-secondary))' },
-  { name: 'Montanhas', value: '/assets/images/wallpaper_01.jpg' },
-  { name: 'Nebulosa', value: 'radial-gradient(circle at 50% 50%, #164e63 0%, #0a0a0a 100%)' },
+  { name: 'Horizonte Limpo', value: '/assets/images/wallpapers/01-horizonte-limpo-v2.jpg' },
+  { name: 'Pavilhão em Silêncio', value: '/assets/images/wallpapers/02-pavilhao-em-silencio-v2.jpg' },
+  { name: 'Luz Rasante', value: '/assets/images/wallpapers/03-luz-rasante-v2.jpg' },
+  { name: 'Jardim em Pausa', value: '/assets/images/wallpapers/04-jardim-em-pausa-v2.jpg' },
+  { name: 'Estudo de Matéria', value: '/assets/images/wallpapers/05-estudo-de-materia-v2.jpg' },
+  { name: 'Céu Profundo', value: '/assets/images/wallpapers/06-ceu-profundo-noturno.jpg' },
+  { name: 'Última Luz', value: '/assets/images/wallpapers/07-ultima-luz-noturno.jpg' },
+  { name: 'Nebulosa', value: 'radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--unkay-accent-border) 38%, var(--unkay-accent-subtle)) 0%, var(--unkay-accent-subtle) 48%, var(--rda-surface-primary) 100%)' },
   { name: 'Obsidian', value: '#0a0a0a' }
 ];
 export const DEFAULT_SHELL = { bar: 'floating', launcher: 'atlas', showLabels: false, pinned: ['theorb', 'file-manager', 'openui'] };

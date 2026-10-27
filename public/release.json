@@ -5,12 +5,14 @@
       "version": "2.0.0-alpha.3",
       "number": 2,
       "date": "2026-10-26",
-      "title": "Abertura confiável e recuperação de aplicativos",
+      "title": "Abertura confiável e personalização do espaço",
       "changes": [
         "Corrigido o tipo MIME de módulos .mjs no Nginx, permitindo abrir OpenUI Studio e Marketplace.",
         "Nova tela de falha com tentar novamente, fechar, recarregar o sistema e diagnóstico técnico copiável.",
         "Falhas de inicialização recebem tratamento próprio; repetir cria uma instância limpa e encerra recursos anteriores.",
-        "Validação de produção exige instâncias inicializadas, verifica dependências ES modules e exercita o OpenUI real."
+        "Validação de produção exige instâncias inicializadas, verifica dependências ES modules e exercita o OpenUI real.",
+        "Coleção Intervalos com sete wallpapers e ajuste opcional de cor e luminosidade ao destaque do sistema.",
+        "Paletas de imagem geradas pelo DS, importação de imagens locais/VFS, cache de aparência revisado e kernel Wasm validado contra JavaScript."
       ]
     },
     {

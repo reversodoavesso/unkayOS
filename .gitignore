@@ -43,3 +43,5 @@ review-*.log
 review-*.json
 
 /public/build-info.json
+
+/browser-proof/

@@ -3,10 +3,15 @@
    remains authoritative and refreshes this cache when preferences are read. */
 (() => {
   let settings = {};
+  let remappedCache = null;
   try {
     const cached = JSON.parse(localStorage.getItem('unkayos_system_settings') || 'null');
     if (cached && typeof cached === 'object' && !Array.isArray(cached)) settings = cached;
   } catch (_) { /* A missing/unavailable cache starts with a neutral surface. */ }
+  try {
+    const rawRemap = JSON.parse(localStorage.getItem('unkayos_remapped_wallpaper_cache') || 'null');
+    if (rawRemap && typeof rawRemap === 'object') remappedCache = rawRemap;
+  } catch (_) {}
 
   const appearance = settings.appearance && typeof settings.appearance === 'object' ? settings.appearance : {};
   const windowing = settings.windowing || {}, shell = settings.shell || {};
@@ -28,16 +33,30 @@
     const desktop = document.getElementById('desktop');
     if (!desktop) return false;
     desktop.dataset.rdaProduct = 'unkayos';
-    // The cache contains a validated preset identifier. Unknown identifiers
-    // receive the CSS default until the official runtime normalizes them.
-    desktop.dataset.unkayAccent = typeof appearance.accent === 'string' && /^[a-z][a-z0-9-]*$/.test(appearance.accent) ? appearance.accent : 'cyan';
-    const wallpaper = appearance.wallpaper;
+    const accent = typeof appearance.accent === 'string' && /^[a-z][a-z0-9-]*$/.test(appearance.accent) ? appearance.accent : 'cyan';
+    desktop.dataset.unkayAccent = accent;
+    const wallpaper = appearance.wallpaper === '/assets/images/wallpaper_01.jpg' ? '/assets/images/wallpapers/01-horizonte-limpo-v2.jpg' : appearance.wallpaper;
     if (typeof wallpaper === 'string' && wallpaper) {
       desktop.style.backgroundImage = 'none';
       desktop.style.backgroundColor = '';
-      if (/^(linear|radial)-gradient\(/.test(wallpaper)) desktop.style.backgroundImage = wallpaper;
-      else if (/^(https?:\/\/|\/|\.\/)/.test(wallpaper)) desktop.style.backgroundImage = `url(${JSON.stringify(wallpaper)})`;
-      else desktop.style.backgroundColor = wallpaper;
+      if (/^(linear|radial)-gradient\(/.test(wallpaper)) {
+        desktop.style.backgroundImage = wallpaper;
+      } else if (/^(https?:\/\/|\/|\.\/|data:image\/|blob:)/.test(wallpaper)) {
+        const custom = appearance.wallpaperRemapPresetMode === 'custom';
+        const signature = JSON.stringify(['v2', custom ? 'custom' : 'auto', ...['wallpaperRemapStrategy', 'wallpaperRemapTheme', 'wallpaperChromaBoost', 'wallpaperRemapTemperature', 'wallpaperRemapIntensity'].map(key => custom ? appearance[key] ?? null : null)]);
+        const adaptWallpaper = (appearance.adaptWallpaper === true || (appearance.adaptWallpaper !== false && wallpaper.startsWith('/assets/images/wallpapers/'))) && !(custom && appearance.wallpaperRemapIntensity === 0);
+        const themeMatch = !remappedCache?.systemTheme || remappedCache.systemTheme === root.dataset.theme;
+        if (adaptWallpaper && remappedCache && remappedCache.appearanceKey === signature && remappedCache.wallpaper === wallpaper && remappedCache.accent === accent && themeMatch && typeof remappedCache.dataUrl === 'string') {
+          desktop.style.backgroundImage = `url(${JSON.stringify(remappedCache.dataUrl)})`;
+        } else if (!adaptWallpaper) {
+          desktop.style.backgroundImage = `url(${JSON.stringify(wallpaper)})`;
+        }
+        // When adaptWallpaper is true and no cached Data URL exists yet, keep the
+        // dark/light surface background until Wasm/Canvas finishes to avoid
+        // flashing the raw un-remapped image.
+      } else {
+        desktop.style.backgroundColor = wallpaper;
+      }
     }
     restored = true;
     return true;
