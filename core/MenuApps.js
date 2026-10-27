@@ -25,6 +25,7 @@ export class menuApps {
     }, options);
     this.toggleHandler = () => this.toggle(); this.closeHandler = () => this.close();
     this.updateHandler = () => { if (this.visibilityFlag) this.refresh(); };
+    eventBus.on('packages:changed', this.updateHandler);
     eventBus.on('menu:apps:toggle', this.toggleHandler); eventBus.on('menu:apps:close', this.closeHandler);
     eventBus.on('settings:updated', this.updateHandler); eventBus.on('app:started', this.updateHandler); eventBus.on('app:stopped', this.updateHandler); eventBus.on('app:start:error', this.updateHandler);
     this.refresh();
@@ -91,6 +92,7 @@ export class menuApps {
   }
   close() { if (this.menuElement?.open) this.menuElement.close(); this.menuElement?.classList.remove('menu_apps--visible'); }
   remove() {
+    eventBus.off('packages:changed', this.updateHandler);
     this.close(); this.controller?.abort(); this.menuElement?.remove();
     eventBus.off('menu:apps:toggle', this.toggleHandler); eventBus.off('menu:apps:close', this.closeHandler);
     eventBus.off('settings:updated', this.updateHandler); eventBus.off('app:started', this.updateHandler); eventBus.off('app:stopped', this.updateHandler); eventBus.off('app:start:error', this.updateHandler);

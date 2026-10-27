@@ -30,6 +30,19 @@ describe('unkayOS 2.0 WASI Runner & Terminal Commands', () => {
         expect(tierResult).toContain('Tier atual de computação');
     });
 
+    it('routes package management and launcher commands through the shared SDK', async () => {
+        const { unkay } = await import('../core/sdk/unkay.js');
+        const list = vi.spyOn(unkay.packages, 'list').mockReturnValue([{ id: 'notes', name: '<img onerror=x>', state: 'installed' }]);
+        const open = vi.spyOn(unkay.packages, 'open').mockResolvedValue('instance');
+        try {
+            const output = await wasmTerminalCommands.unkay.action(['packages', 'list']);
+            expect(output).toContain('&lt;img');
+            expect(output).not.toContain('<img');
+            await wasmTerminalCommands.unkay.action(['run', 'notes']);
+            expect(open).toHaveBeenCalledWith('notes');
+        } finally { list.mockRestore(); open.mockRestore(); }
+    });
+
     it('should grep matching lines from a file using wasmFileSystem', async () => {
         const mockFileContent = `First line
 Error: connection failed

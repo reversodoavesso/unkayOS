@@ -1,337 +1,210 @@
-// apps/store/main.js - unkayOS 2.0 Official Marketplace Application
-// Implements M4 from docs/plans/unkayos-marketplace-app-curation.md
-
 import { BaseApp } from '../../core/BaseApp.js';
 import { unkay } from '../../core/sdk/unkay.js';
 import { iconMarkup } from '../../core/ui/designSystem.js';
+import { escapeHtml } from '../../core/workspace/preferences.js';
+
+const labels = { system: 'Incluído no sistema', installed: 'Instalado', update: 'Atualização disponível',
+    incomplete: 'Instalação incompleta', blocked: 'Indisponível', available: 'Disponível', pending: 'Processando…' };
+const profiles = { 'client-only': 'Neste dispositivo', 'client-server': 'Nuvem RDA',
+    containerized: 'Container dedicado', 'external-gateway': 'Serviço externo' };
+const searchText = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const button = (action, text, id, { disabled = false, color = 'primary' } = {}) =>
+    `<button type="button" class="rda-button rda-button--sm" data-color="${color}" data-action="${action}" data-app-id="${escapeHtml(id)}" ${disabled ? 'disabled' : ''}>${text}</button>`;
 
 export default class StoreApp extends BaseApp {
-    constructor(CORE, standardAPIs) {
-        super(CORE, standardAPIs);
+    constructor(CORE, APIs) {
+        super(CORE, APIs);
         this.apps = [];
-        this.installedAppIds = new Set();
-        this.currentCategory = 'all';
+        this.view = 'all';
         this.searchQuery = '';
+        this.category = 'all';
         this.onlyCompatible = false;
-        this.userTier = 'guest';
+        this.modalAppId = null;
     }
 
     async onRun() {
-        console.log('[Marketplace] Inicializando unkayOS Store...');
-        this.userTier = unkay.auth.getTier();
-        this.updateTierUI();
-        await this.loadInstalledApps();
-        await this.fetchCatalog();
+        this.sdk = this.unkay || unkay;
+        this.packages = this.sdk.packages;
+        this.controller = new AbortController();
         this.setupEventListeners();
-        this.render();
+        this.unsubscribe = this.packages.subscribe(() => this.render());
+        await this.refresh();
     }
 
-    updateTierUI() {
-        const pill = this.$('#userTierPill');
-        if (pill) {
-            pill.textContent = `Perfil: ${this.userTier.toUpperCase()}`;
-            pill.className = `user-tier-pill tier-${this.userTier}`;
-        }
-    }
+    /** @returns {HTMLElement} */
+    $(selector) { return this.appContentRoot?.querySelector(selector); }
 
-    async loadInstalledApps() {
-        try {
-            const appsDir = '/home/user/apps';
-            const exists = await unkay.fs.exists(appsDir);
-            if (exists) {
-                const list = await unkay.fs.list(appsDir);
-                for (const item of list) {
-                    this.installedAppIds.add(item.name || item);
-                }
-            }
-        } catch {
-            // No installed apps yet
-        }
-    }
-
-    async fetchCatalog() {
-        try {
-            // Attempt fetching from compute-service or BFF gateway
-            const res = await fetch('/api/marketplace/apps');
-            if (res.ok) {
-                const data = await res.json();
-                this.apps = data.apps || [];
-                return;
-            }
-        } catch {}
-
-        // Fallback curated seed catalogue
-        this.apps = [
-            {
-                id: "openui-studio",
-                name: "OpenUI Generative Studio",
-                summary: "Gerador e IDE de interfaces Generative UI com o Design System RDA",
-                description: "Ambiente declarativo para prototipar telas e componentes com tokens oficiais do @reversodoavesso/design-system a partir de prompts em linguagem natural.",
-                authorName: "RDA Design Ops",
-                category: "ai",
-                appType: "native",
-                runtimeProfile: "client-only",
-                requiredTier: "guest",
-                icon: "sparkles",
-                version: "2.0.0",
-                permissions: ["storage:local", "ai:generate"]
-            },
-            {
-                id: "cloud-shell-pro",
-                name: "Cloud Shell Pro (Compute Sandbox)",
-                summary: "Terminal Linux interativo no host com Docker sob demanda",
-                description: "Estação de linha de comando com acesso aos utilitários reais da infraestrutura RDA (git, node, rda CLI) em container isolado.",
-                authorName: "RDA Infra Team",
-                category: "utilities",
-                appType: "native",
-                runtimeProfile: "containerized",
-                requiredTier: "sysadmin",
-                icon: "zap",
-                version: "2.0.0",
-                permissions: ["compute:websocket", "auth:stepup-mfa"]
-            },
-            {
-                id: "sqlite-viewer",
-                name: "SQLite & OPFS Data Inspector",
-                summary: "Visualizador e editor SQL para bancos de dados locais no navegador",
-                description: "Inspetor de tabelas, execução de queries e visualização de arquivos de banco de dados SQLite persistidos no OPFS Wasm do unkayOS.",
-                authorName: "unkayOS Core Labs",
-                category: "developer",
-                appType: "native",
-                runtimeProfile: "client-only",
-                requiredTier: "guest",
-                icon: "hard-drive",
-                version: "1.0.0",
-                permissions: ["storage:local", "compute:wasm"]
-            },
-            {
-                id: "task-matrix",
-                name: "Task Matrix Kanban",
-                summary: "Gerenciador ágil de tarefas e notas técnicas com persistência local",
-                description: "Quadro Kanban com organização por prioridades, etiquetas de release e sincronização em Markdown direto no VFS.",
-                authorName: "unkayOS Productivity",
-                category: "productivity",
-                appType: "native",
-                runtimeProfile: "client-only",
-                requiredTier: "guest",
-                icon: "clipboard-list",
-                version: "1.1.0",
-                permissions: ["storage:local"]
-            }
-        ];
-    }
+    /** @returns {NodeListOf<HTMLElement>} */
+    $$(selector) { return this.appContentRoot?.querySelectorAll(selector); }
 
     setupEventListeners() {
-        const searchInput = this.$('#storeSearchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.searchQuery = e.target.value.toLowerCase().trim();
-                this.render();
-            });
-        }
-
-        const compatToggle = this.$('#compatFilterCheckbox');
-        if (compatToggle) {
-            compatToggle.addEventListener('change', (e) => {
-                this.onlyCompatible = e.target.checked;
-                this.render();
-            });
-        }
-
-        const categoryTabs = this.$('#categoryTabs');
-        if (categoryTabs) {
-            categoryTabs.addEventListener('click', (e) => {
-                const btn = e.target.closest('.tab-btn');
-                if (!btn) return;
-                this.elements.all('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.currentCategory = btn.dataset.category;
-                this.render();
-            });
-        }
-
-        const modalBackdrop = this.$('#modalBackdrop');
-        const modalCloseBtn = this.$('#modalCloseBtn');
-        if (modalBackdrop) modalBackdrop.addEventListener('click', () => this.closeModal());
-        if (modalCloseBtn) modalCloseBtn.addEventListener('click', () => this.closeModal());
+        const options = { signal: this.controller.signal };
+        this.$('#storeSearchInput').addEventListener('input', event => { this.searchQuery = searchText((/** @type {HTMLInputElement} */ (event.target)).value.trim()); this.render(); }, options);
+        this.$('#categoryFilter').addEventListener('change', event => { this.category = (/** @type {HTMLSelectElement} */ (event.target)).value; this.render(); }, options);
+        this.$('#compatFilterCheckbox').addEventListener('change', event => { this.onlyCompatible = (/** @type {HTMLInputElement} */ (event.target)).checked; this.render(); }, options);
+        this.$('#storeViews').addEventListener('click', event => {
+            const tab = /** @type {HTMLElement} */ ((/** @type {Element} */ (event.target)).closest('[data-view]'));
+            if (tab) { this.view = tab.dataset.view; this.render(); }
+        }, options);
+        this.$('#refreshCatalog').addEventListener('click', () => this.refresh(), options);
+        this.$('#importPackage').addEventListener('change', event => this.importPackage(event.target), options);
+        this.$('#appsGrid').addEventListener('click', event => this.handleAction(event), options);
+        this.$('#modalBody').addEventListener('click', event => this.handleAction(event), options);
+        this.$('#modalCloseBtn').addEventListener('click', () => this.closeModal(), options);
+        this.$('#modalBackdrop').addEventListener('click', () => this.closeModal(), options);
+        this.appContentRoot.addEventListener('keydown', event => {
+            if (!this.modalAppId) return;
+            if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); this.closeModal(); }
+            if (event.key === 'Tab') {
+                const focusable = [...this.$('#appDetailModal').querySelectorAll('button:not(:disabled), [tabindex="0"]')].filter(element => element instanceof HTMLElement);
+                const first = focusable[0], last = focusable.at(-1);
+                if (event.shiftKey && (event.target === first || !focusable.includes(/** @type {HTMLElement} */ (event.target)))) { event.preventDefault(); last?.focus(); }
+                else if (!event.shiftKey && event.target === last) { event.preventDefault(); first?.focus(); }
+            }
+        }, options);
     }
 
-    isTierCompatible(requiredTier) {
-        const tiersHierarchy = ['guest', 'standard', 'adept', 'sysadmin', 'demiurge'];
-        const userLevel = tiersHierarchy.indexOf(this.userTier);
-        const reqLevel = tiersHierarchy.indexOf(requiredTier || 'guest');
-        return userLevel >= reqLevel;
+    async refresh() {
+        if (this.refreshing) return;
+        this.refreshing = true;
+        const refresh = /** @type {HTMLButtonElement} */ (this.$('#refreshCatalog'));
+        refresh.disabled = true;
+        this.$('#appsGrid').setAttribute('aria-busy', 'true');
+        try { await this.packages.refresh(); }
+        catch (error) { this.message(error.message, true); }
+        finally {
+            this.refreshing = false;
+            if (!this.disposed) { refresh.disabled = false; this.$('#appsGrid').setAttribute('aria-busy', 'false'); this.render(); }
+        }
     }
 
-    getProfileBadge(profile) {
-        switch (profile) {
-            case 'client-only':
-                return "<span class=\"profile-badge profile-client-only\"><rda-icon name=\"monitor\"></rda-icon> 100% Offline / Standalone</span>";
-            case 'client-server':
-                return "<span class=\"profile-badge profile-client-server\"><rda-icon name=\"cloud\"></rda-icon> Nuvem RDA</span>";
-            case 'containerized':
-                return "<span class=\"profile-badge profile-containerized\"><rda-icon name=\"cpu\"></rda-icon> Compute Dedicado</span>";
-            case 'external-gateway':
-                return "<span class=\"profile-badge profile-external-gateway\"><rda-icon name=\"external-link\"></rda-icon> Integração Externa</span>";
-            default:
-                return `<span class="profile-badge">${profile}</span>`;
-        }
+    message(text, error = false) {
+        if (this.disposed) return;
+        const status = this.$('#storeMessage');
+        status.textContent = text;
+        status.dataset.error = String(error);
+        status.hidden = !text;
+    }
+
+    matchesView(app, view = this.view) {
+        return view === 'all' || view === 'installed' && app.installed ||
+            view === 'available' && (app.canInstall || app.busy && !app.installed) || view === 'updates' && app.updateAvailable ||
+            view === 'blocked' && (app.state === 'blocked' || app.state === 'incomplete');
+    }
+
+    actions(app) {
+        if (app.busy) return button('pending', 'Processando…', app.id, { disabled: true });
+        let markup = '';
+        if (app.canOpen) markup += button('open', 'Abrir', app.id);
+        if (app.canInstall) markup += button('install', 'Instalar', app.id);
+        if (app.canUpdate) markup += button('install', app.state === 'incomplete' ? 'Reparar' : 'Atualizar', app.id);
+        if (!app.canOpen && !app.canInstall && !app.canUpdate) markup += button('blocked', app.installed ? 'Abertura indisponível' : 'Indisponível', app.id, { disabled: true, color: 'secondary' });
+        return markup;
     }
 
     render() {
-        const grid = this.$('#appsGrid');
-        if (!grid) return;
-
-        let filtered = this.apps.filter(app => {
-            // Category filter
-            if (this.currentCategory !== 'all' && app.category !== this.currentCategory) {
-                return false;
-            }
-            // Search filter
-            if (this.searchQuery) {
-                const q = this.searchQuery;
-                const matchName = app.name.toLowerCase().includes(q);
-                const matchDesc = (app.summary || app.description || '').toLowerCase().includes(q);
-                if (!matchName && !matchDesc) return false;
-            }
-            // Compatibility filter
-            if (this.onlyCompatible && !this.isTierCompatible(app.requiredTier)) {
-                return false;
-            }
-            return true;
+        if (this.disposed) return;
+        this.apps = this.packages.list();
+        this.$('#userTierPill').textContent = `Perfil: ${this.sdk.auth.getTier()}`;
+        const catalogStatus = this.$('#catalogStatus');
+        catalogStatus.textContent = this.packages.getCatalogError();
+        catalogStatus.hidden = !catalogStatus.textContent;
+        this.$$('#storeViews [data-view]').forEach(tab => {
+            tab.setAttribute('aria-pressed', String(tab.dataset.view === this.view));
+            tab.querySelector('span').textContent = String(this.apps.filter(app => this.matchesView(app, tab.dataset.view)).length);
         });
-
-        if (filtered.length === 0) {
-            grid.innerHTML = `
-                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;">
-                    <div style="font-size: 32px; margin-bottom: 8px;"><rda-icon name="package"></rda-icon></div>
-                    <p style="margin: 0; font-size: 14px;">Nenhum aplicativo encontrado com os filtros atuais.</p>
-                </div>
-            `;
-            return;
-        }
-
-        grid.innerHTML = filtered.map(app => {
-            const isInstalled = this.installedAppIds.has(app.id);
-            return `
-                <div class="app-card" data-app-id="${app.id}">
-                    <div class="card-top">
-                        <div class="card-icon">${iconMarkup(app.iconName || app.icon || 'package')}</div>
-                        <div class="card-title">
-                            <h3>${app.name}</h3>
-                            <span class="author">${app.authorName || 'Comunidade RDA'} • v${app.version || '1.0.0'}</span>
-                        </div>
-                    </div>
-                    ${this.getProfileBadge(app.runtimeProfile)}
-                    <div class="card-summary">${app.summary || app.description || ''}</div>
-                    <div class="card-bottom">
-                        <span style="font-size: 11px; color: #64748b;">Tier: ${app.requiredTier || 'guest'}</span>
-                        <button class="install-btn ${isInstalled ? 'installed' : ''}" data-action="install" data-app-id="${app.id}">
-                            ${isInstalled ? " Instalado" : 'Instalar'}
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // Attach card and install click events
-        grid.querySelectorAll('.app-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('button')) {
-                    const btn = e.target.closest('button');
-                    const appId = btn.dataset.appId;
-                    this.handleInstall(appId, btn);
-                    return;
-                }
-                const appId = card.dataset.appId;
-                this.openDetailModal(appId);
-            });
-        });
+        const filtered = this.apps.filter(app => this.matchesView(app) &&
+            (this.category === 'all' || app.category === this.category) &&
+            (!this.onlyCompatible || app.canInstall || app.canOpen || app.canUpdate || app.busy) &&
+            searchText(`${app.name} ${app.summary} ${app.description} ${app.authorName}`).includes(this.searchQuery));
+        this.$('#resultsCount').textContent = `${filtered.length} de ${this.apps.length} aplicativos`;
+        this.$('#appsGrid').innerHTML = filtered.length ? filtered.map(app => `
+            <article class="app-card" data-app-id="${escapeHtml(app.id)}">
+                <div class="card-top"><span class="card-icon">${iconMarkup(app.iconName || 'package', { size: 24 })}</span>
+                    <div class="card-title"><h3><button type="button" class="detail-link" data-action="details" data-app-id="${escapeHtml(app.id)}">${escapeHtml(app.name)}</button></h3>
+                    <span class="card-author">${escapeHtml(app.authorName || 'unkayOS')} ${app.version ? `· v${escapeHtml(app.version)}` : ''}</span></div></div>
+                <span class="status-badge" data-state="${app.state}">${labels[app.state]}</span>
+                <p class="card-summary">${escapeHtml(app.summary || app.description || 'Aplicativo local.')}</p>
+                <div class="card-meta">${escapeHtml(profiles[app.runtimeProfile] || 'Pacote local')}${app.installedVersion ? ` · Instalado: ${escapeHtml(app.installedVersion)}` : ''}</div>
+                ${app.state === 'blocked' || app.state === 'incomplete' ? `<p class="card-reason">${escapeHtml(app.state === 'incomplete' ? 'O conteúdo executável não foi encontrado. Remova ou repare o pacote.' : app.reasons[0])}</p>` : ''}
+                <div class="card-bottom"><button type="button" class="detail-link" data-action="details" data-app-id="${escapeHtml(app.id)}">Detalhes ${iconMarkup('arrow-right', { size: 14 })}</button><div class="card-actions">${this.actions(app)}</div></div>
+            </article>`).join('') : `<div class="empty-state">${iconMarkup('search', { size: 32 })}<h3>Nenhum aplicativo encontrado</h3><p>Experimente outra busca, categoria ou situação.</p></div>`;
+        if (this.modalAppId) this.renderModal();
     }
 
-    async handleInstall(appId, btn) {
-        const appItem = this.apps.find(a => a.id === appId);
-        if (!appItem) return;
-
-        if (this.installedAppIds.has(appId)) {
-            console.log(`[Marketplace] Aplicativo ${appId} já instalado.`);
-            return;
-        }
-
-        btn.disabled = true;
-        btn.textContent = 'Instalando...';
-
+    async handleAction(event) {
+        const target = event.target.closest('[data-action]');
+        if (!target || target.disabled) return;
+        const { action, appId } = target.dataset;
+        if (action === 'details') { this.openDetailModal(appId); return; }
+        if (action === 'uninstall') { this.renderRemoval(appId); return; }
+        if (action === 'cancel-remove') { this.renderModal(); return; }
+        this.message('');
         try {
-            // 1. Create app directory in VFS
-            const appPath = `/home/user/apps/${appId}`;
-            await unkay.fs.mkdir(appPath, true);
-
-            // 2. Save manifest.json in VFS
-            await unkay.fs.writeFile(`${appPath}/manifest.json`, JSON.stringify(appItem, null, 2));
-
-            // 3. Create desktop shortcut launcher in VFS
-            const desktopPath = `/home/guest/Desktop/${appItem.name.replace(/[^a-zA-Z0-9]/g, '_')}.desktop`;
-            const desktopEntry = `[Desktop Entry]\nName=${appItem.name}\nExec=unkay run ${appId}\nIcon=${appItem.icon || 'app'}\nType=Application\n`;
-            try {
-                await unkay.fs.mkdir('/home/guest/Desktop', true);
-                await unkay.fs.writeFile(desktopPath, desktopEntry);
-            } catch {}
-
-            this.installedAppIds.add(appId);
-            btn.textContent = " Instalado";
-            btn.className = 'install-btn installed';
-            btn.disabled = false;
-            console.log(`[Marketplace] Aplicativo ${appItem.name} instalado com sucesso em ${appPath}`);
-        } catch (err) {
-            btn.disabled = false;
-            btn.textContent = 'Instalar';
-            console.error('[Marketplace] Falha ao instalar aplicativo:', err);
-            alert(`Falha ao instalar aplicativo: ${err.message}`);
-        }
+            if (action === 'open') await this.packages.open(appId);
+            if (action === 'install') { await this.packages.install(appId); this.message('Aplicativo instalado e disponível no menu de aplicativos.'); }
+            if (action === 'confirm-remove') { await this.packages.uninstall(appId); this.message('Aplicativo removido. Os dados pessoais foram preservados.'); }
+        } catch (error) { this.message(error.message, true); }
+        this.render();
     }
 
-    openDetailModal(appId) {
-        const appItem = this.apps.find(a => a.id === appId);
-        if (!appItem) return;
+    async importPackage(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        try {
+            if (file.size > 1024 * 1024) throw new Error('O pacote excede o limite de 1 MB.');
+            await this.packages.installLocal(await file.text());
+            this.message('Pacote instalado. Você já pode abri-lo pelo menu de aplicativos.');
+        } catch (error) { this.message(error.message, true); }
+        finally { input.value = ''; this.render(); }
+    }
 
-        const modal = this.$('#appDetailModal');
-        const body = this.$('#modalBody');
-        const isInstalled = this.installedAppIds.has(appId);
+    openDetailModal(id) {
+        this.previousFocus = /** @type {HTMLElement} */ (document.activeElement);
+        this.modalAppId = id;
+        this.$('#storeMain').inert = true;
+        this.$('#appDetailModal').hidden = false;
+        this.renderModal();
+        this.$('#modalCloseBtn').focus();
+    }
 
-        body.innerHTML = `
-            <div style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px;">
-                <div style="font-size: 36px; background: #0f172a; padding: 12px; border-radius: 10px;">${appItem.icon || "package"}</div>
-                <div>
-                    <h2 style="margin: 0 0 4px 0; font-size: 18px; color: #f8fafc;">${appItem.name}</h2>
-                    <span style="font-size: 12px; color: #94a3b8;">Por ${appItem.authorName || 'Comunidade RDA'} • Versão ${appItem.version || '1.0.0'}</span>
-                    <div style="margin-top: 8px;">${this.getProfileBadge(appItem.runtimeProfile)}</div>
-                </div>
-            </div>
-            <p style="font-size: 13px; color: #cbd5e1; line-height: 1.5; margin-bottom: 16px;">${appItem.description || appItem.summary}</p>
-            <div style="background: rgba(0,0,0,0.25); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px;">
-                <div style="font-weight: 600; color: #94a3b8; margin-bottom: 6px;">Permissões do SDK:</div>
-                <div style="color: #e2e8f0;">${(appItem.permissions || ['Nenhuma']).join(', ')}</div>
-            </div>
-            <div style="display: flex; justify-content: flex-end;">
-                <button class="install-btn ${isInstalled ? 'installed' : ''}" id="modalInstallBtn">
-                    ${isInstalled ? " Instalado" : 'Instalar no unkayOS'}
-                </button>
-            </div>
-        `;
+    renderModal() {
+        const app = this.apps.find(item => item.id === this.modalAppId);
+        if (!app) { this.closeModal(); return; }
+        this.$('#modalBody').innerHTML = `
+            <span class="detail-icon">${iconMarkup(app.iconName || 'package', { size: 32 })}</span>
+            <h2 id="storeDetailTitle">${escapeHtml(app.name)}</h2>
+            <p class="detail-author">${escapeHtml(app.authorName || 'unkayOS')}</p>
+            <span class="status-badge" data-state="${app.state}">${labels[app.state]}</span>
+            <p class="detail-description">${escapeHtml(app.description || app.summary || 'Aplicativo incluído no unkayOS.')}</p>
+            <dl class="detail-metadata"><div><dt>Versão instalada</dt><dd>${escapeHtml(app.installedVersion || (app.system ? 'Incluída no sistema' : 'Não instalado'))}</dd></div>
+            <div><dt>Versão no catálogo</dt><dd>${escapeHtml(app.version || '—')}</dd></div>
+            <div><dt>Execução</dt><dd>${escapeHtml(profiles[app.runtimeProfile] || 'Desconhecida')}</dd></div>
+            <div><dt>Perfil necessário</dt><dd>${escapeHtml(app.requiredTier || 'guest')}</dd></div></dl>
+            <div class="detail-permissions"><h3>Permissões declaradas</h3><p>${escapeHtml(app.permissions?.length ? app.permissions.join(', ') : 'Nenhuma')}</p></div>
+            ${app.state === 'incomplete' ? `<p class="detail-warning">Instalação incompleta: ${escapeHtml(app.localError || 'Faltam arquivos executáveis. Remova ou repare o pacote.')}</p>` : ''}
+            ${app.reasons?.length ? `<div class="detail-warning"><h3>Restrições de instalação</h3><ul>${app.reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join('')}</ul></div>` : ''}
+            ${app.system ? '<p class="detail-note">Este aplicativo faz parte do unkayOS e é atualizado junto com o sistema.</p>' : ''}
+            <div id="removalPrompt"></div><div class="detail-actions">${app.canUninstall ? button('uninstall', 'Remover', app.id, { color: 'danger' }) : ''}<div class="card-actions">${this.actions(app)}</div></div>`;
+    }
 
-        const modalBtn = body.querySelector('#modalInstallBtn');
-        if (modalBtn && !isInstalled) {
-            modalBtn.addEventListener('click', () => {
-                this.handleInstall(appId, modalBtn);
-                this.render();
-            });
-        }
-
-        modal.style.display = 'flex';
+    renderRemoval(id) {
+        this.$('#removalPrompt').innerHTML = `<div class="detail-warning"><p>Remover este aplicativo? As janelas abertas serão fechadas. Seus dados serão preservados.</p><div class="card-actions">${button('cancel-remove', 'Cancelar', id, { color: 'secondary' })}${button('confirm-remove', 'Confirmar remoção', id, { color: 'danger' })}</div></div>`;
+        this.$('#removalPrompt [data-action="cancel-remove"]').focus();
     }
 
     closeModal() {
-        const modal = this.$('#appDetailModal');
-        if (modal) modal.style.display = 'none';
+        const id = this.modalAppId;
+        this.modalAppId = null;
+        this.$('#appDetailModal').hidden = true;
+        this.$('#storeMain').inert = false;
+        if (this.previousFocus?.isConnected) this.previousFocus.focus();
+        else [...this.$$('[data-action="details"]')].find(button => button.dataset.appId === id)?.focus();
+    }
+
+    async onCleanup() {
+        this.disposed = true;
+        this.controller?.abort();
+        this.unsubscribe?.();
     }
 }

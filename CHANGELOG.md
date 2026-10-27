@@ -2,6 +2,14 @@
 
 O contador de releases começa em 1 com a versão 2.0.0-alpha.2. Builds da mesma versão preservam o número; cada release preparada incrementa o contador.
 
+## 2.0.0-alpha.4 · Release 3 · 2026-10-27
+
+Loja e instalação de aplicativos
+
+- Loja com inventário real, filtros de instalados, disponíveis, atualizações e restrições detalhadas.
+- Gerenciador compartilhado para instalar, abrir, atualizar e remover pacotes OpenUI com persistência e validação de integridade.
+- API da loja com autenticação, curadoria por versão e bloqueios de perfil, permissões e runtime.
+
 ## 2.0.0-alpha.3 · Release 2 · 2026-10-26
 
 Abertura confiável e personalização do espaço

@@ -147,6 +147,8 @@ As regras legíveis por agentes estão em `/design-system/rda/icons/guidelines.j
 
 ## 6. Ciclo de vida e persistência
 
+Para instalar, listar, abrir e remover pacotes, use `this.unkay.packages`; a loja e o Studio compartilham esse gerenciador. Não considere uma pasta ou manifesto isolado como instalação concluída. O [contrato do gerenciador de pacotes](PACKAGE_MANAGER.md) descreve o formato `.unkayapp`, os estados, as restrições e a API HTTP.
+
 Estenda `BaseApp`; use `this.$()` e `this.$$()` para seletores locais. Registre eventos no `onRun()` e limpe listeners, sockets e recursos no `onCleanup()`. Utilize os temporizadores gerenciados da BaseApp. Nunca use um ID global para buscar elementos de outra instância.
 
 Prefira `this.wasmFileSystem` para persistência. Suas operações são assíncronas: aguarde `mkdir`, `readFile`, `writeFile`, `readdir` e `remove`. Para confirmar uma gravação durável antes de recarregar ou fechar, aguarde também `fs.flush()` quando disponível: o Wasm VFS usa autosave com debounce de 500 ms. Só apresente sucesso após concluir essas operações. Trate erros e restaure o estado de loading/disabled. O gerador contém um exemplo completo de salvamento.

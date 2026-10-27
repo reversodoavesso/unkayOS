@@ -40,16 +40,17 @@ describe('unkayOS 2.0 OpenUI Generative Studio v2.0', () => {
         const runApp = vi.fn().mockResolvedValue('preview-instance');
         const app = new OpenUIStudioApp(mockCORE, { setTimeout: vi.fn(), appManager: { runApp } });
         app.appContentRoot = root;
-        const mkdir = vi.spyOn(unkay.fs, 'mkdir').mockResolvedValue(undefined);
-        const write = vi.spyOn(unkay.fs, 'writeFile').mockResolvedValue(undefined);
+        const install = vi.spyOn(unkay.packages, 'installLocal').mockResolvedValue(undefined);
+        const open = vi.spyOn(unkay.packages, 'open').mockResolvedValue('preview-instance');
         try {
             await app.onRun();
             expect(root.querySelector('#sandboxHost').shadowRoot.textContent).toContain('Dashboard');
             await app.launchInOsWindow();
-            expect(runApp).toHaveBeenCalledWith('openui', expect.objectContaining({ previewSpec: app.currentSpec }));
+            expect(install).toHaveBeenCalledWith(expect.objectContaining({ manifest: app.manifest, files: { 'spec.openui': app.currentSpec } }));
+            expect(open).toHaveBeenCalledWith(app.manifest.id);
             app.manifest.id = '../outside';
             expect(await app.saveToVfs()).toBe(false);
-        } finally { mkdir.mockRestore(); write.mockRestore(); app.onCleanup(); }
+        } finally { install.mockRestore(); open.mockRestore(); app.onCleanup(); }
     });
 
     it('should provide complete RDA DS component snippets', () => {

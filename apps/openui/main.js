@@ -181,7 +181,7 @@ export default class OpenUIStudioApp extends BaseApp {
         };
     }
 
-    async onRun(terminalOutputCallback = null, appParams = {}) {
+    async onRun(_terminalOutputCallback = null, appParams = {}) {
         console.log('[OpenUIStudio] Inicializando OpenUI Studio v2.0...');
         this.setupEventListeners();
         this.loadPreset('dashboard');
@@ -495,42 +495,15 @@ export default class OpenUIStudioApp extends BaseApp {
             this.notify(`Manifesto inválido: ${validation.errors.join('; ')}`);
             return false;
         }
-        const appId = this.manifest.id;
-        const targetDir = `/home/user/apps/${appId}`;
-
         try {
-            this.notify(`Salvando em ${targetDir}...`);
-            await unkay.fs.mkdir(targetDir, true);
-
-            // 1. Write package manifest
-            await unkay.fs.writeFile(`${targetDir}/package.json`, JSON.stringify(this.manifest, null, 2));
-
-            // 2. Write declarative OpenUI spec
-            await unkay.fs.writeFile(`${targetDir}/spec.openui`, this.currentSpec);
-
-            // 3. Write HTML wrapper entrypoint
-            const indexHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <link rel="stylesheet" href="/design-system/styles/main.css">
-</head>
-<body style="margin: 0; padding: 16px; background: var(--rda-surface-primary, #0a0a0a); color: var(--rda-content-primary, #fafafa); font-family: var(--rda-font-family-base, sans-serif);">
-  ${this.currentSpec}
-</body>
-</html>`;
-            await unkay.fs.writeFile(`${targetDir}/index.html`, indexHtml);
-
-            // 4. Create Desktop launcher entry
-            await unkay.fs.mkdir('/home/guest/Desktop', true);
-            const desktopFile = `/home/guest/Desktop/${appId}.desktop`;
-            await unkay.fs.writeFile(desktopFile, `[Desktop Entry]\nName=${this.manifest.name}\nExec=unkay run ${appId}\nType=Application\nIcon=icon.svg\n`);
-
-            this.notify(` Salvo com sucesso no VFS e criado atalho no Desktop!`);
+            await (this.unkay || unkay).packages.installLocal({
+                format: 'unkayapp-v1', manifest: { ...this.manifest },
+                files: { 'spec.openui': this.currentSpec }
+            });
+            this.notify('Aplicativo instalado e disponível no menu de aplicativos.');
             return true;
         } catch (err) {
-            console.error('[OpenUIStudio] Erro ao salvar no VFS:', err);
-            this.notify(`Erro ao salvar no VFS: ${err.message}`);
+            this.notify(`Erro ao instalar: ${err.message}`);
             return false;
         }
     }
@@ -566,7 +539,8 @@ export default class OpenUIStudioApp extends BaseApp {
             this.notify('Gerenciador de janelas indisponível. O projeto foi salvo no VFS.');
             return;
         }
-        await manager.runApp('openui', { previewSpec: this.currentSpec, manifest: { ...this.manifest } });
+        try { await (this.unkay || unkay).packages.open(this.manifest.id); }
+        catch (error) { this.notify(`Erro ao abrir aplicativo: ${error.message}`); }
     }
 
     createNewProject() {

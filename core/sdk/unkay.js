@@ -12,6 +12,11 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
     const getFullscreen = () => systemManager?.getSystem('fullscreenManager') || (typeof window !== 'undefined' && window.fullscreenManager) || fullscreenManager;
     const getContextMenu = () => systemManager?.getSystem('contextMenuManager') || (typeof window !== 'undefined' && window.contextMenuManager) || contextMenuManager;
     const getKeyboard = () => systemManager?.getSystem('keyboardManager') || (typeof window !== 'undefined' && window.keyboardManager) || keyboardManager;
+    const getPackages = () => {
+        const manager = (systemManager || (typeof window !== 'undefined' && window.systemManager))?.getSystem('packageManager');
+        if (!manager) throw new Error('Gerenciador de pacotes indisponível.');
+        return manager;
+    };
 
     return {
         auth: {
@@ -28,9 +33,10 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                 const user = authSystem?.getCurrentUser?.();
                 if (!user) return 'guest';
                 const claims = user.roles || user['urn:zitadel:iam:org:project:roles'] || [];
-                const roles = Array.isArray(claims) ? claims : Object.keys(claims);
+                const roles = [...(Array.isArray(claims) ? claims : Object.keys(claims)), user.role].filter(Boolean);
                 if (roles.includes('demiurge')) return 'demiurge';
                 if (roles.includes('sysadmin') || roles.includes('architect')) return 'sysadmin';
+                if (roles.includes('adept') || roles.includes('curator')) return 'adept';
                 if (roles.includes('standard') || roles.includes('initiate')) return 'standard';
                 return 'standard';
             },
@@ -50,6 +56,7 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
         },
 
         fs: {
+            async flush() { return getVfs().flush(); },
             async readFile(path) {
                 return getVfs().readFile(path, { encoding: 'binary' });
             },
@@ -96,6 +103,18 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                 }
                 throw new Error('File System Access API not supported in this browser');
             }
+        },
+
+        packages: {
+            list: () => getPackages().list(),
+            status: id => getPackages().getStatus(id),
+            refresh: options => getPackages().refresh(options),
+            install: id => getPackages().install(id),
+            installLocal: bundle => getPackages().installLocal(bundle),
+            uninstall: id => getPackages().uninstall(id),
+            open: id => getPackages().open(id),
+            subscribe: listener => getPackages().subscribe(listener),
+            getCatalogError: () => getPackages().catalogError
         },
 
         ai: {

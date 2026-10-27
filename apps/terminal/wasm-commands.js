@@ -4,15 +4,37 @@
 import { WasiRunner } from '../../core/wasi/WasiRunner.js';
 import { unkay } from '../../core/sdk/unkay.js';
 import { wasmFileSystem } from '../../core/WasmFileSystem.js';
+import { escapeHtml } from '../../core/workspace/preferences.js';
 
 const getVfs = () => (typeof window !== 'undefined' && window.wasmFileSystem) || wasmFileSystem;
 
 export const wasmTerminalCommands = {
     unkay: {
-        description: "CLI de gerenciamento e diagnósticos do unkayOS 2.0 (info, tier, ai, cloud, compute, vfs).",
+        description: "CLI do unkayOS (info, tier, run, packages, ai, cloud, compute, vfs).",
         action: async (args, appendToTerminal) => {
             const sub = args[0] || 'info';
             switch (sub) {
+                case 'run': {
+                    if (!args[1]) return 'Uso: unkay run &lt;app-id&gt;';
+                    try { await unkay.packages.open(args[1]); return `Aplicativo aberto: ${escapeHtml(args[1])}`; }
+                    catch (error) { return `<span class="red">${escapeHtml(error.message)}</span>`; }
+                }
+                case 'packages': {
+                    const action = args[1] || 'list', id = args[2];
+                    try {
+                        if (action === 'refresh') await unkay.packages.refresh();
+                        if (action === 'list' || action === 'refresh') {
+                            return unkay.packages.list().map(app => `${escapeHtml(app.id)} — ${escapeHtml(app.name)} — ${escapeHtml(app.state)}${app.installedVersion ? ` (${escapeHtml(app.installedVersion)})` : ''}`).join('<br>');
+                        }
+                        if (!id) return 'Uso: unkay packages list|refresh|status &lt;id&gt;|install &lt;id&gt;|remove &lt;id&gt;|import &lt;arquivo.unkayapp&gt;';
+                        if (action === 'status') return escapeHtml(JSON.stringify(unkay.packages.status(id), null, 2));
+                        if (action === 'install') { await unkay.packages.refresh(); await unkay.packages.install(id); }
+                        else if (action === 'remove') await unkay.packages.uninstall(id);
+                        else if (action === 'import') await unkay.packages.installLocal(await unkay.fs.readText(id));
+                        else return 'Operação de pacotes desconhecida.';
+                        return 'Operação concluída.';
+                    } catch (error) { return `<span class="red">${escapeHtml(error.message)}</span>`; }
+                }
                 case 'info': {
                     const tier = unkay.auth.getTier();
                     const user = unkay.auth.getUser();

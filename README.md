@@ -114,6 +114,8 @@ unkayOS/
 
 ## Getting Started
 
+The [package manager guide](docs/PACKAGE_MANAGER.md) describes the Store, installation states, SDK/HTTP APIs and currently supported runtimes.
+
 ### Prerequisites
 - Node.js 18+
 - npm

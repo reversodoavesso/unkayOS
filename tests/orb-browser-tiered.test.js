@@ -224,7 +224,7 @@ describe('The Orb Browser v2.0 - Adaptive Tiered Engine', () => {
   });
 
   it('renders reader text without interpreting HTML and resolves article images safely', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, text: async () => '<title>Artigo</title><p>&lt;img src=x onerror=alert(1)&gt; texto suficiente para o artigo</p><img src="/safe.jpg" onerror="alert(1)"><img src="javascript:alert(2)">' }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, headers: new Headers(), text: async () => '<title>Artigo</title><p>&lt;img src=x onerror=alert(1)&gt; texto suficiente para o artigo</p><img src="/safe.jpg" onerror="alert(1)"><img src="javascript:alert(2)">' }));
     const app = new TheOrbApp(mockCORE, mockStandardAPIs, rootElement);
     app.onRun();
     app.navigateToUrl('https://example.org/article');

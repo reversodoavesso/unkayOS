@@ -1,53 +1,38 @@
 <div class="store-app">
-  <header class="store-header">
-    <div class="store-title-bar">
-      <div class="store-brand">
-        <span class="store-logo"><rda-icon name="shopping-bag"></rda-icon></span>
-        <h1>unkayOS Marketplace</h1>
+  <div class="store-main" id="storeMain">
+    <header class="store-header">
+      <div class="store-title-bar">
+        <div class="store-brand"><span class="store-logo"><rda-icon name="shopping-bag" size="24"></rda-icon></span><div><p class="store-eyebrow">SEU ESPAÇO, SUAS FERRAMENTAS</p><h1>Loja de aplicativos</h1></div></div>
+        <span class="user-tier-pill" id="userTierPill">Perfil: guest</span>
       </div>
-      <div class="store-tier-info">
-        <span class="user-tier-pill" id="userTierPill">Perfil: Guest</span>
+      <p class="store-intro">Descubra o que está disponível e cuide dos aplicativos deste dispositivo.</p>
+      <div class="store-controls">
+        <div class="search-box"><rda-icon name="search"></rda-icon><input type="search" id="storeSearchInput" class="rda-input rda-input--md" aria-label="Buscar aplicativos" placeholder="Buscar nome, descrição ou autor"></div>
+        <button type="button" id="refreshCatalog" class="rda-button rda-button--sm" data-color="secondary"><rda-icon name="refresh-cw"></rda-icon> Atualizar catálogo</button>
+        <label class="rda-button rda-button--sm import-control" data-color="secondary"><rda-icon name="upload"></rda-icon> Importar pacote<input type="file" id="importPackage" accept=".unkayapp,application/json" aria-label="Importar pacote .unkayapp"></label>
       </div>
-    </div>
-    <div class="store-controls">
-      <div class="search-box">
-        <span class="search-icon"><rda-icon name="search"></rda-icon></span>
-        <input type="text" id="storeSearchInput" placeholder="Buscar aplicativos, ferramentas, DSP, IA..." / class="rda-input rda-input--md">
+      <nav class="store-views" id="storeViews" aria-label="Situação dos aplicativos">
+        <button type="button" data-view="all" aria-pressed="true">Todos <span>0</span></button>
+        <button type="button" data-view="installed" aria-pressed="false">Instalados <span>0</span></button>
+        <button type="button" data-view="available" aria-pressed="false">Disponíveis <span>0</span></button>
+        <button type="button" data-view="updates" aria-pressed="false">Atualizações <span>0</span></button>
+        <button type="button" data-view="blocked" aria-pressed="false">Indisponíveis <span>0</span></button>
+      </nav>
+    </header>
+    <main class="store-content">
+      <p class="catalog-status" id="catalogStatus" role="status" hidden></p>
+      <p class="store-message" id="storeMessage" role="status" aria-live="polite" hidden></p>
+      <div class="store-filters">
+        <div class="rda-select"><label class="rda-select__label" for="categoryFilter">Categoria</label><div class="rda-select__field-wrapper"><select id="categoryFilter" class="rda-select__field rda-select__field--sm"><option value="all">Todas as categorias</option><option value="audio">Áudio</option><option value="media">Mídia</option><option value="ai">Inteligência artificial</option><option value="productivity">Produtividade</option><option value="utilities">Utilitários</option><option value="developer">Desenvolvimento</option></select><span class="rda-select__chevron" aria-hidden="true"><rda-icon name="chevron-down"></rda-icon></span></div></div>
+        <label class="compatibility-toggle"><input type="checkbox" id="compatFilterCheckbox"> Apenas compatíveis</label>
+        <span id="resultsCount" class="results-count" aria-live="polite"></span>
       </div>
-      <label class="compatibility-toggle">
-        <input type="checkbox" id="compatFilterCheckbox" />
-        <span>Apenas compatíveis com meu perfil</span>
-      </label>
-    </div>
-    <nav class="category-tabs" id="categoryTabs">
-      <button class="tab-btn active" data-category="all">Todos</button>
-      <button class="tab-btn" data-category="ai"><rda-icon name="sparkles"></rda-icon> IA & Generative UI</button>
-      <button class="tab-btn" data-category="productivity"><rda-icon name="clipboard-list"></rda-icon> Produtividade</button>
-      <button class="tab-btn" data-category="utilities"><rda-icon name="settings"></rda-icon> Utilitários & Shell</button>
-      <button class="tab-btn" data-category="developer"><rda-icon name="terminal"></rda-icon> Desenvolvimento</button>
-    </nav>
-  </header>
-
-  <main class="store-content">
-    <div class="store-banner">
-      <div class="banner-text">
-        <h2>Ecossistema Aberto e Curado da Ordem RDA</h2>
-        <p>Aplicativos verificados com execução isolada em WebAssembly, Web Audio DSP, OpenUI e containers sob demanda.</p>
-      </div>
-    </div>
-
-    <div class="apps-grid" id="appsGrid">
-      <!-- App cards dynamically injected here -->
-      <div class="loading-state">Carregando catálogo de aplicativos...</div>
-    </div>
-  </main>
-
-  <!-- App Detail Modal -->
-  <div class="app-modal" id="appDetailModal" style="display: none;">
+      <div class="apps-grid" id="appsGrid" aria-busy="true"><p class="empty-state">Consultando aplicativos instalados e catálogo…</p></div>
+      <p class="store-footnote">As instalações pertencem a este dispositivo. Pacotes importados devem conter uma interface OpenUI.</p>
+    </main>
+  </div>
+  <div class="app-modal" id="appDetailModal" role="dialog" aria-modal="true" aria-labelledby="storeDetailTitle" hidden>
     <div class="modal-backdrop" id="modalBackdrop"></div>
-    <div class="modal-card">
-      <button class="modal-close-btn" id="modalCloseBtn" aria-label="Fechar"><rda-icon name="x"></rda-icon></button>
-      <div class="modal-body" id="modalBody"></div>
-    </div>
+    <div class="modal-card"><button type="button" class="modal-close-btn rda-button rda-button--sm" data-color="secondary" id="modalCloseBtn" aria-label="Fechar detalhes"><rda-icon name="x"></rda-icon></button><div id="modalBody"></div></div>
   </div>
 </div>

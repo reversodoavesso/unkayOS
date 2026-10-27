@@ -14,6 +14,7 @@ import { positionManager } from './PositionManager.js';
 import eventBus from './eventBus.js';
 import { wasmFileSystem, wasmFs } from './WasmFileSystem.js';
 import { unkay } from './sdk/unkay.js';
+import { PackageManager } from './sdk/PackageManager.js';
 import { migrateLegacyStorage } from './utils/storageMigration.js';
 import { hostDropManager } from './HostDropManager.js';
 import { fullscreenManager } from './FullscreenManager.js';
@@ -209,6 +210,10 @@ export class SystemManager {
         
         // Carrega configurações detalhadas dos apps
         await this.systems.appManager.loadAppConfigs();
+        this.systems.packageManager = new PackageManager({
+            fs: unkay.fs, auth: unkay.auth, appManager: this.systems.appManager
+        });
+        await this.systems.packageManager.refresh({ catalog: false });
         
         console.log('[SystemManager] Fase 3 concluída');
     }
