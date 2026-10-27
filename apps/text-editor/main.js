@@ -9,6 +9,11 @@ export default class TextEditorApp extends BaseApp {
             type: 'string',
             required: false,
             description: 'Caminho do arquivo para abrir automaticamente'
+        },
+        content: {
+            type: 'string',
+            required: false,
+            description: 'Conteúdo inicial para um novo documento'
         }
     };
 
@@ -52,6 +57,9 @@ export default class TextEditorApp extends BaseApp {
         // Configura atalhos de teclado
         await this.setupKeyboardShortcuts();
         
+        // Configura menus de contexto
+        await this.setupContextMenus();
+        
         // Atualiza a interface
         this.updateInterface();
         
@@ -63,9 +71,103 @@ export default class TextEditorApp extends BaseApp {
             this.openFile(appParams.file);
         } else if (appParams.filePath) {
             this.openFile(appParams.filePath);
+        } else if (typeof appParams.content === 'string') {
+            this.textArea.value = appParams.content;
+            this.isModified = true;
+            this.clearHistory();
+            this.updateInterface();
         }
         
         console.log('[TextEditor] Editor de texto inicializado');
+    }
+
+    async setupContextMenus() {
+        await this.registerContextMenu('.file-tree-item', ({ matchedElement }) => {
+            const fullPath = matchedElement?.dataset?.path;
+            const itemType = matchedElement?.dataset?.type;
+            if (!fullPath) return [];
+            const items = [];
+            if (itemType === 'file') {
+                items.push({
+                    label: 'Abrir no Editor',
+                    icon: 'file-text',
+                    action: () => this.openFile(fullPath)
+                });
+            }
+            items.push(
+                {
+                    label: 'Abrir local no Gerenciador de Arquivos',
+                    icon: 'folder-open',
+                    action: () => {
+                        const dir = itemType === 'directory' ? fullPath : this.fs.dirname(fullPath);
+                        this.appManager?.runApp('file-manager', { path: dir });
+                    }
+                },
+                {
+                    label: 'Copiar caminho',
+                    icon: 'copy',
+                    action: () => navigator.clipboard?.writeText?.(fullPath)
+                }
+            );
+            return items;
+        });
+
+        await this.registerContextMenu(() => [
+            { type: 'header', label: 'Editor de Texto' },
+            {
+                label: 'Novo arquivo',
+                icon: 'file-plus',
+                shortcut: 'Ctrl+N',
+                action: () => this.newFile()
+            },
+            {
+                label: 'Abrir arquivo...',
+                icon: 'folder-open',
+                shortcut: 'Ctrl+O',
+                action: () => this.showOpenDialog()
+            },
+            {
+                label: 'Salvar',
+                icon: 'save',
+                shortcut: 'Ctrl+S',
+                disabled: !this.isModified,
+                action: () => this.saveFile()
+            },
+            {
+                label: 'Salvar como...',
+                icon: 'download',
+                shortcut: 'Ctrl+Shift+S',
+                action: () => this.showSaveAsDialog()
+            },
+            { type: 'separator' },
+            {
+                label: 'Desfazer',
+                icon: 'undo-2',
+                shortcut: 'Ctrl+Z',
+                disabled: this.undoHistory.length <= 1,
+                action: () => this.undo()
+            },
+            {
+                label: 'Refazer',
+                icon: 'redo-2',
+                shortcut: 'Ctrl+Y',
+                disabled: this.redoHistory.length === 0,
+                action: () => this.redo()
+            },
+            { type: 'separator' },
+            {
+                label: 'Buscar no texto...',
+                icon: 'search',
+                shortcut: 'Ctrl+F',
+                action: () => this.showSearchPanel(false)
+            },
+            {
+                label: 'Substituir...',
+                icon: 'replace',
+                shortcut: 'Ctrl+H',
+                action: () => this.showSearchPanel(true)
+            }
+        ]);
     }
 
     initializeElements() {
@@ -604,7 +706,6 @@ export default class TextEditorApp extends BaseApp {
         
         // Contadores
         const text = this.textArea.value;
-        const lines = text.split('\n');
         
         this.statusElements.wordCount.textContent = `${this.countWords(text)} palavras`;
         
@@ -613,7 +714,6 @@ export default class TextEditorApp extends BaseApp {
         this.updateCursorPosition();
         
         // Estado dos botões
-        const hasText = text.length > 0;
         const canUndo = this.undoHistory.length > 1;
         const canRedo = this.redoHistory.length > 0;
         
@@ -710,6 +810,8 @@ export default class TextEditorApp extends BaseApp {
     createTreeItem(name, type, fullPath, level) {
         const item = document.createElement('div');
         item.className = 'file-tree-item';
+        item.dataset.path = fullPath;
+        item.dataset.type = type;
         item.style.paddingLeft = `${8 + (level * 16)}px`;
         
         const icon = document.createElement('rda-icon');

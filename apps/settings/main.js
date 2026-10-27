@@ -10,6 +10,7 @@ import { accentPresets, iconMarkup } from '../../core/ui/designSystem.js';
 import { readPreferences, writePreferences, applyAppearance, applyWallpaperStyle, applyWindowing, clearTemporaryFiles, normalizeAppearance, resolveEffectiveRemapParams } from '../../core/utils/appPreferences.js';
 import { getWorkspace } from '../../core/workspace/WorkspaceSession.js';
 import { normalizeWorkspace, changedSettings, applyShell, accentChoices, WALLPAPERS, validateWidget, WIDGET_EXAMPLE, escapeHtml } from '../../core/workspace/preferences.js';
+import { keyboardManager } from '../../core/KeyboardManager.js';
 
 export default class SettingsApp extends BaseApp {
   static get parameters() {
@@ -117,6 +118,9 @@ export default class SettingsApp extends BaseApp {
     this.toggleCenterWindows = this.$('#toggleCenterWindows');
     this.selectTaskbarPosition = this.$('#selectTaskbarPosition');
     this.toggleAutoHideTaskbar = this.$('#toggleAutoHideTaskbar');
+    this.toggleFullscreenSettingsBtn = this.$('#toggleFullscreenSettingsBtn');
+    this.fullscreenSettingsStatus = this.$('#fullscreenSettingsStatus');
+    this.systemKeybindsList = this.$('#systemKeybindsList');
 
     // Controles de Armazenamento
     this.inputMinioUrl = this.$('#inputMinioUrl');
@@ -142,6 +146,7 @@ export default class SettingsApp extends BaseApp {
 
     // Registra listeners
     this.registerEventListeners();
+    this.renderSystemKeybinds();
 
     // Carrega configurações persistidas
     await this.loadSettings();
@@ -161,6 +166,43 @@ export default class SettingsApp extends BaseApp {
     // Ativa painel solicitado por parâmetro se houver
     if (appParams.panel) {
       this.switchPanel(appParams.panel);
+    }
+  }
+
+  renderSystemKeybinds() {
+    if (!this.systemKeybindsList) return;
+    const mgr = (typeof window !== 'undefined' && window.keyboardManager) || keyboardManager;
+    const list = mgr?.getSystemShortcuts?.() || [];
+    if (list.length === 0) {
+      this.systemKeybindsList.innerHTML = '<div class="service-row"><div class="service-info"><div><strong>Atalhos padrão ativos</strong></div></div></div>';
+      return;
+    }
+    this.systemKeybindsList.innerHTML = list.map(item => {
+      const combos = item.keys.map(k => `<kbd>${escapeHtml(k)}</kbd>`).join(' · ');
+      return `
+        <div class="service-row">
+          <div class="service-info">
+            <span class="service-dot online"></span>
+            <div>
+              <strong>${escapeHtml(item.description || item.id)}</strong>
+              <p>${escapeHtml(item.id)}</p>
+            </div>
+          </div>
+          <span class="service-latency">${combos}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  updateFullscreenSettingsStatus(isFullscreen) {
+    const active = Boolean(isFullscreen);
+    if (this.fullscreenSettingsStatus) {
+      this.fullscreenSettingsStatus.textContent = active
+        ? 'Modo Tela Cheia ATIVO. Pressione F11 ou clique ao lado para restaurar o modo janela.'
+        : 'Oculta as barras do navegador e prioriza atalhos de sistema como F11 e Escape.';
+    }
+    if (this.toggleFullscreenSettingsBtn) {
+      this.toggleFullscreenSettingsBtn.setAttribute('aria-pressed', String(active));
     }
   }
 
@@ -400,6 +442,14 @@ export default class SettingsApp extends BaseApp {
         this.systemSettings.windowing.autoHideTaskbar = e.target.checked;
         this.saveSettings();
       });
+    }
+    if (this.toggleFullscreenSettingsBtn) {
+      this.toggleFullscreenSettingsBtn.addEventListener('click', () => {
+        eventBus.emit('system:fullscreen:toggle');
+      });
+      this._onFullscreenChanged = ({ isFullscreen }) => this.updateFullscreenSettingsStatus(isFullscreen);
+      eventBus.on('system:fullscreen:changed', this._onFullscreenChanged);
+      this.updateFullscreenSettingsStatus(Boolean(window.fullscreenManager?.isFullscreen?.() || document.documentElement?.dataset?.fullscreen === 'true'));
     }
 
     // Armazenamento
@@ -940,6 +990,7 @@ export default class SettingsApp extends BaseApp {
     eventBus.off('settings:updated', this.workspaceUpdated);
     eventBus.off('widgets:updated', this.widgetsUpdated);
     eventBus.off('widgets:error', this.widgetError);
+    if (this._onFullscreenChanged) eventBus.off('system:fullscreen:changed', this._onFullscreenChanged);
     this.healthController?.abort();
     await super.onCleanup();
   }

@@ -65,6 +65,7 @@ export class AppWindowSystem {
         this.appWindowElement.classList.add('app', this.namespace);
         this.appWindowElement.id = this.instanceId; // Define o ID da instância na janela
         this.appWindowElement.dataset.instanceId = this.instanceId; // Para o KeyboardManager
+        this.appWindowElement.dataset.appId = this.core.id;
         this.appWindowElement.dataset.appType = 'system_window';
 
         const desktopWidth = this.desktopElement.clientWidth || window.innerWidth;
@@ -96,9 +97,20 @@ export class AppWindowSystem {
         appNameSpan.appendChild(document.createTextNode(this.appName));
         topBar.appendChild(appNameSpan);
 
+        // Duplo clique na barra de título alterna maximização (padrão Linux DE / Desktop OS)
+        topBar.addEventListener('dblclick', (e) => {
+            if (e.target instanceof Element && e.target.closest('button')) return;
+            e.stopPropagation();
+            if (this.isMaximized) {
+                eventBus.emit('window:unmaximize', { instanceId: this.instanceId });
+            } else {
+                eventBus.emit('window:maximize', { instanceId: this.instanceId });
+            }
+        });
+
         // Habilita o arrastar na barra de título usando DragManager
         this.dragCleanup = dragManager.enableWindowDrag(this.appWindowElement, topBar, {
-            onDragStart: (e) => {
+            onDragStart: (_e) => {
                 if (this.isMaximized) {
                     return false;
                 }
@@ -576,6 +588,7 @@ export class AppWindowSystem {
 
     maximize() {
         this.isMaximized = true;
+        this.appWindowElement.classList.remove('snapped-left', 'snapped-right');
 
         // Salva posição/tamanho atuais para restauração
         this._restoreWin = {
@@ -609,6 +622,8 @@ export class AppWindowSystem {
      */
     unmaximize() {
         this.isMaximized = false;
+        this.snapState = 'none';
+        this.appWindowElement.classList.remove('snapped-left', 'snapped-right');
 
         // Restaura posição/tamanho salvos
         if (this._restoreWin) {
@@ -630,6 +645,55 @@ export class AppWindowSystem {
             isMaximized: false,
             isActive: true
         });
+    }
+
+    /**
+     * Ajusta a janela via Aero Snap ('left' | 'right' | 'top' | 'none')
+     * @param {'left'|'right'|'top'|'none'} zone
+     */
+    snapTo(zone) {
+        if (this.isMinimized) {
+            this.restore();
+        }
+        if (zone === 'none') {
+            if (this.isMaximized) {
+                this.unmaximize();
+            } else {
+                aeroSnapManager.unsnap(this.appWindowElement, this);
+            }
+            return;
+        }
+        if (this.isMaximized && zone !== 'top') {
+            this.unmaximize();
+        }
+        aeroSnapManager.applySnap(this.appWindowElement, this, zone);
+    }
+
+    /**
+     * Centraliza a janela na área de trabalho
+     */
+    centerWindow() {
+        if (this.isMinimized) {
+            this.restore();
+        }
+        if (this.isMaximized) {
+            this.unmaximize();
+        } else if (this.snapState && this.snapState !== 'none') {
+            aeroSnapManager.unsnap(this.appWindowElement, this);
+        }
+
+        const desktopWidth = this.desktopElement?.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1280);
+        const desktopHeight = this.desktopElement?.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 720);
+        const winWidth = this.appWindowElement.offsetWidth || parseFloat(this.appWindowElement.style.width) || 640;
+        const winHeight = this.appWindowElement.offsetHeight || parseFloat(this.appWindowElement.style.height) || 480;
+
+        const left = Math.max(8, Math.round((desktopWidth - winWidth) / 2));
+        const top = Math.max(8, Math.round((desktopHeight - winHeight - 50) / 2));
+
+        this.appWindowElement.style.left = `${left}px`;
+        this.appWindowElement.style.top = `${top}px`;
+        this.restoreX = left;
+        this.restoreY = top;
     }
 
     /**

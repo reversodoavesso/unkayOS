@@ -290,7 +290,7 @@
     <div id="panelWindowing" class="settings-panel" style="display: none;">
       <div class="panel-header">
         <h2>Janelas & Desktop</h2>
-        <p>Configurações do gerenciador de janelas, Aero Snap e barra de tarefas.</p>
+        <p>Configurações do gerenciador de janelas, Aero Snap, tela cheia e atalhos globais de teclado.</p>
       </div>
 
       <div class="settings-card">
@@ -344,6 +344,25 @@
             <span class="slider"></span>
           </label>
         </div>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Modo Tela Cheia do Navegador</h3>
+        <div class="setting-toggle-row">
+          <div class="toggle-info">
+            <strong>Imersão de Sistema Operacional (W3C Fullscreen + Keyboard Lock)</strong>
+            <p id="fullscreenSettingsStatus">Oculta as barras do navegador e prioriza atalhos de sistema como F11 e Escape.</p>
+          </div>
+          <button id="toggleFullscreenSettingsBtn" type="button" class="rda-button rda-button--md" data-color="secondary">
+            <rda-icon name="maximize-2"></rda-icon> Alternar Tela Cheia (F11)
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Atalhos Globais de Teclado (System Keybinds)</h3>
+        <p class="card-subtext">Inspirados em GNOME, KDE Plasma, Pop!_OS COSMIC e Hyprland para gerenciamento ágil de janelas e aplicativos.</p>
+        <div id="systemKeybindsList" class="services-status-list"></div>
       </div>
     </div>
 

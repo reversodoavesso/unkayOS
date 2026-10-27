@@ -17,6 +17,7 @@ export class WindowLayerManager {
             TASKBAR: 10000,             // Taskbar do sistema
             APPS_MENU: 10001,           // Menu de aplicativos
             MODAL: 20000,               // Modais e overlays
+            CONTEXT_MENU: 25000,        // Menus de contexto do sistema
             NOTIFICATION: 30000         // Notificações
         };
 

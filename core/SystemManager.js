@@ -16,6 +16,8 @@ import { wasmFileSystem, wasmFs } from './WasmFileSystem.js';
 import { unkay } from './sdk/unkay.js';
 import { migrateLegacyStorage } from './utils/storageMigration.js';
 import { hostDropManager } from './HostDropManager.js';
+import { fullscreenManager } from './FullscreenManager.js';
+import { contextMenuManager } from './ContextMenuManager.js';
 
 /**
  * SystemManager - Gerenciador centralizado de todos os sistemas do unkayOS
@@ -49,6 +51,8 @@ export class SystemManager {
             wasmFileSystem: wasmFileSystem,
             wasmFs: wasmFs,
             unkaySDK: unkay,
+            fullscreenManager: fullscreenManager,
+            contextMenuManager: contextMenuManager,
             authSystem: null, // Será inicializado
             appManager: null  // Será inicializado
         };
@@ -222,6 +226,7 @@ export class SystemManager {
         // Inicializa suporte a arrastar arquivos do sistema operacional para o desktop
         if (this.config.desktop) {
             hostDropManager.initialize(this.config.desktop);
+            contextMenuManager.initialize(this.config.desktop);
         }
         
         console.log('[SystemManager] Fase 4 concluída');
@@ -328,6 +333,9 @@ export class SystemManager {
             // Para todos os apps
             if (this.systems.appManager) {
                 this.systems.appManager.killAll();
+            }
+            if (this.systems.contextMenuManager?.destroy) {
+                this.systems.contextMenuManager.destroy();
             }
             if (this.systems.wasmFileSystem?.shutdown) {
                 this.systems.wasmFileSystem.shutdown();

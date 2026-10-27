@@ -2,10 +2,16 @@
 // Standard application interface inspired by puter.js and customized for RDA ecosystem
 
 import { wasmFileSystem } from '../WasmFileSystem.js';
+import { fullscreenManager } from '../FullscreenManager.js';
+import { contextMenuManager } from '../ContextMenuManager.js';
+import { keyboardManager } from '../KeyboardManager.js';
 
 export function createUnkaySDK(appCore = null, systemManager = null) {
     const getAuth = () => systemManager?.getSystem('authSystem') || (typeof window !== 'undefined' ? window.authSystem : null);
     const getVfs = () => (typeof window !== 'undefined' && window.wasmFileSystem) || wasmFileSystem;
+    const getFullscreen = () => systemManager?.getSystem('fullscreenManager') || (typeof window !== 'undefined' && window.fullscreenManager) || fullscreenManager;
+    const getContextMenu = () => systemManager?.getSystem('contextMenuManager') || (typeof window !== 'undefined' && window.contextMenuManager) || contextMenuManager;
+    const getKeyboard = () => systemManager?.getSystem('keyboardManager') || (typeof window !== 'undefined' && window.keyboardManager) || keyboardManager;
 
     return {
         auth: {
@@ -166,7 +172,7 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
         window: {
             setTitle(title) {
                 if (appCore?.windowElement) {
-                    const titleEl = appCore.windowElement.querySelector('.window-title');
+                    const titleEl = appCore.windowElement.querySelector('.window-title, .app__top_bar__app_name');
                     if (titleEl) titleEl.textContent = title;
                 }
             },
@@ -177,16 +183,54 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                 }
             },
             minimize() {
+                if (appCore?.windowSystem?.minimizeWindow) {
+                    appCore.windowSystem.minimizeWindow();
+                    return;
+                }
                 const appWindowSystem = systemManager?.getSystem('appWindowSystem');
                 if (appCore && appWindowSystem?.minimizeWindow) {
                     appWindowSystem.minimizeWindow(appCore.instanceId);
                 }
+            },
+            maximize() {
+                appCore?.windowSystem?.toggleMaximizeWindow?.();
+            },
+            snap(zone) {
+                appCore?.windowSystem?.snapTo?.(zone);
+            },
+            center() {
+                appCore?.windowSystem?.centerWindow?.();
             },
             close() {
                 const appManager = systemManager?.getSystem('appManager') || (typeof window !== 'undefined' ? window.appManager : null);
                 if (appCore && appManager?.closeApp) {
                     appManager.closeApp(appCore.instanceId);
                 }
+            },
+            async toggleFullscreen() {
+                return getFullscreen()?.toggleFullscreen?.();
+            },
+            isFullscreen() {
+                return Boolean(getFullscreen()?.isFullscreen?.());
+            }
+        },
+
+        contextMenu: {
+            register(selectorOrBuilder, builder = null) {
+                if (!appCore?.instanceId) return () => {};
+                return getContextMenu()?.registerAppProvider?.(appCore.instanceId, selectorOrBuilder, builder);
+            },
+            open(items, options = {}) {
+                return getContextMenu()?.openCustomMenu?.(items, options);
+            },
+            close() {
+                return getContextMenu()?.closeMenu?.();
+            }
+        },
+
+        shortcuts: {
+            listSystemShortcuts() {
+                return getKeyboard()?.getSystemShortcuts?.() || [];
             }
         }
     };

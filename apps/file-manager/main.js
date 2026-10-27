@@ -1,24 +1,37 @@
-// apps/file-manager/main.js - v1.0.0
+// apps/file-manager/main.js - v1.1.0
 
 import { BaseApp } from '../../core/BaseApp.js';
 import { fs } from '../../core/FileSystem.js';
-import eventBus from '../../core/eventBus.js';
 
 /**
  * Gerenciador de Arquivos - Interface gráfica para o sistema de arquivos
  */
 export default class FileManagerApp extends BaseApp {
+    static parameters = {
+        path: {
+            type: 'string',
+            required: false,
+            description: 'Diretório inicial para abrir no Gerenciador de Arquivos'
+        },
+        initialPath: {
+            type: 'string',
+            required: false,
+            description: 'Alias para o diretório inicial'
+        }
+    };
+
     constructor(CORE, standardAPIs) {
         super(CORE, standardAPIs);
         
         // Estado da aplicação
         this.currentPath = '/home/user';
+        this.currentItems = [];
         this.selectedItems = new Set();
         this.clipboard = null;
         this.clipboardOperation = null; // 'copy' ou 'cut'
         this.viewMode = 'list'; // 'list' ou 'grid'
-        this.navigationHistory = [];
-        this.navigationIndex = -1;
+        this.navigationHistory = ['/home/user'];
+        this.navigationIndex = 0;
         
         // Referências DOM
         this.elements = {};
@@ -34,15 +47,224 @@ export default class FileManagerApp extends BaseApp {
     /**
      * Inicializa o aplicativo
      */
-    async onRun() {
-        console.log(`[${this.appName}] Inicializando File Manager...`);
+    async onRun(terminalOutputCallback = null, appParams = {}) {
+        console.log(`[${this.appName}] Inicializando File Manager...`, appParams);
+        super.onRun(terminalOutputCallback, appParams);
+        
+        const requestedPath = appParams?.path || appParams?.initialPath;
+        if (typeof requestedPath === 'string' && requestedPath.trim() && fs.exists(requestedPath)) {
+            const stat = fs.stat(requestedPath);
+            this.currentPath = stat.type === 'directory' ? fs.normalize(requestedPath) : fs.dirname(requestedPath);
+            this.navigationHistory = [this.currentPath];
+            this.navigationIndex = 0;
+        }
         
         this.initializeElements();
         await this.setupEventListeners();
+        await this.setupSystemContextMenus();
         this.updatePathInput();
         this.refreshView();
         
         console.log(`[${this.appName}] File Manager inicializado`);
+    }
+
+    /**
+     * Registra menus de contexto integrados ao ContextMenuManager global
+     */
+    async setupSystemContextMenus() {
+        // 1. Clique direito em um arquivo ou pasta
+        await this.registerContextMenu('.file-item', ({ matchedElement }) => {
+            const itemPath = matchedElement?.dataset?.path;
+            const itemType = matchedElement?.dataset?.type;
+            if (!itemPath) return [];
+
+            if (!this.selectedItems.has(itemPath)) {
+                this.selectedItems.clear();
+                this.selectedItems.add(itemPath);
+                this.updateItemSelection();
+            }
+
+            const count = this.selectedItems.size;
+            const isSingle = count === 1;
+            const isDirectory = itemType === 'directory';
+            const baseName = fs.basename(itemPath);
+
+            const items = [
+                {
+                    type: 'header',
+                    label: isSingle ? baseName : `${count} itens selecionados`
+                }
+            ];
+
+            if (isSingle) {
+                items.push({
+                    label: isDirectory ? 'Abrir pasta' : 'Abrir arquivo',
+                    icon: isDirectory ? 'folder-open' : 'file-text',
+                    shortcut: 'Enter',
+                    action: () => this.openSelectedItem()
+                });
+
+                if (!isDirectory) {
+                    items.push(
+                        {
+                            label: 'Abrir no Editor de Texto',
+                            icon: 'pencil',
+                            action: () => this.appManager?.runApp('text-editor', { file: itemPath })
+                        },
+                        {
+                            label: 'Abrir com...',
+                            icon: 'external-link',
+                            action: () => this.showOpenWithModal()
+                        }
+                    );
+                } else {
+                    items.push({
+                        label: 'Abrir no Terminal aqui',
+                        icon: 'terminal',
+                        action: () => this.appManager?.runApp('terminal', { cwd: itemPath })
+                    });
+                }
+            }
+
+            items.push(
+                { type: 'separator' },
+                {
+                    label: 'Copiar',
+                    icon: 'copy',
+                    shortcut: 'Ctrl+C',
+                    action: () => this.copySelectedItems()
+                },
+                {
+                    label: 'Recortar',
+                    icon: 'scissors',
+                    shortcut: 'Ctrl+X',
+                    action: () => this.cutSelectedItems()
+                },
+                {
+                    label: 'Colar na pasta atual',
+                    icon: 'clipboard-paste',
+                    shortcut: 'Ctrl+V',
+                    disabled: !this.clipboard,
+                    action: () => this.pasteItems()
+                },
+                {
+                    label: 'Copiar caminho',
+                    icon: 'copy',
+                    action: () => navigator.clipboard?.writeText?.(itemPath)
+                }
+            );
+
+            if (isSingle) {
+                items.push(
+                    { type: 'separator' },
+                    {
+                        label: 'Renomear...',
+                        icon: 'pencil',
+                        shortcut: 'F2',
+                        action: () => this.renameSelectedItem()
+                    },
+                    {
+                        label: 'Propriedades',
+                        icon: 'info',
+                        shortcut: 'Alt+Enter',
+                        action: () => this.showPropertiesModal()
+                    }
+                );
+            }
+
+            items.push(
+                { type: 'separator' },
+                {
+                    label: count > 1 ? `Excluir (${count} itens)` : 'Excluir',
+                    icon: 'trash-2',
+                    shortcut: 'Delete',
+                    danger: true,
+                    action: () => this.deleteSelectedItems()
+                }
+            );
+
+            return items;
+        });
+
+        // 2. Clique direito nos locais da barra lateral
+        await this.registerContextMenu('.location-item', ({ matchedElement }) => {
+            const locPath = matchedElement?.dataset?.path;
+            if (!locPath) return [];
+            return [
+                { type: 'header', label: `Local: ${locPath}` },
+                {
+                    label: 'Abrir diretório',
+                    icon: 'folder-open',
+                    action: () => this.navigateToPath(locPath)
+                },
+                {
+                    label: 'Abrir em nova janela',
+                    icon: 'plus',
+                    action: () => this.appManager?.runApp('file-manager', { path: locPath })
+                },
+                {
+                    label: 'Abrir no Terminal aqui',
+                    icon: 'terminal',
+                    action: () => this.appManager?.runApp('terminal', { cwd: locPath })
+                }
+            ];
+        });
+
+        // 3. Clique direito no espaço vazio da pasta atual
+        await this.registerContextMenu(() => [
+            { type: 'header', label: `Pasta: ${this.currentPath}` },
+            {
+                label: 'Nova Pasta...',
+                icon: 'folder-plus',
+                shortcut: 'Ctrl+Shift+N',
+                action: () => this.showNewFolderModal()
+            },
+            {
+                label: 'Novo Arquivo...',
+                icon: 'file-plus',
+                shortcut: 'Ctrl+N',
+                action: () => this.showNewFileModal()
+            },
+            { type: 'separator' },
+            {
+                label: 'Colar aqui',
+                icon: 'clipboard-paste',
+                shortcut: 'Ctrl+V',
+                disabled: !this.clipboard,
+                action: () => this.pasteItems()
+            },
+            {
+                label: 'Selecionar tudo',
+                icon: 'check',
+                shortcut: 'Ctrl+A',
+                action: () => this.selectAll()
+            },
+            {
+                label: 'Atualizar pasta',
+                icon: 'refresh-cw',
+                shortcut: 'F5',
+                action: () => this.refreshView()
+            },
+            { type: 'separator' },
+            {
+                label: 'Visualização em Lista',
+                icon: 'list',
+                checked: this.viewMode === 'list',
+                action: () => this.setViewMode('list')
+            },
+            {
+                label: 'Visualização em Grade',
+                icon: 'layout-grid',
+                checked: this.viewMode === 'grid',
+                action: () => this.setViewMode('grid')
+            },
+            { type: 'separator' },
+            {
+                label: 'Abrir no Terminal aqui',
+                icon: 'terminal',
+                action: () => this.appManager?.runApp('terminal', { cwd: this.currentPath })
+            }
+        ]);
     }
 
     /**
@@ -121,7 +343,7 @@ export default class FileManagerApp extends BaseApp {
             });
         });
         
-        // Menu de contexto
+        // Menu de contexto legado (mantido para compatibilidade caso invocado diretamente)
         document.addEventListener('click', this.hideContextMenu);
         this.setupContextMenuActions();
         
@@ -148,25 +370,29 @@ export default class FileManagerApp extends BaseApp {
         });
         await this.registerKeyboardShortcut('ctrl+n', () => this.showNewFileModal());
         await this.registerKeyboardShortcut('ctrl+shift+n', () => this.showNewFolderModal());
+        await this.registerKeyboardShortcut('f2', () => {
+            if (this.selectedItems.size === 1) this.renameSelectedItem();
+        });
         await this.registerKeyboardShortcut('delete', () => {
             if (this.selectedItems.size > 0) this.deleteSelectedItems();
         });
         await this.registerKeyboardShortcut('f5', () => this.refreshView());
         await this.registerKeyboardShortcut('backspace', () => this.navigateUp());
+        await this.registerKeyboardShortcut('escape', () => this.hideAllModals());
     }
 
     /**
      * Configura ações do menu de contexto
      */
     setupContextMenuActions() {
-        this.$('#ctx-open').addEventListener('click', () => this.openSelectedItem());
-        this.$('#ctx-open-with').addEventListener('click', () => this.showOpenWithModal());
-        this.$('#ctx-copy').addEventListener('click', () => this.copySelectedItems());
-        this.$('#ctx-cut').addEventListener('click', () => this.cutSelectedItems());
-        this.$('#ctx-paste').addEventListener('click', () => this.pasteItems());
-        this.$('#ctx-rename').addEventListener('click', () => this.renameSelectedItem());
-        this.$('#ctx-delete').addEventListener('click', () => this.deleteSelectedItems());
-        this.$('#ctx-properties').addEventListener('click', () => this.showPropertiesModal());
+        this.$('#ctx-open')?.addEventListener('click', () => this.openSelectedItem());
+        this.$('#ctx-open-with')?.addEventListener('click', () => this.showOpenWithModal());
+        this.$('#ctx-copy')?.addEventListener('click', () => this.copySelectedItems());
+        this.$('#ctx-cut')?.addEventListener('click', () => this.cutSelectedItems());
+        this.$('#ctx-paste')?.addEventListener('click', () => this.pasteItems());
+        this.$('#ctx-rename')?.addEventListener('click', () => this.renameSelectedItem());
+        this.$('#ctx-delete')?.addEventListener('click', () => this.deleteSelectedItems());
+        this.$('#ctx-properties')?.addEventListener('click', () => this.showPropertiesModal());
     }
 
     /**
@@ -186,13 +412,6 @@ export default class FileManagerApp extends BaseApp {
         
         // Modal "Abrir com..."
         this.$('#cancel-open-with-btn').addEventListener('click', () => this.hideModal('openWithModal'));
-        
-        // Fechar modais com ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.hideAllModals();
-            }
-        });
     }
 
     /**
@@ -203,6 +422,7 @@ export default class FileManagerApp extends BaseApp {
             console.log(`[${this.appName}] Atualizando visualização para: ${this.currentPath}`);
             
             const items = fs.ls(this.currentPath);
+            this.currentItems = items;
             
             this.updateBreadcrumb();
             this.updateItemCount(items.length);
@@ -288,7 +508,6 @@ export default class FileManagerApp extends BaseApp {
         // Event listeners
         itemElement.addEventListener('click', (e) => this.handleFileItemClick(e, item));
         itemElement.addEventListener('dblclick', (e) => this.handleFileItemDoubleClick(e, item));
-        itemElement.addEventListener('contextmenu', (e) => this.handleContextMenu(e, item));
         
         return itemElement;
     }
@@ -319,19 +538,14 @@ export default class FileManagerApp extends BaseApp {
     }
 
     /**
-     * Manipula menu de contexto
+     * Manipula menu de contexto legado
      */
     handleContextMenu(event, item) {
-        event.preventDefault();
-        event.stopPropagation();
-        
         if (!this.selectedItems.has(item.path)) {
             this.selectedItems.clear();
             this.selectedItems.add(item.path);
             this.updateItemSelection();
         }
-        
-        this.showContextMenu(event.clientX, event.clientY);
     }
 
     /**
@@ -352,7 +566,6 @@ export default class FileManagerApp extends BaseApp {
      */
     openFileWithApp(item) {
         const extension = this.getFileExtension(item.name);
-        const mimeType = this.getMimeType(extension);
         
         // Determina qual aplicativo usar baseado na extensão
         let appId = null;
@@ -377,12 +590,10 @@ export default class FileManagerApp extends BaseApp {
             case 'png':
             case 'gif':
             case 'svg':
-                // TODO: Implementar visualizador de imagens
                 console.log(`[${this.appName}] Visualizador de imagens não implementado ainda`);
                 this.showMessage(`Visualizador de imagens não implementado ainda`, 'warning');
                 return;
             case 'pdf':
-                // TODO: Implementar visualizador de PDF
                 console.log(`[${this.appName}] Visualizador de PDF não implementado ainda`);
                 this.showMessage(`Visualizador de PDF não implementado ainda`, 'warning');
                 return;
@@ -649,41 +860,20 @@ export default class FileManagerApp extends BaseApp {
     }
 
     /**
-     * Mostra menu de contexto
+     * Mostra menu de contexto legado
      */
     showContextMenu(x, y) {
+        if (!this.elements.contextMenu) return;
         this.elements.contextMenu.style.left = x + 'px';
         this.elements.contextMenu.style.top = y + 'px';
         this.elements.contextMenu.classList.remove('hidden');
-        
-        // Atualiza estado dos itens do menu
-        const hasSelection = this.selectedItems.size > 0;
-        const hasClipboard = this.clipboard !== null;
-        const isSingleSelection = this.selectedItems.size === 1;
-        
-        // Verifica se é um arquivo (não pasta) para mostrar "Abrir com..."
-        let isFile = false;
-        if (isSingleSelection) {
-            const selectedItem = Array.from(this.selectedItems)[0];
-            const item = this.currentItems.find(i => i.name === selectedItem);
-            isFile = item && item.type === 'file';
-        }
-        
-        this.$('#ctx-open').style.display = isSingleSelection ? 'flex' : 'none';
-        this.$('#ctx-open-with').style.display = isFile ? 'flex' : 'none';
-        this.$('#ctx-copy').style.display = hasSelection ? 'flex' : 'none';
-        this.$('#ctx-cut').style.display = hasSelection ? 'flex' : 'none';
-        this.$('#ctx-paste').style.display = hasClipboard ? 'flex' : 'none';
-        this.$('#ctx-rename').style.display = isSingleSelection ? 'flex' : 'none';
-        this.$('#ctx-delete').style.display = hasSelection ? 'flex' : 'none';
-        this.$('#ctx-properties').style.display = isSingleSelection ? 'flex' : 'none';
     }
 
     /**
      * Oculta menu de contexto
      */
     hideContextMenu() {
-        this.elements.contextMenu.classList.add('hidden');
+        this.elements.contextMenu?.classList.add('hidden');
     }
 
     /**
@@ -873,9 +1063,6 @@ export default class FileManagerApp extends BaseApp {
     }
 
     /**
-     * Manipula atalhos de teclado
-     */
-    /**
      * Seleciona todos os itens
      */
     selectAll() {
@@ -884,7 +1071,7 @@ export default class FileManagerApp extends BaseApp {
             this.selectedItems.clear();
             items.forEach(item => this.selectedItems.add(item.path));
             this.updateItemSelection();
-        } catch (error) {
+        } catch {
             // Ignora erros
         }
     }
@@ -946,7 +1133,6 @@ export default class FileManagerApp extends BaseApp {
      */
     showError(message) {
         console.error(`[${this.appName}] ${message}`);
-        // TODO: Implementar sistema de notificações
         alert(`Erro: ${message}`);
     }
 
@@ -955,7 +1141,6 @@ export default class FileManagerApp extends BaseApp {
      */
     showSuccess(message) {
         console.log(`[${this.appName}] ${message}`);
-        // TODO: Implementar sistema de notificações
     }
 
     /**
@@ -1002,11 +1187,11 @@ export default class FileManagerApp extends BaseApp {
         if (this.selectedItems.size !== 1) return;
         
         const selectedItem = Array.from(this.selectedItems)[0];
-        const item = this.currentItems.find(i => i.name === selectedItem);
+        const item = this.currentItems.find(i => i.path === selectedItem || i.name === selectedItem);
         
         if (!item || item.type !== 'file') return;
         
-        const filePath = this.currentPath === '/' ? `/${item.name}` : `${this.currentPath}/${item.name}`;
+        const filePath = item.path || (this.currentPath === '/' ? `/${item.name}` : `${this.currentPath}/${item.name}`);
         const fileExtension = this.getFileExtension(item.name);
         
         // Lista de aplicativos disponíveis com suas capacidades
@@ -1116,7 +1301,7 @@ export default class FileManagerApp extends BaseApp {
 
             // Casos especiais para aplicativos que ainda não existem
             if (appId === 'image-viewer' || appId === 'pdf-reader') {
-                this.showWarning(`Aplicativo "${appId}" ainda não foi implementado`);
+                this.showMessage(`Aplicativo "${appId}" ainda não foi implementado`, 'warning');
                 return;
             }
 
@@ -1147,12 +1332,13 @@ export default class FileManagerApp extends BaseApp {
     /**
      * Limpeza quando o aplicativo é fechado
      */
-    onCleanup() {
+    async onCleanup() {
         console.log(`[${this.appName}] Limpando recursos...`);
         
         // Remove event listeners globais
         document.removeEventListener('click', this.hideContextMenu);
         
+        await super.onCleanup();
         console.log(`[${this.appName}] Recursos limpos`);
     }
 

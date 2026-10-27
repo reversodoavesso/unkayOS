@@ -18,6 +18,7 @@ export class WorkspaceSession {
     this.widgets = new WidgetManager(this);
     this.setup = new WelcomeSetup(this);
     this.keyboard = event => {
+      if (event.defaultPrevented) return;
       if (event.ctrlKey && event.code === 'Space' && !event.altKey && !event.metaKey && !document.querySelector('dialog[open]:not(.menu_apps)')) {
         event.preventDefault();
         eventBus.emit('menu:apps:toggle');

@@ -1,4 +1,4 @@
-// /core/AppManager.js - v1.0.27 
+// /core/AppManager.js - v1.0.28
 
 import { AppCore } from './AppCore.js';
 import eventBus from './eventBus.js'; // Importa o eventBus para Pub/Sub
@@ -10,6 +10,7 @@ export class AppManager {
 
     constructor(desktopElement, appsOnToolBarElement, appConfigs) {
         this.focusHistory = [];
+        this._showDesktopSavedIds = [];
 
         this.desktopElement = desktopElement;
         this.appsOnToolBarElement = appsOnToolBarElement;
@@ -71,7 +72,7 @@ export class AppManager {
         eventBus.on('window:minimize', ({ instanceId }) => {
             const appInfo = this.runningApps.get(instanceId);
             if (appInfo && appInfo.UI) {
-                appInfo.UI.minimize()
+                appInfo.UI.minimize();
             }
         });
 
@@ -99,6 +100,29 @@ export class AppManager {
             }
         });
 
+        eventBus.on('window:snap', ({ instanceId, zone }) => {
+            const appInfo = this.runningApps.get(instanceId);
+            if (appInfo && appInfo.UI && typeof appInfo.UI.snapTo === 'function') {
+                appInfo.UI.snapTo(zone);
+                this.defineFirstPlaneApp(instanceId);
+            }
+        });
+
+        eventBus.on('window:center', ({ instanceId }) => {
+            const appInfo = this.runningApps.get(instanceId);
+            if (appInfo && appInfo.UI && typeof appInfo.UI.centerWindow === 'function') {
+                appInfo.UI.centerWindow();
+                this.defineFirstPlaneApp(instanceId);
+            }
+        });
+
+        eventBus.on('window:cycle', ({ direction = 1 } = {}) => {
+            this.cycleWindows(direction);
+        });
+
+        eventBus.on('desktop:toggle-show', () => {
+            this.toggleShowDesktop();
+        });
 
         eventBus.on('window:toggle', ({ instanceId }) => {
             const appInfo = this.runningApps.get(instanceId);
@@ -160,6 +184,69 @@ export class AppManager {
             }
             eventBus.emit('app:parametersSchema', { appId, schema });
         });
+    }
+
+    /**
+     * Alterna o foco entre as janelas abertas (Alt + ` / Alt + Tab)
+     * @param {number} [direction=1]
+     */
+    cycleWindows(direction = 1) {
+        const systemWindows = [];
+        for (const [instanceId, appInfo] of this.runningApps.entries()) {
+            if (appInfo.CORE.mode === 'system_window' && appInfo.UI) {
+                systemWindows.push(instanceId);
+            }
+        }
+        if (systemWindows.length === 0) return null;
+
+        const currentIndex = systemWindows.indexOf(this.activeAppInstanceId);
+        const step = direction < 0 ? -1 : 1;
+        const nextIndex =
+            currentIndex === -1
+                ? 0
+                : (currentIndex + step + systemWindows.length) % systemWindows.length;
+        const targetId = systemWindows[nextIndex];
+        const targetApp = this.runningApps.get(targetId);
+        if (targetApp?.UI?.isMinimized) {
+            targetApp.UI.restore();
+        }
+        this.defineFirstPlaneApp(targetId);
+        return targetId;
+    }
+
+    /**
+     * Minimiza todas as janelas visíveis ou restaura as janelas minimizadas anteriormente (Ctrl + Alt + D)
+     */
+    toggleShowDesktop() {
+        const visibleWindows = [];
+        for (const [instanceId, appInfo] of this.runningApps.entries()) {
+            if (appInfo.CORE.mode === 'system_window' && appInfo.UI && !appInfo.UI.isMinimized) {
+                visibleWindows.push(instanceId);
+            }
+        }
+
+        if (visibleWindows.length > 0) {
+            this._showDesktopSavedIds = visibleWindows;
+            for (const id of visibleWindows) {
+                this.runningApps.get(id)?.UI?.minimize();
+            }
+            return { action: 'minimized', count: visibleWindows.length };
+        }
+
+        const toRestore = this._showDesktopSavedIds.filter((id) => this.runningApps.has(id));
+        this._showDesktopSavedIds = [];
+        let lastRestored = null;
+        for (const id of toRestore) {
+            const appInfo = this.runningApps.get(id);
+            if (appInfo?.UI?.isMinimized) {
+                appInfo.UI.restore();
+                lastRestored = id;
+            }
+        }
+        if (lastRestored) {
+            this.defineFirstPlaneApp(lastRestored);
+        }
+        return { action: 'restored', count: toRestore.length };
     }
 
     async initAutorunApps() {
@@ -273,7 +360,7 @@ export class AppManager {
         this.focusHistory = this.focusHistory.filter(id => id !== instanceId);
         this.focusHistory.unshift(instanceId);
 
-        this.runningApps.forEach((value, key) => {
+        this.runningApps.forEach((value, _key) => {
             if (value.UI && value.CORE.mode == 'system_window') {
 
                 if (value.CORE.instanceId === instanceId) {
@@ -379,14 +466,10 @@ export class AppManager {
         // Se não estiver rodando, tenta buscar nos loadedAppDetails
         const appData = this.loadedAppDetails.get(appId);
         if (appData && appData.jsFile) {
-            // Tenta importar o módulo e ler a propriedade estática
-            // (Nota: import dinâmico pode ser async, mas aqui simplificamos para sync se já carregado)
             if (appData._cachedParametersSchema) return appData._cachedParametersSchema;
             try {
-                // Não há garantia de já estar importado, mas tentamos acessar via window.loadedAppDetails
-                // ou podemos retornar null e sugerir rodar o app para garantir o schema
                 return null;
-            } catch (e) {
+            } catch (_e) {
                 return null;
             }
         }

@@ -120,6 +120,26 @@ export class BaseApp {
             console.warn(`[${this.appName}] Erro ao limpar listeners de teclado:`, error);
         }
 
+        // Remove provedores de menu de contexto registrados pela instância
+        try {
+            let contextMenuManager = null;
+            if (window.systemManager && window.systemManager.isInitialized) {
+                contextMenuManager = window.systemManager.getSystem('contextMenuManager');
+            }
+            if (!contextMenuManager && window.contextMenuManager) {
+                contextMenuManager = window.contextMenuManager;
+            }
+            if (!contextMenuManager) {
+                const imported = await import('./ContextMenuManager.js');
+                contextMenuManager = imported.contextMenuManager;
+            }
+            if (contextMenuManager) {
+                contextMenuManager.removeAppProviders(this.instanceId);
+            }
+        } catch (error) {
+            console.warn(`[${this.appName}] Erro ao limpar menus de contexto:`, error);
+        }
+
         // Limpa listeners fallback se existirem
         if (this._fallbackListeners) {
             this._fallbackListeners.forEach(({ listener, element, event }) => {
@@ -129,6 +149,34 @@ export class BaseApp {
         }
 
         console.warn(`[${this.appName} - ${this.instanceId}] Método onCleanup() não implementado na classe base. Considere limpar listeners e recursos aqui.`);
+    }
+
+    /**
+     * Registra um provedor de menu de contexto (botão direito) escopado a esta instância do aplicativo.
+     * @param {string|function} selectorOrBuilder - Seletor CSS local (ex: '.file-item') ou função builder (para toda a área do app).
+     * @param {function} [builder=null] - Função `(context) => Array<MenuItem>` quando o primeiro argumento é um seletor.
+     * @returns {Promise<function>} Função de desregistro.
+     */
+    async registerContextMenu(selectorOrBuilder, builder = null) {
+        try {
+            let contextMenuManager = null;
+            if (window.systemManager && window.systemManager.isInitialized) {
+                contextMenuManager = window.systemManager.getSystem('contextMenuManager');
+            }
+            if (!contextMenuManager && window.contextMenuManager) {
+                contextMenuManager = window.contextMenuManager;
+            }
+            if (!contextMenuManager) {
+                const imported = await import('./ContextMenuManager.js');
+                contextMenuManager = imported.contextMenuManager;
+            }
+            if (contextMenuManager) {
+                return contextMenuManager.registerAppProvider(this.instanceId, selectorOrBuilder, builder);
+            }
+        } catch (error) {
+            console.warn(`[${this.appName}] Erro ao registrar menu de contexto:`, error);
+        }
+        return () => {};
     }
 
     /**

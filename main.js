@@ -20,6 +20,8 @@ async function init() {
         window.appManager = systemManager.getSystem('appManager');
         window.authSystem = systemManager.getSystem('authSystem');
         window.keyboardManager = systemManager.getSystem('keyboardManager');
+        window.fullscreenManager = systemManager.getSystem('fullscreenManager');
+        window.contextMenuManager = systemManager.getSystem('contextMenuManager');
         window.unkayFileSystem = {
             fileSystem: systemManager.getSystem('fileSystem'),
             fs: systemManager.getSystem('fs')
