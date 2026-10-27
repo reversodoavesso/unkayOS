@@ -320,3 +320,12 @@ dialog.menu_apps::backdrop, dialog.workspace-setup::backdrop { background: var(-
   color: var(--unkay-accent-text);
   background: var(--unkay-accent-subtle);
 }
+/* Authenticated Compute setup belongs to the workspace, including invitation after login. */
+.compute-setup { width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box;border:1px solid var(--rda-border-primary,#555);border-radius:18px;background:var(--rda-surface-primary,#151515);color:var(--rda-content-primary,#eee);padding:0; }
+.compute-setup::backdrop {background:rgba(0,0,0,.65);}
+.compute-setup__body {padding:24px;}.compute-setup h1{font-size:26px;margin:8px 0 16px;}.compute-setup p{line-height:1.5;}
+.compute-resources{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0;}.compute-resources div{padding:10px;border:1px solid #7774;border-radius:8px;}.compute-resources dt{font-size:12px;opacity:.7;}.compute-resources dd{margin:5px 0 0;font-weight:600;}
+.compute-setup fieldset{border:0;padding:0;margin:20px 0;}.compute-choice{display:flex;gap:12px;padding:14px 0;align-items:flex-start;}.compute-choice input{margin-top:5px;}.compute-choice strong,.compute-choice small{display:block;}.compute-choice small{margin-top:6px;line-height:1.5;opacity:.8;}
+.compute-note{font-size:13px;opacity:.8;}.compute-setup__status{min-height:24px;}.compute-setup footer{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:20px;}
+.compute-invitation{position:absolute;right:24px;bottom:100px;z-index:11000;max-width:400px;padding:18px;background:var(--rda-surface-primary,#151515);color:var(--rda-content-primary,#eee);border:1px solid #7776;border-radius:14px;box-shadow:0 10px 30px #0005;display:flex;gap:12px;flex-wrap:wrap;}.compute-invitation p{margin:8px 0;line-height:1.5;}
+@media(max-width:480px){.compute-setup__body{padding:18px;}.compute-resources{grid-template-columns:repeat(2,1fr);}.compute-invitation{left:12px;right:12px;bottom:90px;}}

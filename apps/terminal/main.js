@@ -8,6 +8,7 @@ import { createFilesystemCommands } from './filesystem-commands.js';
 import { createTerminalFileSystem, parseCommandLine } from './session.js';
 import { escapeHtml } from '../../core/workspace/preferences.js';
 import DOMPurify from '../../core/vendor/purify.es.mjs';
+import { confirmComputeSetup } from '../../core/workspace/ComputeSetup.js';
 
 export default class TerminalApp extends BaseApp {
     static parameters = {
@@ -69,6 +70,11 @@ export default class TerminalApp extends BaseApp {
 
     registerCommand(name, func, description = 'Sem descrição.') {
         this.commands[name] = { action: func, description };
+    }
+
+    confirmCompute(signal) {
+        this.computeSetupController?.abort();this.computeSetupController=new AbortController();
+        return confirmComputeSetup({token:this.unkay.auth.getToken(),signal:AbortSignal.any([this.computeSetupController.signal,signal])});
     }
 
     startAppViaEventBus(appId, params = []) {
@@ -212,6 +218,7 @@ export default class TerminalApp extends BaseApp {
         const api = this._getAuthApi();
         if (api && typeof api.on === 'function') {
             this._authChangeHandler = () => {
+                this.computeSetupController?.abort();
                 const auth = this.unkay?.auth;
                 if (!auth?.getToken() || !['sysadmin','demiurge'].includes(auth.getTier())) this.computeBridge.disconnect();
                 this.updatePrompt();
@@ -235,6 +242,7 @@ export default class TerminalApp extends BaseApp {
         this.writeLine('Terminal local. Digite "help" ou "mode". WASI roda neste navegador; Compute abre um Linux remoto autorizado.');
         this.inputElement.focus();
         this.scrollToBottom();
+        if(appParams.computeSetup)void this.processCommand('mode compute');
 
         this.appContentRoot.addEventListener('click', this._focusInputOnClick);
 
@@ -336,6 +344,7 @@ export default class TerminalApp extends BaseApp {
     }
 
     async onCleanup() {
+        this.computeSetupController?.abort();
         this.modeController?.abort();this.computeBridge.disconnect();
         if (this.inputElement) {
             this.inputElement.removeEventListener('keydown', this.handleKeydown);

@@ -2,6 +2,15 @@
 
 O contador de releases começa em 1 com a versão 2.0.0-alpha.2. Builds da mesma versão preservam o número; cada release preparada incrementa o contador.
 
+## 2.0.0-alpha.8 · Release 7 · 2026-10-27
+
+Compute com confirmação e workspace preservado
+
+- Contas autorizadas recebem um convite para configurar o Compute sem alocar recursos automaticamente.
+- A confirmação oferece sessão momentânea ou workspace salvo, com limites de recursos e exigência de MFA explícitos.
+- Workspaces mantidos salvam os arquivos e liberam CPU e RAM ao desconectar ou atingir o limite de inatividade.
+- Retomar, encerrar e excluir o ambiente exigem autorização do dono no servidor.
+
 ## 2.0.0-alpha.7 · Release 6 · 2026-10-27
 
 Menus sincronizados e terminal com modos isolados

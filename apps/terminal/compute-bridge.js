@@ -14,6 +14,7 @@ export class ComputeBridge {
         this.isConnecting = false;
         this.abortController = null;
         this.terminal = null;
+        this.generation = 0;
     }
 
     /**
@@ -21,7 +22,7 @@ export class ComputeBridge {
      * @param {object} terminal - TerminalApp instance
      * @param {string} wsUrl - WebSocket endpoint URL
      */
-    async connect(terminal, wsUrl = null) {
+    async connect(terminal, wsUrl = null, options = {}) {
         if (this.isConnected || this.isConnecting) {
             terminal.writeLine('<span class="yellow">Já conectado a uma sessão de compute.</span>');
             return;
@@ -40,6 +41,9 @@ export class ComputeBridge {
             return;
         }
         this.terminal = terminal;
+        const generation=++this.generation;
+        this.abortController=new AbortController();
+        const requestController=this.abortController;
         this.isConnecting = true;
         this.onStateChange();
         try {
@@ -47,12 +51,13 @@ export class ComputeBridge {
             expected.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const target = wsUrl ? new URL(wsUrl, expected) : expected;
             if (target.origin !== expected.origin || target.pathname !== '/ws/terminal' || target.username || target.password || target.search || target.hash) throw Error('Use o endpoint de computação desta instalação.');
-            this.abortController = new AbortController();
-            const requestController = this.abortController;
+            const mode=options.confirmed?options.mode:await terminal.confirmCompute?.(requestController.signal);
+            if(generation!==this.generation||requestController.signal.aborted)return;
+            if(!['temporary','retained'].includes(mode)){this.cleanup();return;}
             const timeout = setTimeout(() => requestController.abort(), 15000);
             let response;
             try {
-                response = await fetch('/api/compute/ticket', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, signal: requestController.signal });
+                response = await fetch('/api/compute/ticket', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type':'application/json' },body:JSON.stringify({mode,confirmed:true}), signal: requestController.signal });
             } finally { clearTimeout(timeout); }
             const result = await response.json();
             if (!response.ok) throw Error(typeof result.error === 'string' ? result.error : 'Não foi possível autorizar a sessão de computação.');
@@ -86,6 +91,8 @@ export class ComputeBridge {
                         this.onStateChange(); return;
                     }
                     if (msg.type === 'pong') return;
+                    if (msg.type === 'error') {terminal.writeLine(escapeText(msg.message));return;}
+                    if (msg.type === 'ended') {terminal.writeLine(escapeText(msg.retained?'Salvando seus arquivos e liberando o Compute…':'Sessão temporária encerrada.'));return;}
                     if (msg.type === 'output') {
                         terminal.writeLine(escapeText(msg.data));
                     }
@@ -106,6 +113,7 @@ export class ComputeBridge {
             };
 
         } catch (err) {
+            if(generation!==this.generation)return;
             terminal.writeLine(`<span class="red">Falha ao iniciar conexão: ${escapeText(err.name === 'AbortError' ? 'Solicitação cancelada ou tempo de conexão excedido.' : err.message)}</span>`);
             this.cleanup();
         }
@@ -124,6 +132,7 @@ export class ComputeBridge {
     }
 
     cleanup() {
+        this.generation++;
         if (this.readyTimer) clearTimeout(this.readyTimer);
         this.readyTimer = null;
         this.isConnected = false;

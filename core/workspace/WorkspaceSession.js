@@ -3,6 +3,7 @@ import { readPreferences, writePreferences, applyAppearance, applyWindowing } fr
 import { normalizeWorkspace, mergeWorkspace, applyShell } from './preferences.js';
 import { WidgetManager } from './WidgetManager.js';
 import { WelcomeSetup } from './WelcomeSetup.js';
+import { ComputeInvitation } from './ComputeSetup.js';
 
 let currentSession = null;
 export const getWorkspace = () => currentSession;
@@ -17,6 +18,7 @@ export class WorkspaceSession {
     this.queue = Promise.resolve();
     this.widgets = new WidgetManager(this);
     this.setup = new WelcomeSetup(this);
+    this.computeInvitation = new ComputeInvitation(this);
     this.keyboard = event => {
       if (event.defaultPrevented) return;
       if (event.ctrlKey && event.code === 'Space' && !event.altKey && !event.metaKey && !document.querySelector('dialog[open]:not(.menu_apps)')) {
@@ -34,6 +36,7 @@ export class WorkspaceSession {
     document.addEventListener('keydown', this.keyboard);
     eventBus.emit('settings:updated', structuredClone(this.settings));
     if (!this.settings.onboarding.completedAt) this.setup.show();
+    this.computeInvitation.initialize();
     return this;
   }
 
@@ -71,6 +74,7 @@ export class WorkspaceSession {
     const running = [...this.appManager.runningApps.entries()].find(([, app]) => app.CORE.id === appId && app.CORE.mode === 'system_window');
     if (running) {
       if (params.panel) running[1].CORE.appInstance?.switchPanel?.(params.panel);
+      if (params.computeSetup) void running[1].CORE.appInstance?.processCommand?.('mode compute');
       if (running[1].UI.isMinimized) running[1].UI.restore();
       this.appManager.defineFirstPlaneApp(running[0]);
       return running[0];
@@ -81,6 +85,7 @@ export class WorkspaceSession {
   async destroy() {
     document.removeEventListener('keydown', this.keyboard);
     this.setup.destroy();
+    this.computeInvitation.destroy();
     await this.widgets.destroy();
     if (currentSession === this) currentSession = null;
   }
