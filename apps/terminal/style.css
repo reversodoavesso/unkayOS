@@ -34,6 +34,19 @@
     align-items: center;
 }
 
+.terminal-output, .terminal-output *, .terminal-input-line, .terminal-input-line * {
+    font-family: ui-monospace, 'Courier New', monospace;
+}
+.terminal-input-line > .terminal-prompt {
+    flex: 0 1 auto;
+    max-width: 75%;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.terminal-input-line > .terminal-input { flex: 1 1 0; }
+
 /* Prompt com cor de destaque */
 .terminal-prompt {
     color: var(--color-primary-base); /* azul vibrante para prompt */

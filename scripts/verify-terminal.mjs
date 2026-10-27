@@ -37,6 +37,8 @@ try {
     await page.evaluate(id => window.appManager.runningApps.get(id).CORE.appInstance.writeLine('<script>window.__terminalUnsafe=1</script><span onclick="window.__terminalUnsafe=1">safe output</span>'), a);
     assert(await root(a).locator('#terminalOutput script,#terminalOutput img,#terminalOutput [onclick],#terminalOutput [onerror]').count() === 0, 'Terminal rendered executable markup');
     assert(!await page.evaluate(() => window.__terminalUnsafe), 'Terminal executed untrusted output');
+    const promptStyle = await root(b).locator('#terminalPrompt').evaluate(el => getComputedStyle(el).whiteSpace);
+    assert(promptStyle === 'nowrap', 'Terminal prompt can wrap across lines');
     await page.screenshot({ path: resolve(output, 'independent-terminal-modes.png') });
     await page.evaluate(id => window.appManager.stopApp(id), a);
     await command(b, 'pwd');

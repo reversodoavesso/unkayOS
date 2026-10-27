@@ -60,6 +60,7 @@ export default class TerminalApp extends BaseApp {
             const currentDir = this.fs ? this.fs.pwd() : '~';
             const dirDisplay = currentDir === '/home/user' ? '~' : currentDir;
             this.terminalPromptElement.textContent = this.computeBridge.isConnected ? `${promptText}$` : `${promptText}:${dirDisplay}$`;
+            this.terminalPromptElement.title = this.terminalPromptElement.textContent;
         }
         const state = this.computeBridge.isConnected ? 'Compute · Linux remoto' : this.computeBridge.isConnecting ? 'Conectando ao Compute…' : 'Local · arquivos deste navegador';
         const status = this.$('#terminalModeStatus'); if (status) status.textContent = state;
