@@ -1,11 +1,31 @@
 // @vitest-environment happy-dom
-import { afterEach, describe, expect, it, vi } from 'vitest';
-vi.mock('../core/sdk/unkay.js', () => ({ unkay: { auth: { getTier: () => 'sysadmin', getToken: () => 'synthetic-bearer' } } }));
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+const auth = vi.hoisted(() => ({getTier:vi.fn(),getToken:vi.fn()}));
+vi.mock('../core/sdk/unkay.js', () => ({ unkay: { auth } }));
 import { ComputeBridge } from '../apps/terminal/compute-bridge.js';
 
 describe('canonical compute authorization bridge', () => {
   const ticket = '11111111-1111-4111-8111-111111111111';
-  afterEach(() => vi.unstubAllGlobals());
+  beforeEach(() => {auth.getTier.mockReturnValue('sysadmin');auth.getToken.mockReturnValue('synthetic-bearer');});
+  afterEach(() => {vi.useRealTimers();vi.unstubAllGlobals();});
+  it('denies guest and standard users before requesting a ticket', async () => {
+    const fetch=vi.fn(),writeLine=vi.fn();vi.stubGlobal('fetch',fetch);
+    for(const role of ['guest','standard']) {auth.getTier.mockReturnValue(role);await new ComputeBridge().connect({writeLine});}
+    expect(fetch).not.toHaveBeenCalled();
+    expect(writeLine).toHaveBeenCalledWith(expect.stringContaining('Acesso negado'));
+  });
+  it('keeps heartbeats and terminal input working and clears timers on disconnect', async () => {
+    vi.useFakeTimers();
+    const send=vi.fn();let socket;
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({ticket,success:true})));
+    vi.stubGlobal('WebSocket',class {static OPEN=1;constructor(){this.readyState=1;this.send=send;socket=this;}close(){this.onclose();}});
+    const bridge=new ComputeBridge();await bridge.connect({writeLine:vi.fn()});socket.onopen();
+    expect(bridge.isConnected).toBe(true);bridge.sendInput('pwd\n');
+    expect(send).toHaveBeenCalledWith(JSON.stringify({type:'input',data:'pwd\n'}));
+    await vi.advanceTimersByTimeAsync(25000);
+    expect(send).toHaveBeenCalledWith(JSON.stringify({type:'ping'}));
+    bridge.disconnect();expect(bridge.isConnected).toBe(false);expect(vi.getTimerCount()).toBe(0);
+  });
   it('exchanges the bearer for a one-use ticket without exposing either credential in output', async () => {
     const lines = [], sockets = [];
     const fetch = vi.fn().mockResolvedValue(Response.json({ticket,success:true}));
