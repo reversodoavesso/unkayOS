@@ -2,6 +2,13 @@
 
 O contador de releases começa em 1 com a versão 2.0.0-alpha.2. Builds da mesma versão preservam o número; cada release preparada incrementa o contador.
 
+## 2.0.0-alpha.6 · Release 5 · 2026-10-27
+
+SSO e computação autenticada
+
+- Terminal solicita ticket de uso único no mesmo domínio, com autorização e MFA no servidor.
+- Tokens deixam de aparecer em URLs e mensagens da ponte de computação.
+
 ## 2.0.0-alpha.5 · Release 4 · 2026-10-27
 
 Login integrado ao RDA

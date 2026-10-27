@@ -2,6 +2,16 @@
   "schemaVersion": 1,
   "releases": [
     {
+      "version": "2.0.0-alpha.6",
+      "number": 5,
+      "date": "2026-10-27",
+      "title": "SSO e computação autenticada",
+      "changes": [
+        "Terminal solicita ticket de uso único no mesmo domínio, com autorização e MFA no servidor.",
+        "Tokens deixam de aparecer em URLs e mensagens da ponte de computação."
+      ]
+    },
+    {
       "version": "2.0.0-alpha.5",
       "number": 4,
       "date": "2026-10-27",
