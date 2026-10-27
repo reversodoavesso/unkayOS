@@ -6,7 +6,7 @@ export const AUTH_CONFIG = {
     baseUrl: 'https://id.reversodoavesso.com',
 
     // ID do cliente OAuth2/OIDC
-    clientId: 'unkayos',
+    clientId: '',
 
     // URI de redirecionamento (PKCE)
     redirectUri: typeof window !== 'undefined' ? window.location.origin + '/auth/callback.html' : 'https://unkayos.reversodoavesso.com/auth/callback.html',
@@ -43,6 +43,13 @@ export const DEV_CONFIG = {
 };
 
 export function getAuthConfig() {
+    const runtime = globalThis.__UNKAYOS_DEPLOYMENT__?.oidc;
+    const config = { ...AUTH_CONFIG };
+    if (runtime && typeof runtime.clientId === 'string' && /^[a-zA-Z0-9_.@-]+$/.test(runtime.clientId) &&
+        typeof runtime.projectId === 'string' && /^[a-zA-Z0-9_-]+$/.test(runtime.projectId)) {
+        config.clientId = runtime.clientId;
+        config.scope += ` offline_access urn:zitadel:iam:org:project:id:${runtime.projectId}:aud`;
+    }
     if (typeof window !== 'undefined') {
         const isLocalDev = window.location.hostname === 'localhost' ||
             window.location.hostname === '127.0.0.1';
@@ -50,14 +57,14 @@ export function getAuthConfig() {
         if (isLocalDev && DEV_CONFIG.debug) {
             console.log('[AuthConfig] Modo de desenvolvimento local detectado');
             return {
-                ...AUTH_CONFIG,
+                ...config,
                 baseUrl: DEV_CONFIG.devBaseUrl,
                 clientId: DEV_CONFIG.devClientId
             };
         }
     }
 
-    return AUTH_CONFIG;
+    return config;
 }
 
 export function validateAuthConfig(config) {

@@ -6,7 +6,7 @@ import { generateCodeVerifier, generateCodeChallenge } from './utils/generateCod
 
 /**
  * Sistema de Autenticação unkayOS
- * Gerencia autenticação SSO com Authentik e fornece APIs para outras aplicações
+ * Gerencia autenticação SSO com Zitadel e fornece APIs para outras aplicações
  */
 export class AuthSystem {
     constructor() {
@@ -89,6 +89,7 @@ export class AuthSystem {
      * Inicia o processo de login SSO
      */
     async login() {
+        if (!validateAuthConfig(this.authentikConfig)) throw new Error('O SSO RDA não está configurado neste ambiente.');
         const authWindow = window.open('about:blank', 'unkayos_auth', 'width=500,height=600,scrollbars=yes,resizable=yes');
         if (!authWindow) throw new Error('Permita a janela de autenticação para entrar com SSO.');
         this.authWindow = authWindow;
@@ -211,7 +212,12 @@ export class AuthSystem {
             throw new Error(`Erro ao obter informações do usuário: ${response.status} - ${errorText}`);
         }
         
-        return await response.json();
+        const userInfo = await response.json();
+        const identityResponse = await fetch('/api/identity/me', { headers: { Authorization: `Bearer ${this.authToken}` } });
+        if (!identityResponse.ok) throw new Error('Sua conta RDA não está habilitada ou a sessão expirou.');
+        const identity = await identityResponse.json();
+        if (identity.issuer !== this.authentikConfig.baseUrl || identity.sub !== userInfo.sub || !identity.id || !identity.role) throw new Error('A identidade RDA não corresponde à sessão do provedor.');
+        return { ...userInfo, id: identity.id, role: identity.role, roles: [identity.role], circle: identity.circle };
     }
 
     /**

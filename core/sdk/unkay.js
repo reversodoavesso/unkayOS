@@ -35,8 +35,9 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                 const claims = user.roles || user['urn:zitadel:iam:org:project:roles'] || [];
                 const roles = [...(Array.isArray(claims) ? claims : Object.keys(claims)), user.role].filter(Boolean);
                 if (roles.includes('demiurge')) return 'demiurge';
-                if (roles.includes('sysadmin') || roles.includes('architect')) return 'sysadmin';
+                if (roles.includes('sysadmin') || roles.includes('architect') || roles.includes('archon')) return 'sysadmin';
                 if (roles.includes('adept') || roles.includes('curator')) return 'adept';
+                if (roles.some(role => ['artificer', 'abyssal', 'weaver', 'sentinel', 'chronicler', 'envoy', 'hierophant', 'eminence', 'oathkeeper'].includes(role))) return 'adept';
                 if (roles.includes('standard') || roles.includes('initiate')) return 'standard';
                 return 'standard';
             },

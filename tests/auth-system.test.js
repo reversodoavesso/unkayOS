@@ -1,15 +1,18 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AuthSystem } from '../core/AuthSystem.js';
+import { getAuthConfig } from '../core/configs/auth-config.js';
 
 describe('OIDC callback and session integration', () => {
   let auth;
   beforeEach(async () => {
+    globalThis.__UNKAYOS_DEPLOYMENT__ = { oidc: { clientId: 'configured-client', projectId: 'configured-project' } };
     localStorage.clear();
     auth = new AuthSystem();
     await auth.ready;
   });
   afterEach(() => {
+    delete globalThis.__UNKAYOS_DEPLOYMENT__;
     window.removeEventListener('message', auth.messageHandler);
     window.removeEventListener('storage', auth.storageHandler);
     vi.restoreAllMocks();
@@ -47,5 +50,23 @@ describe('OIDC callback and session integration', () => {
     vi.spyOn(window, 'open').mockReturnValue(null);
     await expect(auth.login()).rejects.toThrow('janela de autenticação');
     expect(auth.isAuthenticated).toBe(false);
+  });
+
+  it('uses the registered deployment client and the canonical project audience', () => {
+    expect(getAuthConfig().clientId).toBe('configured-client');
+    expect(getAuthConfig().scope).toContain('urn:zitadel:iam:org:project:id:configured-project:aud');
+    delete globalThis.__UNKAYOS_DEPLOYMENT__;
+    expect(getAuthConfig().clientId).toBe('');
+  });
+
+  it('takes permissions from the canonical core and rejects an identity mismatch', async () => {
+    auth.authToken = 'synthetic-token';
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ sub: 'subject', roles: ['demiurge'] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'platform-user', sub: 'subject', issuer: 'https://id.reversodoavesso.com', role: 'acolyte' })));
+    expect((await auth.getUserInfo()).roles).toEqual(['acolyte']);
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ sub: 'subject' })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'other', sub: 'foreign-subject', issuer: 'https://id.reversodoavesso.com', role: 'demiurge' })));
+    await expect(auth.getUserInfo()).rejects.toThrow('não corresponde');
   });
 });

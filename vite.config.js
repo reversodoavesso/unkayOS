@@ -86,6 +86,7 @@ export default {
   appType: 'mpa',
   server: {
     proxy: {
+      '/api/identity/me': { target: 'https://auth.reversodoavesso.com', changeOrigin: true, rewrite: () => '/api/auth/verify' },
       '/api/marketplace': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', changeOrigin: true },
       '/api/proxy': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', changeOrigin: true },
       '/api/reader': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', changeOrigin: true },

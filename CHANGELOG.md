@@ -2,6 +2,13 @@
 
 O contador de releases começa em 1 com a versão 2.0.0-alpha.2. Builds da mesma versão preservam o número; cada release preparada incrementa o contador.
 
+## 2.0.0-alpha.5 · Release 4 · 2026-10-27
+
+Login integrado ao RDA
+
+- SSO com cliente registrado no Zitadel e configuração por implantação.
+- Identidade e permissões verificadas pelo núcleo RDA antes de abrir uma sessão.
+
 ## 2.0.0-alpha.4 · Release 3 · 2026-10-27
 
 Loja e instalação de aplicativos
