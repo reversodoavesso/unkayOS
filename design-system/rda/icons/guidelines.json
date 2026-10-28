@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "ui": {
     "viewBox": "0 0 24 24",
     "stroke": "currentColor",
@@ -15,6 +15,10 @@
     "fill": "currentColor",
     "preserveViewBox": true
   },
+  "scopes": {
+    "exclusive": "Usos exclusivos: marcas ou ícones restritos a contextos ou produtos específicos (ex: The Orb no unkayOS, Cine). Não utilizar como ícone genérico de UI.",
+    "general": "Uso geral no ecossistema: símbolos ou glifos institucionais proprietários de uso amplo e transversal (ex: rda-icon, rda-logo)."
+  },
   "previewSizes": [
     16,
     20,
@@ -27,6 +31,7 @@
     "Margem óptica e peso próximos ao catálogo Lucide",
     "Sem texto, emojis, sombras, gradientes ou detalhes decorativos",
     "Claro/escuro por currentColor; accent pertence ao consumidor",
-    "Marca existente preserva seu desenho original"
+    "Marca existente preserva seu desenho original",
+    "Categorização clara de escopo: exclusivo (contexto específico) vs geral (ecossistema)"
   ]
 }

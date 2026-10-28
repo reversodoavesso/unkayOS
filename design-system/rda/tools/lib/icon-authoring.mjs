@@ -1,20 +1,38 @@
 /** Shared contract for the Icon Studio, CLI and catalog build. */
 export const ICON_GUIDELINES = Object.freeze({
-  version: 1,
+  version: 2,
   ui: { viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 2, fill: 'none', linecap: 'round', linejoin: 'round', margin: 2, maxElements: 32 },
   brand: { preserveGeometry: true, fill: 'currentColor', preserveViewBox: true },
+  scopes: {
+    exclusive: 'Usos exclusivos: marcas ou ícones restritos a contextos ou produtos específicos (ex: The Orb no unkayOS, Cine). Não utilizar como ícone genérico de UI.',
+    general: 'Uso geral no ecossistema: símbolos ou glifos institucionais proprietários de uso amplo e transversal (ex: rda-icon, rda-logo).'
+  },
   previewSizes: [16, 20, 24, 32, 48],
-  review: ['Silhueta reconhecível a 16 e 24 px', 'Margem óptica e peso próximos ao catálogo Lucide', 'Sem texto, emojis, sombras, gradientes ou detalhes decorativos', 'Claro/escuro por currentColor; accent pertence ao consumidor', 'Marca existente preserva seu desenho original'],
+  review: [
+    'Silhueta reconhecível a 16 e 24 px',
+    'Margem óptica e peso próximos ao catálogo Lucide',
+    'Sem texto, emojis, sombras, gradientes ou detalhes decorativos',
+    'Claro/escuro por currentColor; accent pertence ao consumidor',
+    'Marca existente preserva seu desenho original',
+    'Categorização clara de escopo: exclusivo (contexto específico) vs geral (ecossistema)'
+  ],
 });
 
-export function createIconBrief({ name, description, kind = 'ui' }) {
+export function createIconBrief({ name, description, kind = 'ui', scope = 'general', context = '' }) {
   if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(name)) throw new Error('Use um nome em kebab-case.');
   if (!description?.trim()) throw new Error('Descreva a função e a metáfora visual do app.');
   if (!['ui', 'brand'].includes(kind)) throw new Error('Tipo de ícone inválido.');
+  if (!['general', 'exclusive'].includes(scope)) throw new Error('Escopo de ícone inválido. Use "general" ou "exclusive".');
+
   const contract = kind === 'brand'
     ? 'Adapte o SVG original fornecido, preservando todos os paths, proporções e viewBox. Use fill="currentColor". Não redesenhe uma marca existente.'
     : 'Crie um SVG vetorial de interface com viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round" e stroke-linejoin="round" na raiz. Use até 32 formas simples diretamente na raiz (path, circle, rect, line, polyline, polygon ou ellipse). Componha na área óptica de 2 a 22, com poucos detalhes e peso compatível com os ícones Lucide do RDA DS.';
-  return `# Ícone ${name} — RDA Design System\n\nFunção e metáfora solicitadas:\n${description.trim()}\n\n${contract}\n\nSem texto, emojis, cores literais, CSS, scripts, imagens, links, fontes, filtros, sombras ou gradientes. Não fixe width/height; o consumidor controla tamanho e cor. Entregue somente o SVG, sem Markdown.\n\nRevise em 16, 20, 24, 32 e 48 px nos temas claro e escuro. A validação técnica não substitui conferir silhueta, legibilidade, semelhança excessiva e identidade do app.\n\nDepois: valide no Icon Studio ou com icons:author validate; registre no catálogo custom; gere o DS e sincronize o Unkayos.\n`;
+
+  const scopeNote = scope === 'exclusive'
+    ? `Escopo: EXCLUSIVO${context ? ` (Contexto: ${context})` : ''} — Este ícone é de uso específico para este contexto/produto (exemplo análogo: The Orb no unkayOS) e não deve ser usado como ícone genérico do ecossistema.`
+    : 'Escopo: GERAL — Este ícone personalizado destina-se a uso generalizado e transversal no ecossistema RDA.';
+
+  return `# Ícone ${name} — RDA Design System\n\nFunção e metáfora solicitadas:\n${description.trim()}\n\n${scopeNote}\n\n${contract}\n\nSem texto, emojis, cores literais, CSS, scripts, imagens, links, fontes, filtros, sombras ou gradientes. Não fixe width/height; o consumidor controla tamanho e cor. Entregue somente o SVG, sem Markdown.\n\nRevise em 16, 20, 24, 32 e 48 px nos temas claro e escuro. A validação técnica não substitui conferir silhueta, legibilidade, semelhança excessiva e identidade do app.\n\nDepois: valide no Icon Studio ou com icons:author validate; registre no catálogo custom (${scope}); gere o DS e sincronize o Unkayos.\n`;
 }
 
 const shapes = new Set(['path', 'circle', 'ellipse', 'rect', 'line', 'polyline', 'polygon']);
