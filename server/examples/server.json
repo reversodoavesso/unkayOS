@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "installationId": "self-hosted",
+  "revision": "2026-10-30.1",
+  "listen": { "host": "127.0.0.1", "port": 8080 },
+  "identity": {
+    "mode": "oidc",
+    "issuer": "https://id.example.com",
+    "clientId": "unkayos-desktop",
+    "clientSecretRef": "OIDC_CLIENT_SECRET",
+    "redirectUri": "https://desktop.example.com/session/login/callback",
+    "scopes": ["openid", "profile", "email"],
+    "groupClaim": "groups",
+    "roleClaim": "roles",
+    "postLoginPath": "/"
+  },
+  "session": {
+    "cookieName": "unkay_session",
+    "cookieSecure": true,
+    "cookieSameSite": "Lax",
+    "idleTimeoutSeconds": 1800,
+    "absoluteTimeoutSeconds": 43200,
+    "csrfHeader": "x-unkay-csrf"
+  },
+  "accessPolicy": { "file": "access-policy.json" },
+  "ai": {
+    "basePath": "/ai",
+    "timeoutMs": 30000,
+    "defaultModel": "assistant",
+    "maxMessages": 64,
+    "maxMessageChars": 32000,
+    "models": {
+      "assistant": { "upstream": "primary", "model": "provider-model-name", "maxOutputTokens": 2048 }
+    },
+    "upstreams": {
+      "primary": {
+        "baseUrl": "https://api.provider.example/v1",
+        "apiKeyRef": "AI_PROVIDER_API_KEY",
+        "protocol": "openai-chat"
+      }
+    }
+  }
+}

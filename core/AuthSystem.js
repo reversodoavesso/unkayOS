@@ -418,6 +418,34 @@ export class AuthSystem {
     /**
      * API pública para outras aplicações
      */
+    /** Stop host listeners without logging out the persisted account. */
+    destroy() {
+        window.removeEventListener('message', this.messageHandler);
+        window.removeEventListener('storage', this.storageHandler);
+        this.authWindow?.close?.();
+        this.eventListeners.clear();
+        this.currentUser = null;
+        this.authToken = null;
+        this.refreshToken = null;
+        this.isAuthenticated = false;
+    }
+
+    getProviderInfo() {
+        return {
+            id: 'rda-zitadel',
+            label: 'RDA SSO',
+            providerName: 'Reverso do Avesso',
+            mode: 'sso',
+            supportsLogin: true,
+            supportsLogout: true,
+            loginLabel: 'Entrar com RDA',
+            accountLabel: 'conta RDA',
+            connectedDescription: 'Sua conta RDA está conectada.',
+            loginDescription: 'Use neste dispositivo ou entre com sua conta RDA. Você pode decidir depois.',
+            ...(this.authentikConfig?.provider || {})
+        };
+    }
+
     getAPI() {
         return {
             // Estado da autenticação
@@ -447,6 +475,7 @@ export class AuthSystem {
             
             // Token para requisições
             getAuthToken: () => this.getAuthToken(),
+            getProviderInfo: () => this.getProviderInfo(),
             
             // Requisição autenticada
             authenticatedRequest: async (url, options = {}) => {

@@ -118,6 +118,22 @@ export default class TheOrbApp extends BaseApp {
     this.activateReaderFallbackBtn = this.$('#activateReaderFallbackBtn');
     this.loginToProxyBtn = this.$('#loginToProxyBtn');
 
+    // RDA-only services (server reader and proxy) are hidden outside the RDA profile.
+    this.rdaServices = this.standardAPIs?.hostProfile?.capabilities?.rdaServices !== false;
+    if (!this.rdaServices) {
+      for (const selector of ['#readerModeBtn', '#activateReaderFallbackBtn', '#loginToProxyBtn', '#readerView']) {
+        this.$(selector)?.remove();
+      }
+      this.readerModeBtn = null;
+      this.activateReaderFallbackBtn = null;
+      this.loginToProxyBtn = null;
+      this.readerView = null;
+      const heroSubtitle = this.$('.hero-subtitle');
+      if (heroSubtitle) {
+        heroSubtitle.textContent = 'Navegador direto para sites compatíveis, com abertura externa quando o site bloqueia quadros.';
+      }
+    }
+
     // Elementos do Canvas Sysadmin (RBI)
     this.orbRemoteCanvas = this.$('#orbRemoteCanvas');
     this.rbiLatency = this.$('#rbiLatency');
@@ -127,7 +143,7 @@ export default class TheOrbApp extends BaseApp {
     this.authChanged = () => {
       this.detectUserTier();
       this.proxySessionExpiresAt = 0;
-      if (this.currentTier === 'guest') {
+      if (this.currentTier === 'guest' && this.rdaServices) {
         void fetch(new URL('/api/proxy/session', window.location.origin), { method: 'DELETE' }).catch(() => {});
       }
       const tab = this.getActiveTab();
@@ -208,7 +224,9 @@ export default class TheOrbApp extends BaseApp {
         bannerDesc.textContent = 'Navegação contínua com Streaming Proxy, contornando X-Frame-Options e CSP sem consumo excessivo de RAM no servidor.';
       } else {
         bannerTitle.textContent = 'Modo Convidado (Guest) Ativo';
-        bannerDesc.textContent = 'A navegação Guest abre sites compatíveis diretamente. Sites que bloqueiam quadros oferecem Modo Leitor RDA ou abertura no navegador hospedeiro.';
+        bannerDesc.textContent = this.rdaServices
+          ? 'A navegação Guest abre sites compatíveis diretamente. Sites que bloqueiam quadros oferecem Modo Leitor RDA ou abertura no navegador hospedeiro.'
+          : 'A navegação abre sites compatíveis diretamente. Sites que bloqueiam quadros podem ser abertos no navegador hospedeiro.';
       }
     }
   }
@@ -597,6 +615,7 @@ export default class TheOrbApp extends BaseApp {
    * Extrai e renderiza o conteúdo no Modo Leitor RDA
    */
   async loadReaderMode(url) {
+    if (!this.rdaServices) { this.showToast('Modo leitor indisponível nesta versão.'); return; }
     this.readerController?.abort();
     const controller = new AbortController();
     this.readerController = controller;

@@ -9,13 +9,20 @@ export class WasmFileSystem {
         this.currentPath = '/home/guest';
         this.pendingRequests = new Map();
         this.requestIdCounter = 0;
+        this.namespace = null;
+        // Mutating operations and namespace switches share one chain: a switch can
+        // never run between two writes, and writes never land in another scope.
+        this._mutationChain = Promise.resolve();
     }
 
     /**
-     * Initialize worker and wasm runtime
+     * Initialize worker and wasm runtime.
+     * @param {{ namespace?: string | readonly string[] }} [options]
      */
-    async initialize() {
+    async initialize(options = {}) {
         if (this.readyPromise) return this.readyPromise;
+
+        if (options.namespace) this.namespace = options.namespace;
 
         this.readyPromise = new Promise((resolve, reject) => {
             try {
@@ -46,9 +53,10 @@ export class WasmFileSystem {
                 };
 
                 // Request initialization from worker
-                this._sendRequest('init', {})
+                this._sendRequest('init', { namespace: this.namespace })
                     .then((info) => {
                         this.isReady = true;
+                        this.namespace = info?.namespace || this.namespace;
                         console.log('[WasmFileSystem] Kernel ready:', info);
                         resolve(info);
                     })
@@ -61,6 +69,33 @@ export class WasmFileSystem {
         });
 
         return this.readyPromise;
+    }
+
+    /**
+     * @template T
+     * @param {() => Promise<T>} task
+     * @returns {Promise<T>}
+     */
+    _enqueueMutation(task) {
+        const next = this._mutationChain.then(task, task);
+        this._mutationChain = next.then(() => undefined, () => undefined);
+        return next;
+    }
+
+    /**
+     * Flush the current namespace and load another one. Resolves after every
+     * queued write from the previous scope has been persisted.
+     * @param {string | readonly string[]} namespace
+     */
+    async switchNamespace(namespace) {
+        await this.readyPromise;
+        if (!namespace) throw new Error('WasmFileSystem.switchNamespace requires a namespace.');
+        return this._enqueueMutation(async () => {
+            const info = await this._sendRequest('switchNamespace', { namespace });
+            if (info?.namespace) this.namespace = info.namespace;
+            this.currentPath = '/home/guest';
+            return info;
+        });
     }
 
     _sendRequest(op, payload, transferables = []) {
@@ -86,10 +121,11 @@ export class WasmFileSystem {
 
     async mkdir(path, options = { recursive: true }) {
         await this.readyPromise;
-        return this._sendRequest('mkdir', {
-            path: this.resolvePath(path),
+        const resolved = this.resolvePath(path);
+        return this._enqueueMutation(() => this._sendRequest('mkdir', {
+            path: resolved,
             recursive: options.recursive ?? true
-        });
+        }));
     }
 
     async readFile(path, options = { encoding: 'utf8' }) {
@@ -104,10 +140,12 @@ export class WasmFileSystem {
     async writeFile(path, content) {
         await this.readyPromise;
         const resolved = this.resolvePath(path);
-        if (content instanceof Uint8Array) {
-            return this._sendRequest('writeFile', { path: resolved, content }, [content.buffer]);
-        }
-        return this._sendRequest('writeFile', { path: resolved, content });
+        return this._enqueueMutation(() => {
+            if (content instanceof Uint8Array) {
+                return this._sendRequest('writeFile', { path: resolved, content }, [content.buffer]);
+            }
+            return this._sendRequest('writeFile', { path: resolved, content });
+        });
     }
 
     async readdir(path = this.currentPath) {
@@ -117,10 +155,11 @@ export class WasmFileSystem {
 
     async remove(path, options = { recursive: false }) {
         await this.readyPromise;
-        return this._sendRequest('remove', {
-            path: this.resolvePath(path),
+        const resolved = this.resolvePath(path);
+        return this._enqueueMutation(() => this._sendRequest('remove', {
+            path: resolved,
             recursive: options.recursive ?? false
-        });
+        }));
     }
 
     async copy(src, dest, options = { recursive: false }) {
@@ -154,12 +193,17 @@ export class WasmFileSystem {
         const json = typeof treeJsonOrObject === 'string'
             ? treeJsonOrObject
             : JSON.stringify(treeJsonOrObject);
-        return this._sendRequest('importLegacyTree', { json });
+        return this._enqueueMutation(() => this._sendRequest('importLegacyTree', { json }));
+    }
+
+    async claimLegacy() {
+        await this.readyPromise;
+        return this._enqueueMutation(() => this._sendRequest('claimLegacy', {}));
     }
 
     async flush() {
         await this.readyPromise;
-        return this._sendRequest('flush', {});
+        return this._enqueueMutation(() => this._sendRequest('flush', {}));
     }
 
     // Path management

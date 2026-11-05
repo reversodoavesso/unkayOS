@@ -1,5 +1,9 @@
 # unkayOS — Modular Web Operating System
 
+## Runtime deployment and plugins
+
+The [deployment guide](docs/DEPLOYMENT.md) documents validated JSON, a trusted plugin catalog, identity/access policies, configurable same-origin AI and the legacy RDA AI/sync bridge. Generate a configuration with `npm run config:prepare -- --preset=standalone`, or use [the own-AI example](config/examples/standalone-ai.json) / [the self-hosted BFF example](config/examples/self-hosted.json). A dependency-free gateway in `server/` provides cookie sessions, remote authorization and an AI proxy (`npm run server:start`); private storage is namespaced per installation and principal.
+
 ## Create apps with the RDA Design System
 
 The [practical app guide](docs/APP_DEVELOPMENT.md) covers official controls, tokens, icons, product accents, lifecycle and persistence. While the local server is running, open `/design-system/guide.html`. The SDK and OpenUI agent consume the same guide.
@@ -116,6 +120,8 @@ unkayOS/
 
 The [package manager guide](docs/PACKAGE_MANAGER.md) describes the Store, installation states, SDK/HTTP APIs and currently supported runtimes.
 
+The [feature guide](docs/FEATURES.md) documents the host-agnostic feature kernel and how to add modular capabilities without touching the system core.
+
 ### Prerequisites
 - Node.js 18+
 - npm
@@ -136,12 +142,33 @@ npm run dev
 http://localhost:5173
 ```
 
+### Host profiles
+
+The same codebase builds two products:
+
+```bash
+npm run dev:rda         # RDA ecosystem: SSO, marketplace, AI gateway
+npm run dev:standalone  # clean/local: no SSO, marketplace or RDA services
+npm run dev:sso         # bring-your-own SSO via window.__UNKAY_IDENTITY_PROVIDER__
+```
+
+`npm run build:rda`, `npm run build:standalone` and `npm run build:sso` produce the
+corresponding bundles. The standalone profile never imports `AuthSystem`/`auth-config.js`; it
+uses a local guest identity. The UI reads labels from `auth.getProviderInfo()`, so any SSO can
+plug in without code changes.
+
 ### Available Scripts
 
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Start Vite dev server with HMR |
+| `npm run dev` | Start Vite dev server with HMR (RDA profile) |
+| `npm run dev:rda` | Dev server with SSO, marketplace and AI |
+| `npm run dev:standalone` | Dev server without SSO or RDA services |
+| `npm run dev:sso` | Dev server with an injected SSO provider |
 | `npm run build` | Production build with tree-shaking and sourcemaps |
+| `npm run build:rda` | Production build with the RDA profile |
+| `npm run build:standalone` | Production build with the clean profile |
+| `npm run build:sso` | Production build with the injected SSO profile |
 | `npm run preview` | Preview the production build |
 | `npm run test` | Run tests with Vitest |
 | `npm run test:watch` | Run tests in watch mode |

@@ -1,13 +1,35 @@
 // core/sdk/unkay.js - unkayOS 2.0 Unified SDK
-// Standard application interface inspired by puter.js and customized for RDA ecosystem
+// Composition root: binds the host-agnostic features to unkayOS systems.
+// Features live in core/features/* and never import unkayOS internals.
 
 import { wasmFileSystem } from '../WasmFileSystem.js';
 import { fullscreenManager } from '../FullscreenManager.js';
 import { contextMenuManager } from '../ContextMenuManager.js';
 import { keyboardManager } from '../KeyboardManager.js';
 
-export function createUnkaySDK(appCore = null, systemManager = null) {
-    const getAuth = () => systemManager?.getSystem('authSystem') || (typeof window !== 'undefined' ? window.authSystem : null);
+import { createKv } from '../features/kv/index.js';
+import { createAuth, mapUserTier } from '../features/auth/index.js';
+import { createFs } from '../features/fs/index.js';
+import { createAi } from '../features/ai/index.js';
+import { createPackages } from '../features/packages/index.js';
+import { createWindow } from '../features/window/index.js';
+import { createContextMenu } from '../features/context-menu/index.js';
+import { createShortcuts } from '../features/shortcuts/index.js';
+import { createAccess } from '../features/access/index.js';
+import { unavailable } from '../features/serviceError.js';
+
+/**
+ * Builds the standard application SDK.
+ *
+ * @param {any} [appCore]
+ * @param {{ getSystem(name: string): any } | null} [systemManager]
+ * @param {{ aiEnabled?: boolean, syncEnabled?: boolean }} [options]
+ */
+export function createUnkaySDK(appCore = null, systemManager = null, options = {}) {
+    const { aiEnabled = true, syncEnabled = true } = options;
+    // Explicit manager is authoritative: never fall back to another host's services.
+    const getSystem = name => (systemManager || (typeof window !== 'undefined' ? /** @type {any} */ (window).systemManager : null))?.getSystem(name);
+    const getAuth = () => getSystem('authSystem') || (!systemManager && typeof window !== 'undefined' ? window.authSystem : null);
     const getVfs = () => (typeof window !== 'undefined' && window.wasmFileSystem) || wasmFileSystem;
     const getFullscreen = () => systemManager?.getSystem('fullscreenManager') || (typeof window !== 'undefined' && window.fullscreenManager) || fullscreenManager;
     const getContextMenu = () => systemManager?.getSystem('contextMenuManager') || (typeof window !== 'undefined' && window.contextMenuManager) || contextMenuManager;
@@ -17,179 +39,91 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
         if (!manager) throw new Error('Gerenciador de pacotes indisponível.');
         return manager;
     };
+    const getStorage = () => (typeof localStorage !== 'undefined' ? localStorage : null);
+    /** Stable, path-safe identity of the current principal for private storage. */
+    const principalStorageKey = () => {
+        let user = null;
+        try {
+            user = getAuth()?.getCurrentUser?.() || null;
+        } catch {
+            user = null;
+        }
+        const value = String(user?.id || user?.sub || 'guest').replace(/[^A-Za-z0-9_-]/g, '');
+        return value.slice(0, 64) || 'guest';
+    };
 
-    return {
-        auth: {
-            getUser() {
-                const authSystem = getAuth();
-                return authSystem?.getCurrentUser?.() || null;
-            },
-            getToken() {
-                const authSystem = getAuth();
-                return authSystem?.getAuthToken?.() || null;
-            },
-            getTier() {
-                const authSystem = getAuth();
-                const user = authSystem?.getCurrentUser?.();
-                if (!user) return 'guest';
-                const claims = user.roles || user['urn:zitadel:iam:org:project:roles'] || [];
-                const roles = [...(Array.isArray(claims) ? claims : Object.keys(claims)), user.role].filter(Boolean);
-                if (roles.includes('demiurge')) return 'demiurge';
-                if (roles.includes('sysadmin') || roles.includes('architect') || roles.includes('archon')) return 'sysadmin';
-                if (roles.includes('adept') || roles.includes('curator')) return 'adept';
-                if (roles.some(role => ['artificer', 'abyssal', 'weaver', 'sentinel', 'chronicler', 'envoy', 'hierophant', 'eminence', 'oathkeeper'].includes(role))) return 'adept';
-                if (roles.includes('standard') || roles.includes('initiate')) return 'standard';
-                return 'standard';
-            },
-            async login() {
-                const authSystem = getAuth();
-                if (authSystem?.login) {
-                    return authSystem.login();
-                }
-                console.warn('[UnkaySDK] AuthSystem login not available');
-            },
-            async logout() {
-                const authSystem = getAuth();
-                if (authSystem?.logout) {
-                    return authSystem.logout();
-                }
-            }
-        },
+    const auth = createAuth({
+        mapTier: user => getSystem('accessPolicy')?.getTier?.(user) || mapUserTier(user),
+        provider: {
+            getCurrentUser: () => getAuth()?.getCurrentUser?.() || null,
+            getAuthToken: () => getAuth()?.getAuthToken?.() || null,
+            login: () => getAuth()?.login?.(),
+            logout: () => getAuth()?.logout?.()
+        }
+    });
 
-        fs: {
-            async flush() { return getVfs().flush(); },
-            async readFile(path) {
-                return getVfs().readFile(path, { encoding: 'binary' });
-            },
-            async readText(path) {
-                return getVfs().readFile(path, { encoding: 'utf8' });
-            },
-            async writeFile(path, content) {
-                return getVfs().writeFile(path, content);
-            },
-            async list(path) {
-                return getVfs().readdir(path);
-            },
-            async stat(path) {
-                return getVfs().stat(path);
-            },
-            async exists(path) {
-                return getVfs().exists(path);
-            },
-            async mkdir(path, recursive = true) {
-                return getVfs().mkdir(path, { recursive });
-            },
-            async remove(path, recursive = false) {
-                return getVfs().remove(path, { recursive });
-            },
-            async syncCloud() {
-                const { minioSyncDriver } = await import('../sync/MinioSyncDriver.js');
-                return minioSyncDriver.sync();
-            },
-            // File System Access API - mount host directory into /mnt/host
+    const fs = createFs({
+        adapter: {
+            flush: () => getVfs().flush(),
+            readFile: (path, options) => getVfs().readFile(path, options),
+            writeFile: (path, content) => getVfs().writeFile(path, content),
+            readdir: path => getVfs().readdir(path),
+            stat: path => getVfs().stat(path),
+            exists: path => getVfs().exists(path),
+            mkdir: (path, options) => getVfs().mkdir(path, options),
+            remove: (path, options) => getVfs().remove(path, options),
             async mountLocalDirectory() {
-                if (typeof window !== 'undefined' && 'showDirectoryPicker' in window) {
-                    try {
-                        const dirHandle = await window.showDirectoryPicker();
-                        const mountPath = `/mnt/host_${dirHandle.name}`;
-                        await getVfs().mkdir(mountPath, { recursive: true });
-                        console.log(`[UnkaySDK] Mounted local host directory at ${mountPath}`);
-                        return mountPath;
-                    } catch (err) {
-                        if (err.name === 'AbortError') {
-                            throw new Error('User cancelled directory picker');
-                        }
-                        throw err;
-                    }
+                if (typeof window === 'undefined' || !('showDirectoryPicker' in window)) {
+                    throw new Error('File System Access API not supported in this browser');
                 }
-                throw new Error('File System Access API not supported in this browser');
+                try {
+                    const dirHandle = await window.showDirectoryPicker();
+                    const mountPath = `/mnt/host_${dirHandle.name}`;
+                    await getVfs().mkdir(mountPath, { recursive: true });
+                    return mountPath;
+                } catch (err) {
+                    if (err && /** @type {any} */ (err).name === 'AbortError') {
+                        throw new Error('User cancelled directory picker');
+                    }
+                    throw err;
+                }
             }
         },
+        syncCloud: async () => {
+            const adapter = syncEnabled && getSystem('syncService');
+            if (!adapter) throw unavailable('Sincronização não disponível nesta versão do unkayOS.');
+            return adapter.sync();
+        }
+    });
 
-        packages: {
+    const packages = createPackages({
+        manager: {
             list: () => getPackages().list(),
-            status: id => getPackages().getStatus(id),
+            getStatus: id => getPackages().getStatus(id),
             refresh: options => getPackages().refresh(options),
             install: id => getPackages().install(id),
             installLocal: bundle => getPackages().installLocal(bundle),
             uninstall: id => getPackages().uninstall(id),
             open: id => getPackages().open(id),
             subscribe: listener => getPackages().subscribe(listener),
-            getCatalogError: () => getPackages().catalogError
-        },
-
-        ai: {
-            async prompt(messages) {
-                // Calls RDA AI Gateway proxy (/api/v1/ai/chat)
-                const token = getAuth()?.getAuthToken?.();
-                const headers = { 'Content-Type': 'application/json' };
-                if (token) headers['Authorization'] = `Bearer ${token}`;
-
-                const res = await fetch('/api/v1/ai/chat', {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ messages })
-                });
-
-                if (!res.ok) {
-                    throw new Error(`AI Gateway error: ${res.statusText}`);
-                }
-                const data = await res.json();
-                return data.reply || data.content || '';
-            },
-
-            async stream(messages, onChunk) {
-                const token = getAuth()?.getAuthToken?.();
-                const headers = { 'Content-Type': 'application/json' };
-                if (token) headers['Authorization'] = `Bearer ${token}`;
-
-                const res = await fetch('/api/v1/ai/chat/stream', {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ messages })
-                });
-
-                if (!res.ok || !res.body) {
-                    throw new Error(`AI Streaming error: ${res.statusText}`);
-                }
-
-                const reader = res.body.getReader();
-                const decoder = new TextDecoder();
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    const chunk = decoder.decode(value, { stream: true });
-                    onChunk(chunk);
-                }
+            get catalogError() {
+                return getPackages().catalogError;
             }
-        },
+        }
+    });
 
-        kv: {
-            async get(key) {
-                if (typeof localStorage === 'undefined') return null;
-                const prefix = `unkay_kv_${appCore?.app_name || 'global'}_`;
-                const raw = localStorage.getItem(prefix + key);
-                if (raw === null) return null;
-                try {
-                    return JSON.parse(raw);
-                } catch {
-                    return raw;
-                }
-            },
-            async set(key, value) {
-                if (typeof localStorage === 'undefined') return;
-                const prefix = `unkay_kv_${appCore?.app_name || 'global'}_`;
-                const serialized = typeof value === 'string' ? value : JSON.stringify(value);
-                localStorage.setItem(prefix + key, serialized);
-            },
-            async remove(key) {
-                if (typeof localStorage === 'undefined') return;
-                const prefix = `unkay_kv_${appCore?.app_name || 'global'}_`;
-                localStorage.removeItem(prefix + key);
-            }
-        },
+    const ai = createAi({ adapter: () => aiEnabled ? getSystem('aiService') : null });
 
-        window: {
+    const kv = createKv({
+        storage: getStorage(),
+        // Private app data is scoped by principal; the previous unscoped namespace
+        // is read once and migrated lazily so upgrades keep their values.
+        namespace: `${principalStorageKey()}::${appCore?.app_name || 'global'}`,
+        legacyNamespace: appCore?.app_name || 'global'
+    });
+
+    const windowApi = createWindow({
+        controller: {
             setTitle(title) {
                 if (appCore?.windowElement) {
                     const titleEl = appCore.windowElement.querySelector('.window-title, .app__top_bar__app_name');
@@ -227,18 +161,16 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
                     appManager.closeApp(appCore.instanceId);
                 }
             },
-            async toggleFullscreen() {
-                return getFullscreen()?.toggleFullscreen?.();
-            },
-            isFullscreen() {
-                return Boolean(getFullscreen()?.isFullscreen?.());
-            }
-        },
+            toggleFullscreen: () => getFullscreen()?.toggleFullscreen?.(),
+            isFullscreen: () => Boolean(getFullscreen()?.isFullscreen?.())
+        }
+    });
 
-        contextMenu: {
-            register(selectorOrBuilder, builder = null) {
+    const contextMenu = createContextMenu({
+        provider: {
+            register(target, builder = null) {
                 if (!appCore?.instanceId) return () => {};
-                return getContextMenu()?.registerAppProvider?.(appCore.instanceId, selectorOrBuilder, builder);
+                return getContextMenu()?.registerAppProvider?.(appCore.instanceId, target, builder);
             },
             open(items, options = {}) {
                 return getContextMenu()?.openCustomMenu?.(items, options);
@@ -246,13 +178,30 @@ export function createUnkaySDK(appCore = null, systemManager = null) {
             close() {
                 return getContextMenu()?.closeMenu?.();
             }
-        },
-
-        shortcuts: {
-            listSystemShortcuts() {
-                return getKeyboard()?.getSystemShortcuts?.() || [];
-            }
         }
+    });
+
+    const shortcuts = createShortcuts({
+        keyboard: {
+            getSystemShortcuts: () => getKeyboard()?.getSystemShortcuts?.() || []
+        }
+    });
+
+    return {
+        auth,
+        access: createAccess({ provider: {
+            evaluate: (action, resource) => {
+                const policy = getSystem('accessPolicy');
+                return policy?.evaluate(action, resource) || { allowed: false, reason: 'POLICY_UNAVAILABLE' };
+            }
+        } }),
+        fs,
+        packages,
+        ai,
+        kv,
+        window: windowApi,
+        contextMenu,
+        shortcuts
     };
 }
 

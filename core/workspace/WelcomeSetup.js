@@ -1,5 +1,6 @@
 import { workspaceIcon } from '../deployment.js';
 import { iconMarkup } from '../ui/designSystem.js';
+import { resolveProviderInfo } from '../identity/provider.js';
 import { shouldAdaptWallpaper } from '../ui/wallpaperAppearance.js';
 import { applyWallpaperStyle, resolveEffectiveRemapParams } from '../utils/appPreferences.js';
 import { accentChoices, escapeHtml, WALLPAPERS } from './preferences.js';
@@ -44,11 +45,17 @@ export class WelcomeSetup {
 
   render(focusSelector) {
     const e = escapeHtml, authUser = this.session.auth?.getCurrentUser();
+    const provider = resolveProviderInfo(this.session.auth);
+    this.provider = provider;
+    const accountTitle = authUser
+      ? (authUser.name || authUser.preferred_username || 'Conta conectada')
+      : (provider.supportsLogin ? 'Conecte sua conta quando quiser.' : 'Sessão local neste dispositivo.');
+    const accountDescription = authUser ? provider.connectedDescription : provider.loginDescription;
     let body;
     if (this.step === 0) {
       body = `<span class="workspace-eyebrow">UM ESPAÇO QUE É SEU</span><h1 id="setupTitle" tabindex="-1">Seu ritmo.<br>Seu próximo movimento.</h1><p class="setup-lead">Um lugar para explorar, criar e organizar suas ideias. Vamos deixar o Unkayos com a sua cara.</p>
         <label class="rda-form-field"><span class="rda-label">Como quer ser chamado?</span><input id="setupName" class="rda-input rda-input--lg" maxlength="40" value="${e(this.draft.onboarding.displayName)}" placeholder="Seu nome, se quiser" autocomplete="nickname"></label>
-        <div class="setup-account"><span class="setup-account__icon">${iconMarkup(authUser ? 'circle-check' : 'user', { size: 24 })}</span><div><strong>${authUser ? e(authUser.name || authUser.preferred_username || 'Conta conectada') : 'Comece aqui. Conecte-se quando quiser.'}</strong><p>${authUser ? 'Sua conta RDA está conectada.' : 'Use neste dispositivo ou entre com sua conta RDA. Você pode decidir depois.'}</p></div>${!authUser ? '<button type="button" class="rda-button rda-button--md" data-color="secondary" data-setup="login">Entrar com RDA</button>' : ''}</div><p role="status">${e(this.authMessage)}</p>`;
+        <div class="setup-account"><span class="setup-account__icon">${iconMarkup(authUser ? 'circle-check' : 'user', { size: 24 })}</span><div><strong>${e(accountTitle)}</strong><p>${e(accountDescription)}</p></div>${!authUser && provider.supportsLogin ? `<button type="button" class="rda-button rda-button--md" data-color="secondary" data-setup="login">${e(provider.loginLabel)}</button>` : ''}</div><p role="status">${e(this.authMessage)}</p>`;
     } else if (this.step === 1) {
       body = `<span class="workspace-eyebrow">LUZ, COR E ATMOSFERA</span><h1 id="setupTitle" tabindex="-1">Faça este espaço<br>parecer seu.</h1><p class="setup-lead">Escolha uma base para começar. Tudo continua disponível nas configurações.</p>
         <div class="setup-two-options">${['dark', 'light'].map(theme => `<button type="button" class="setup-choice" data-theme-choice="${theme}" aria-pressed="${this.draft.appearance.theme === theme}"><span class="setup-theme-sample" data-theme="${theme}"><span></span><i></i><i></i></span><strong>${theme === 'dark' ? 'Escuro' : 'Claro'}</strong></button>`).join('')}</div>
@@ -78,6 +85,7 @@ export class WelcomeSetup {
     if (!button || button.disabled) return;
     const { setup, accent, themeChoice, wallpaper, bar, launcher } = button.dataset;
     if (setup === 'login') {
+      if (!this.provider?.supportsLogin) return;
       button.disabled = true;
       try { await this.session.auth.login(); this.authMessage = 'Janela de login aberta. Você pode continuar a configuração enquanto se conecta.'; }
       catch (error) { this.authMessage = error.message; }

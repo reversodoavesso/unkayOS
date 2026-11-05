@@ -85,7 +85,6 @@ export class BaseApp {
             }
             return;
         }
-        console.warn(`[${this.appName} - ${this.instanceId}] Método onRun() não implementado na classe base. Por favor, implemente-o em sua classe de aplicativo.`);
     }
 
     /**
@@ -147,8 +146,6 @@ export class BaseApp {
             });
             this._fallbackListeners = [];
         }
-
-        console.warn(`[${this.appName} - ${this.instanceId}] Método onCleanup() não implementado na classe base. Considere limpar listeners e recursos aqui.`);
     }
 
     /**

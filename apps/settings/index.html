@@ -32,6 +32,9 @@
       <button class="nav-item" data-panel="security">
         <span class="nav-icon"><rda-icon name="shield"></rda-icon></span> Segurança & Sandbox
       </button>
+      <button class="nav-item" data-panel="apps">
+        <span class="nav-icon"><rda-icon name="layout-grid"></rda-icon></span> Aplicativos
+      </button>
       <button class="nav-item" data-panel="about">
         <span class="nav-icon"><rda-icon name="info"></rda-icon></span> Sobre o Sistema
       </button>
@@ -393,7 +396,7 @@
         </div>
       </div>
 
-      <div class="settings-card">
+      <div class="settings-card" data-rda-only>
         <h3 class="card-heading">Sincronização em Nuvem (MinIO S3)</h3>
         <p class="card-subtext">Sincroniza automaticamente <code>/home/user/cloud</code> com seu bucket na nuvem RDA.</p>
         <div class="form-row">
@@ -524,6 +527,21 @@
       </div>
     </div>
 
+    <!-- Panel: Aplicativos -->
+    <div id="panelApps" class="settings-panel" style="display: none;">
+      <div class="panel-header">
+        <h2>Aplicativos</h2>
+        <p>Escolha o que aparece no menu e na trilha. As mudanças valem na hora, sem recarregar.</p>
+      </div>
+
+      <div class="settings-card">
+        <h3 class="card-heading">Catálogo do sistema</h3>
+        <p class="card-subtext">Aplicativos essenciais ficam bloqueados. Apps já abertos continuam até serem fechados.</p>
+        <div id="appFeatureList" class="widget-settings-list"></div>
+        <p id="appFeatureStatus" role="status" class="card-subtext"></p>
+      </div>
+    </div>
+
     <!-- Panel 6: Sobre o Sistema -->
     <div id="panelAbout" class="settings-panel" style="display: none;">
       <div class="panel-header">
@@ -551,7 +569,7 @@
             <span class="spec-label">Engine Gráfica</span>
             <strong class="spec-value">RDA DS Tokenized DOM</strong>
           </div>
-          <div class="spec-card">
+          <div class="spec-card" data-rda-only>
             <span class="spec-label">SSO Cluster</span>
             <strong class="spec-value">Zitadel OIDC + PKCE</strong>
           </div>

@@ -59,6 +59,17 @@ describe('OIDC callback and session integration', () => {
     expect(getAuthConfig().clientId).toBe('');
   });
 
+  it('destroys callback listeners without deleting the persisted session', () => {
+    localStorage.setItem('unkayos_auth_token', 'persisted-session');
+    const exchange = vi.spyOn(auth, 'handleAuthCallback');
+    auth.destroy();
+    auth.destroy();
+    window.dispatchEvent(new StorageEvent('storage', { key: 'unkayos_oauth_callback', newValue: JSON.stringify({ type: 'AUTH_CALLBACK', code: 'code', state: 'state' }) }));
+    expect(exchange).not.toHaveBeenCalled();
+    expect(localStorage.getItem('unkayos_auth_token')).toBe('persisted-session');
+    expect(auth.getAuthToken()).toBeNull();
+  });
+
   it('takes permissions from the canonical core and rejects an identity mismatch', async () => {
     auth.authToken = 'synthetic-token';
     const fetchMock = vi.spyOn(globalThis, 'fetch');

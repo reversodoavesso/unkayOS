@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:unkayos:plugin:gateway-identity:1",
+  "title": "unkayOS gateway identity configuration",
+  "description": "Same-origin BFF session. No endpoint, token or credential is supplied by the browser.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "basePath": { "type": "string", "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?:/[A-Za-z0-9._~-]+)*$", "maxLength": 512 },
+    "loginPath": { "type": "string", "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*$", "maxLength": 512 },
+    "logoutPath": { "type": "string", "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*$", "maxLength": 512 },
+    "timeoutMs": { "type": "integer", "minimum": 1000, "maximum": 60000 },
+    "csrfHeader": { "type": "string", "pattern": "^[a-z0-9-]{3,64}$" }
+  }
+}
+
+

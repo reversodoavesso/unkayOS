@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "installationId": "own-desktop",
+  "revision": "own-ai-1",
+  "preset": "standalone",
+  "product": { "name": "My Desktop", "orgName": "My organization" },
+  "instances": {
+    "account": { "plugin": "unkayos.local-identity", "config": {} },
+    "policy": { "plugin": "unkayos.local-access", "config": {} },
+    "assistant": {
+      "plugin": "unkayos.http-ai",
+      "config": { "basePath": "/api/company-ai", "timeoutMs": 30000 }
+    }
+  },
+  "bindings": {
+    "identity": "account.identity",
+    "access": "policy.access",
+    "ai": "assistant.ai"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "installationId": "self-hosted",
+  "revision": "2026-10-30.1",
+  "preset": "standalone",
+  "product": {
+    "name": "unkayOS",
+    "orgName": "",
+    "guestDomain": "local"
+  },
+  "instances": {
+    "account": {
+      "plugin": "unkayos.gateway-identity",
+      "config": {
+        "basePath": "",
+        "loginPath": "/session/login",
+        "logoutPath": "/session/logout",
+        "timeoutMs": 10000,
+        "csrfHeader": "x-unkay-csrf"
+      }
+    },
+    "policy": {
+      "plugin": "unkayos.gateway-access",
+      "config": {
+        "basePath": "",
+        "sessionPath": "/session",
+        "evaluatePath": "/access/evaluate",
+        "timeoutMs": 8000,
+        "cacheTtlMs": 5000,
+        "csrfHeader": "x-unkay-csrf"
+      }
+    },
+    "assistant": {
+      "plugin": "unkayos.http-ai",
+      "config": {
+        "basePath": "/ai",
+        "timeoutMs": 30000,
+        "csrfCookie": "unkay_session_csrf",
+        "csrfHeader": "x-unkay-csrf"
+      }
+    }
+  },
+  "bindings": {
+    "identity": "account.identity",
+    "access": "policy.access",
+    "ai": "assistant.ai"
+  }
+}

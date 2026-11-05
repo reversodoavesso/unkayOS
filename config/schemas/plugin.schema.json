@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:unkayos:plugin:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "target",
+    "hostApi",
+    "exports",
+    "requires"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "target": {
+      "const": "browser"
+    },
+    "hostApi": {
+      "const": 1
+    },
+    "exports": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "identity": {
+          "const": "identity@1"
+        },
+        "access": {
+          "const": "access@1"
+        },
+        "ai": {
+          "const": "ai@1"
+        },
+        "sync": {
+          "const": "sync@1"
+        }
+      }
+    },
+    "requires": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "identity",
+          "access",
+          "ai",
+          "sync"
+        ]
+      }
+    }
+  }
+}

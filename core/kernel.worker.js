@@ -1,23 +1,76 @@
 // core/kernel.worker.js - unkayOS 2.0 Dedicated Web Worker Kernel
-// Runs Wasm microkernel and manages OPFS SyncAccessHandle storage
+// Runs Wasm microkernel and manages OPFS SyncAccessHandle storage.
+// The snapshot lives inside a per-installation/per-principal namespace so two
+// identities never share the same VFS tree in this browser.
 
 import initWasm, { UnkayKernel } from './wasm/pkg/unkay_kernel.js';
+import { normalizeStorageNamespace } from './utils/storageNamespace.js';
 
 let kernel = null;
 let opfsRoot = null;
 let opfsAvailable = false;
-const OPFS_SNAPSHOT_FILE = 'unkay_vfs_snapshot.json';
+const LEGACY_SNAPSHOT_FILE = 'unkay_vfs_snapshot.json';
+const SNAPSHOT_FILE = 'vfs-snapshot.json';
+const MIGRATION_MARKER = 'legacy-migrated.json';
+// Portable fallback used only until the host resolves installation and principal.
+let namespaceSegments = ['unkayos', 'v1', 'default', 'anonymous', 'principal'];
+const normalizeNamespace = normalizeStorageNamespace;
+
+/** @returns {Promise<FileSystemDirectoryHandle>} */
+async function namespaceDirectory(create = true) {
+    let directory = opfsRoot;
+    for (const segment of namespaceSegments) {
+        directory = await directory.getDirectoryHandle(segment, { create });
+    }
+    return directory;
+}
+
+/** Migration marker shared by every namespace of this installation. */
+async function metaDirectory(create = true) {
+    let directory = opfsRoot;
+    for (const segment of namespaceSegments.slice(0, 2)) {
+        directory = await directory.getDirectoryHandle(segment, { create });
+    }
+    return directory;
+}
+
+async function snapshotHandle(create) {
+    const directory = await namespaceDirectory(create);
+    return directory.getFileHandle(SNAPSHOT_FILE, { create });
+}
+
+async function writeTextFile(handle, text) {
+    if (handle.createWritable) {
+        const writable = await handle.createWritable();
+        await writable.write(text);
+        await writable.close();
+        return;
+    }
+    if (handle.createSyncAccessHandle) {
+        const accessHandle = await handle.createSyncAccessHandle();
+        const bytes = new TextEncoder().encode(text);
+        accessHandle.truncate(0);
+        accessHandle.write(bytes, { at: 0 });
+        accessHandle.flush();
+        accessHandle.close();
+        return;
+    }
+    throw new Error('OPFS handle does not support writing.');
+}
 
 /**
  * Initialize WebAssembly kernel and OPFS storage
  */
-async function initKernel() {
+async function initKernel(namespace) {
     try {
         console.log('[KernelWorker] Initializing Wasm module...');
         // In worker context, load wasm relative to pkg
         await initWasm();
         kernel = new UnkayKernel();
         console.log(`[KernelWorker] Kernel ${kernel.version()} initialized successfully`);
+
+        const normalized = normalizeNamespace(namespace);
+        if (normalized) namespaceSegments = normalized;
 
         // Check for OPFS availability
         if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.getDirectory) {
@@ -36,7 +89,8 @@ async function initKernel() {
         return {
             success: true,
             version: kernel.version(),
-            opfs: opfsAvailable
+            opfs: opfsAvailable,
+            namespace: namespaceSegments.join('/')
         };
     } catch (err) {
         console.error('[KernelWorker] Failed to initialize kernel:', err);
@@ -45,21 +99,55 @@ async function initKernel() {
 }
 
 /**
- * Load persistent snapshot from OPFS if present
+ * Load the snapshot of the active namespace. Legacy root snapshots from older
+ * releases are imported explicitly by the host (`claimLegacy`), after the
+ * installation/principal namespace is known.
  */
 async function loadSnapshotFromOPFS() {
     if (!opfsAvailable || !opfsRoot) return;
     try {
-        const fileHandle = await opfsRoot.getFileHandle(OPFS_SNAPSHOT_FILE, { create: false });
+        const fileHandle = await snapshotHandle(false);
         const file = await fileHandle.getFile();
         const jsonText = await file.text();
         if (jsonText && jsonText.length > 5) {
             const count = kernel.import_legacy_tree_json(jsonText);
-            console.log(`[KernelWorker] Restored ${count} inodes from OPFS snapshot`);
+            console.log(`[KernelWorker] Restored ${count} inodes from ${namespaceSegments.join('/')}`);
         }
-    } catch (e) {
-        // File does not exist yet; normal for first boot
-        console.log('[KernelWorker] No existing OPFS snapshot found; starting with default tree');
+    } catch {
+        // Namespace snapshot does not exist yet; the kernel keeps its default tree.
+    }
+}
+
+/**
+ * Import the pre-namespace snapshot exactly once per installation. The legacy
+ * file stays untouched as a backup and is never loaded into a second identity.
+ */
+async function claimLegacySnapshot() {
+    if (!opfsAvailable || !opfsRoot) return { imported: false, reason: 'opfs_unavailable' };
+    try {
+        const meta = await metaDirectory(true);
+        try {
+            await meta.getFileHandle(MIGRATION_MARKER, { create: false });
+            return { imported: false, reason: 'already_migrated' };
+        } catch {
+            // Marker absent: legacy data was never imported in this installation.
+        }
+        const legacyHandle = await opfsRoot.getFileHandle(LEGACY_SNAPSHOT_FILE, { create: false });
+        const legacyText = await (await legacyHandle.getFile()).text();
+        if (!legacyText || legacyText.length <= 5) return { imported: false, reason: 'no_legacy_snapshot' };
+        const count = kernel.import_legacy_tree_json(legacyText);
+        await persistSnapshotToOPFS();
+        await writeTextFile(await meta.getFileHandle(MIGRATION_MARKER, { create: true }), JSON.stringify({
+            migratedAt: new Date().toISOString(),
+            from: LEGACY_SNAPSHOT_FILE,
+            namespace: namespaceSegments.join('/'),
+            inodes: count
+        }));
+        console.log(`[KernelWorker] Migrated ${count} legacy inodes into ${namespaceSegments.join('/')}`);
+        return { imported: true, count, namespace: namespaceSegments.join('/') };
+    } catch {
+        // No legacy snapshot or a read-only filesystem.
+        return { imported: false, reason: 'unavailable' };
     }
 }
 
@@ -70,25 +158,24 @@ async function persistSnapshotToOPFS() {
     if (!opfsAvailable || !opfsRoot || !kernel) return;
     try {
         const treeJson = kernel.export_tree_json();
-        const fileHandle = await opfsRoot.getFileHandle(OPFS_SNAPSHOT_FILE, { create: true });
-        
-        // Use createWritable if available
-        if (fileHandle.createWritable) {
-            const writable = await fileHandle.createWritable();
-            await writable.write(treeJson);
-            await writable.close();
-        } else if (fileHandle.createSyncAccessHandle) {
-            const accessHandle = await fileHandle.createSyncAccessHandle();
-            const encoder = new TextEncoder();
-            const bytes = encoder.encode(treeJson);
-            accessHandle.truncate(0);
-            accessHandle.write(bytes, { at: 0 });
-            accessHandle.flush();
-            accessHandle.close();
-        }
+        await writeTextFile(await snapshotHandle(true), treeJson);
     } catch (err) {
         console.warn('[KernelWorker] Failed to persist snapshot to OPFS:', err);
     }
+}
+
+/** Switch identity namespace: flush the old tree and load the new one. */
+async function switchNamespace(value) {
+    const normalized = normalizeNamespace(value);
+    if (!normalized) throw new Error('Invalid storage namespace.');
+    if (normalized.join('/') === namespaceSegments.join('/')) {
+        return { namespace: namespaceSegments.join('/'), opfs: opfsAvailable, changed: false };
+    }
+    await persistSnapshotToOPFS();
+    kernel = new UnkayKernel();
+    namespaceSegments = normalized;
+    await loadSnapshotFromOPFS();
+    return { namespace: namespaceSegments.join('/'), opfs: opfsAvailable, changed: true };
 }
 
 // Debounced auto-save
@@ -110,7 +197,19 @@ self.onmessage = async (event) => {
     try {
         switch (op) {
             case 'init': {
-                const res = await initKernel();
+                const res = await initKernel(payload?.namespace);
+                self.postMessage({ id, success: true, result: res });
+                break;
+            }
+
+            case 'switchNamespace': {
+                const res = await switchNamespace(payload?.namespace);
+                self.postMessage({ id, success: true, result: res });
+                break;
+            }
+
+            case 'claimLegacy': {
+                const res = await claimLegacySnapshot();
                 self.postMessage({ id, success: true, result: res });
                 break;
             }

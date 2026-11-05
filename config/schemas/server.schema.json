@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:unkayos:server:1",
+  "title": "unkayOS server configuration",
+  "description": "Private BFF configuration. Secrets are named environment references only; no credential is ever stored in this document or served to the browser.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "installationId", "revision", "identity", "session", "accessPolicy"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "installationId": { "$ref": "#/$defs/id" },
+    "revision": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "listen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "port"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+      }
+    },
+    "identity": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": { "mode": { "const": "local" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "issuer", "clientId", "clientSecretRef", "redirectUri"],
+          "properties": {
+            "mode": { "const": "oidc" },
+            "issuer": { "type": "string", "pattern": "^https?://", "maxLength": 256 },
+            "clientId": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "clientSecretRef": { "$ref": "#/$defs/secretRef" },
+            "redirectUri": { "type": "string", "pattern": "^https?://", "maxLength": 512 },
+            "scopes": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true,
+              "items": { "type": "string", "pattern": "^[a-z][a-z0-9:_./-]{0,127}$" }
+            },
+            "roleClaim": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:/-]{0,127}$" },
+            "groupClaim": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:/-]{0,127}$" },
+            "postLoginPath": { "$ref": "#/$defs/path" },
+            "loginPath": { "$ref": "#/$defs/path" },
+            "callbackPath": { "$ref": "#/$defs/path" },
+            "logoutPath": { "$ref": "#/$defs/path" }
+          }
+        }
+      ]
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cookieName", "cookieSecure", "idleTimeoutSeconds", "absoluteTimeoutSeconds"],
+      "properties": {
+        "cookieName": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+        "cookieSecure": { "type": "boolean" },
+        "cookieSameSite": { "enum": ["Lax", "Strict"] },
+        "idleTimeoutSeconds": { "type": "integer", "minimum": 60, "maximum": 86400 },
+        "absoluteTimeoutSeconds": { "type": "integer", "minimum": 300, "maximum": 604800 },
+        "csrfHeader": { "type": "string", "pattern": "^[a-z0-9-]{3,64}$" }
+      }
+    },
+    "accessPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file"],
+      "properties": {
+        "file": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "ai": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["basePath", "models", "upstreams"],
+      "properties": {
+        "basePath": { "$ref": "#/$defs/path" },
+        "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 300000 },
+        "defaultModel": { "$ref": "#/$defs/id" },
+        "maxMessages": { "type": "integer", "minimum": 1, "maximum": 256 },
+        "maxMessageChars": { "type": "integer", "minimum": 1, "maximum": 200000 },
+        "models": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 32,
+          "propertyNames": { "$ref": "#/$defs/id" },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["upstream", "model"],
+            "properties": {
+              "upstream": { "$ref": "#/$defs/id" },
+              "model": { "type": "string", "minLength": 1, "maxLength": 128 },
+              "maxOutputTokens": { "type": "integer", "minimum": 1, "maximum": 128000 },
+              "temperature": { "type": "number", "minimum": 0, "maximum": 2 }
+            }
+          }
+        },
+        "upstreams": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 8,
+          "propertyNames": { "$ref": "#/$defs/id" },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["baseUrl", "apiKeyRef", "protocol"],
+            "properties": {
+              "baseUrl": { "type": "string", "pattern": "^https?://", "maxLength": 512 },
+              "apiKeyRef": { "$ref": "#/$defs/secretRef" },
+              "protocol": { "const": "openai-chat" },
+              "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 300000 }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "maxLength": 64,
+      "not": { "enum": ["constructor", "prototype"] }
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*$",
+      "maxLength": 512
+    },
+    "secretRef": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,63}$"
+    }
+  }
+}
+

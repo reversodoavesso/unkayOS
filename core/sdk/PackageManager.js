@@ -9,11 +9,12 @@ const categories = { openui: 'ai', theorb: 'utilities', 'text-editor': 'producti
 /** The VFS is the installation authority. The server supplies reviewed packages,
  * never a claim that an application is installed on this browser. */
 export class PackageManager {
-    constructor({ fs, appManager, auth, fetcher = (url, options) => fetch(url, options) }) {
+    constructor({ fs, appManager, auth, appFeatureRegistry = null, fetcher = (url, options) => fetch(url, options) }) {
         this.fs = fs;
         this.appManager = appManager;
         appManager.packageManager = this;
         this.auth = auth;
+        this.appFeatureRegistry = appFeatureRegistry;
         this.fetcher = fetcher;
         this.bundled = new Map([...appManager.loadedAppDetails].filter(([, app]) => !app.packageId));
         this.installed = new Map();
@@ -157,6 +158,23 @@ export class PackageManager {
             minWidth: pkg.window.minWidth, minHeight: pkg.window.minHeight, resizable: pkg.window.resizable,
             x_position: '12vw', y_position: '10vh'
         });
+        if (this.appFeatureRegistry && !this.appFeatureRegistry.has(app.id)) {
+            try {
+                this.appFeatureRegistry.register({
+                    id: app.id,
+                    path: '',
+                    requires: [],
+                    metadata: {
+                        source: 'package',
+                        name: app.name,
+                        description: app.description || '',
+                        version: app.installedVersion || pkg.version
+                    }
+                });
+            } catch (error) {
+                console.warn(`[PackageManager] Pacote '${app.id}' não entrou no catálogo de features:`, error);
+            }
+        }
     }
 
     list() {
@@ -331,6 +349,7 @@ export class PackageManager {
             await this.fs.flush?.();
             this.installed.delete(id);
             this.appManager.loadedAppDetails.delete(id);
+            this.appFeatureRegistry?.unregister(id);
         });
     }
 }

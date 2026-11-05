@@ -34,6 +34,7 @@ export default class TerminalApp extends BaseApp {
 
         this.fs = createTerminalFileSystem(standardAPIs?.fs || window.unkayFileSystem?.fs || {});
         this.computeBridge = new ComputeBridge({ onStateChange: () => this.updatePrompt() });
+        this.computeEnabled = standardAPIs?.hostProfile?.capabilities?.compute !== false;
         this.commandBusy = false;
 
         this.writeLine = this.writeLine.bind(this);
@@ -73,6 +74,7 @@ export default class TerminalApp extends BaseApp {
     }
 
     confirmCompute(signal) {
+        if (!this.computeEnabled) throw new Error('Compute não disponível nesta versão.');
         this.computeSetupController?.abort();this.computeSetupController=new AbortController();
         return confirmComputeSetup({token:this.unkay.auth.getToken(),signal:AbortSignal.any([this.computeSetupController.signal,signal])});
     }
@@ -191,7 +193,11 @@ export default class TerminalApp extends BaseApp {
         }
         this.registerCommand('mode', async args => {
             if (args[0] === 'local') { this.computeBridge.disconnect();this.updatePrompt();return 'Modo local ativo. Arquivos e pacotes pertencem a este navegador.'; }
-            if (args[0] === 'compute') {await this.computeBridge.connect(this);this.updatePrompt();return '';}
+            if (args[0] === 'compute') {
+                if (!this.computeEnabled) return 'Compute não disponível nesta versão. O terminal opera apenas localmente.';
+                await this.computeBridge.connect(this);this.updatePrompt();return '';
+            }
+            if (!this.computeEnabled) return 'Modo: Local. WASI: wasi &lt;arquivo.wasm&gt; [args], executado localmente.';
             return `Modo: ${this.computeBridge.isConnected ? 'Compute remoto' : this.computeBridge.isConnecting ? 'Conectando' : 'Local'}. Use mode local ou mode compute. WASI: wasi &lt;arquivo.wasm&gt; [args], executado localmente. Compute exige perfil SysAdmin/Demiurge e MFA.`;
         }, 'Mostra ou alterna Local / Compute; módulos WASI executam no modo local.');
     }
@@ -212,6 +218,12 @@ export default class TerminalApp extends BaseApp {
         this.inputElement = this.$('#terminalInput');
         this.terminalInputLine = this.$('.terminal-input-line');
         this.terminalPromptElement = this.$('#terminalPrompt');
+
+        if (!this.computeEnabled) {
+            this.$('#terminalMode option[value="compute"]')?.remove();
+            const modeStatus = this.$('#terminalModeStatus');
+            if (modeStatus) modeStatus.textContent = 'Local — arquivos deste navegador';
+        }
 
         this.updatePrompt();
 
@@ -244,7 +256,9 @@ export default class TerminalApp extends BaseApp {
         await this.registerKeyboardShortcut('ctrl+l', () => this.clearTerminal());
         await this.setupContextMenu();
 
-        this.writeLine('Terminal local. Digite "help" ou "mode". WASI roda neste navegador; Compute abre um Linux remoto autorizado.');
+        this.writeLine(this.computeEnabled
+            ? 'Terminal local. Digite "help" ou "mode". WASI roda neste navegador; Compute abre um Linux remoto autorizado.'
+            : 'Terminal local. Digite "help" ou "mode". WASI roda neste navegador.');
         this.inputElement.focus();
         this.scrollToBottom();
         if(appParams.computeSetup)void this.processCommand('mode compute');

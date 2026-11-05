@@ -1,7 +1,7 @@
 import { escapeHtml as e } from './preferences.js';
 
 export async function computeCapabilities(token,signal) {
-    const response=await fetch('/api/compute/capabilities',{headers:{Authorization:'Bearer '+token},signal:signal?AbortSignal.any([signal,AbortSignal.timeout(12000)]):AbortSignal.timeout(12000)});
+    const response=await fetch('/api/runtime/v1/terminal/capabilities',{headers:{Authorization:'Bearer '+token},signal:signal?AbortSignal.any([signal,AbortSignal.timeout(12000)]):AbortSignal.timeout(12000)});
     const data=await response.json();if(!response.ok)throw Error(data.error||'Compute indisponível.');return data;
 }
 
@@ -27,7 +27,8 @@ export async function confirmComputeSetup({token,signal}) {
               </fieldset>
               <p class="compute-note">Uma instância por conta, até ${e(r.maxTotal)} em execução. Cada conexão dura até ${e(r.retentionMinutes)} min. A rede atual não tem acesso à Internet. Salve seus projetos em <code>/home/sandbox</code>; <code>/tmp</code> é descartável.</p>
               ${own?`<p>Seu ambiente: <strong>${e(({saved:'Arquivos salvos',running:'Em uso',saving:'Salvando arquivos',suspended:'Suspenso',starting:'Preparando'})[own.state]||own.state)}</strong>${own.savedAt?' · salvo em '+e(new Date(own.savedAt).toLocaleString('pt-BR')):''}.</p><button type="button" class="rda-button" data-compute="delete" ${caps.busy?'disabled':''}>Encerrar ambiente e apagar arquivos</button>`:''}
-              <p class="compute-setup__status" role="status">${e(message||own?.error||(caps.requiresMfa?'Sua conta tem permissão, mas este login precisa comprovar MFA. Entre pelo SSO com segundo fator e tente novamente.':own?.attached?'Sua instância está conectada em outro terminal. Desconecte-o para retomar aqui.':!caps.capacityAvailable?'Todos os recursos estão reservados. Tente novamente mais tarde.':''))}</p>
+              <p class="compute-setup__status" role="status">${e(message||own?.error||(caps.requiresMfa?'O Compute não conseguiu confirmar o segundo fator desta sessão. Se você já usou MFA, a verificação pode não ter sido reconhecida.':own?.attached?'Sua instância está conectada em outro terminal. Desconecte-o para retomar aqui.':!caps.capacityAvailable?'Todos os recursos estão reservados. Tente novamente mais tarde.':''))}</p>
+              ${caps.requiresMfa?'<p><a href="https://id.reversodoavesso.com/ui/console/users/me" target="_blank" rel="noopener noreferrer">Gerenciar segundo fator no SSO</a></p>':''}
               <footer><button type="button" class="rda-button" data-compute="cancel">Agora não</button><button type="button" class="rda-button" data-color="primary" data-compute="connect" ${!caps.canConnect||!caps.capacityAvailable||own?.attached?'disabled':''}>${own?'Retomar ambiente':'Conectar e preparar'}</button></footer></div>`;
             if(caps.busy)poll=setTimeout(async()=>{try{caps=await computeCapabilities(token,signal);render();}catch(error){render(error.message);}},1000);
         };
@@ -42,7 +43,7 @@ export async function confirmComputeSetup({token,signal}) {
             if(button.dataset.compute==='confirm-delete'){
                 button.disabled=true;
                 try{
-                    const response=await fetch('/api/compute/instance',{method:'DELETE',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({confirmed:true}),signal});
+                    const response=await fetch('/api/runtime/v1/terminal/instance',{method:'DELETE',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({confirmed:true}),signal});
                     const result=await response.json();if(!response.ok)throw Error(result.error||'Não foi possível encerrar.');
                     caps=await computeCapabilities(token,signal);render('Ambiente encerrado.');
                 }catch(error){if(!finished)render(error.message);}

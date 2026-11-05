@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:unkayos:plugin:gateway-access:1",
+  "title": "unkayOS gateway access configuration",
+  "description": "Remote authorization over the same-origin BFF. Failures are denied, never allowed.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "basePath": { "type": "string", "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?:/[A-Za-z0-9._~-]+)*$", "maxLength": 512 },
+    "sessionPath": { "type": "string", "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*$", "maxLength": 512 },
+    "evaluatePath": { "type": "string", "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*$", "maxLength": 512 },
+    "timeoutMs": { "type": "integer", "minimum": 500, "maximum": 60000 },
+    "cacheTtlMs": { "type": "integer", "minimum": 0, "maximum": 60000 },
+    "csrfHeader": { "type": "string", "pattern": "^[a-z0-9-]{3,64}$" }
+  }
+}
+
+

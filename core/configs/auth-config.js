@@ -5,6 +5,20 @@ export const AUTH_CONFIG = {
     // Provedor central Zitadel do ecossistema RDA
     baseUrl: 'https://id.reversodoavesso.com',
 
+    // Metadados consumidos pela UI. Qualquer SSO pode fornecer os seus.
+    provider: {
+        id: 'rda-zitadel',
+        label: 'RDA SSO',
+        providerName: 'Reverso do Avesso',
+        mode: 'sso',
+        supportsLogin: true,
+        supportsLogout: true,
+        loginLabel: 'Entrar com RDA',
+        accountLabel: 'conta RDA',
+        connectedDescription: 'Sua conta RDA está conectada.',
+        loginDescription: 'Use neste dispositivo ou entre com sua conta RDA. Você pode decidir depois.'
+    },
+
     // ID do cliente OAuth2/OIDC
     clientId: '',
 

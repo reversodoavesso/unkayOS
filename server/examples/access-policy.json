@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "2026-10-30.1",
+  "rules": [
+    {
+      "id": "device-local-actions",
+      "effect": "allow",
+      "actions": ["files.local.*", "apps.local.*", "settings.user.*"],
+      "groups": ["local"]
+    },
+    {
+      "id": "members-ai",
+      "effect": "allow",
+      "actions": ["ai.chat"],
+      "groups": ["members"],
+      "models": ["assistant"],
+      "requestsPerMinute": 30
+    },
+    {
+      "id": "block-unverified",
+      "effect": "deny",
+      "actions": ["ai.*", "compute.*"],
+      "groups": ["unverified"]
+    },
+    {
+      "id": "compute-own-session",
+      "effect": "allow",
+      "actions": ["compute.session.create", "compute.session.attach"],
+      "groups": ["operators"],
+      "requireMfa": true,
+      "ownership": "required"
+    }
+  ]
+}

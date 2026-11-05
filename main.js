@@ -3,6 +3,7 @@ import './core/ui/designSystem.js';
 
 import { systemManager } from './core/SystemManager.js';
 import { WorkspaceSession } from './core/workspace/WorkspaceSession.js';
+import { loadDeployment } from './core/host/config/deployment.js';
 
 let workspace;
 
@@ -11,7 +12,15 @@ async function init() {
 
     try {
         console.log('[main.js] Inicializando unkayOS com SystemManager...');
-        
+
+        // Any SSO can plug in by defining this factory before the app boots.
+        const hostWindow = /** @type {any} */ (window);
+        if (typeof hostWindow.__UNKAY_IDENTITY_PROVIDER__ === 'function') {
+            systemManager.identityProvider = hostWindow.__UNKAY_IDENTITY_PROVIDER__;
+        }
+
+        systemManager.deployment = await loadDeployment({ legacy: hostWindow.__UNKAYOS_DEPLOYMENT__ });
+
         // Inicializa todos os sistemas de forma centralizada e ordenada
         await systemManager.initialize(desktop);
         
@@ -32,9 +41,10 @@ async function init() {
         window.loadingManager = systemManager.getSystem('loadingManager');
         window.loadingUI = systemManager.getSystem('loadingUI');
         window.lazyResourceLoader = systemManager.getSystem('lazyResourceLoader');
-        workspace = new WorkspaceSession({ desktop, appManager: window.appManager, fs: window.wasmFileSystem, auth: window.authSystem });
+        workspace = new WorkspaceSession({ desktop, appManager: window.appManager, fs: window.wasmFileSystem, auth: window.authSystem, profile: systemManager.getSystem('hostProfile')?.id || 'rda' });
         await workspace.initialize();
         window.workspaceSession = workspace;
+        /** @type {any} */ (window).unkayProfile = systemManager.getSystem('hostProfile');
         
         console.log('[main.js] unkayOS inicializado com sucesso');
         console.log('[main.js] Estatísticas do sistema:', systemManager.getSystemStats());
@@ -56,11 +66,13 @@ async function init() {
             font-family: monospace;
             z-index: 99999;
         `;
-        errorDiv.innerHTML = `
-            <h3>Erro ao inicializar unkayOS</h3>
-            <p>${error.message}</p>
-            <small>Verifique o console para mais detalhes</small>
-        `;
+        const title = document.createElement('h3');
+        title.textContent = 'Erro ao inicializar unkayOS';
+        const message = document.createElement('p');
+        message.textContent = error.message;
+        const details = document.createElement('small');
+        details.textContent = 'Verifique o console para mais detalhes';
+        errorDiv.append(title, message, details);
         document.body.appendChild(errorDiv);
     }
 }

@@ -35,7 +35,7 @@ describe('canonical compute authorization bridge', () => {
     vi.stubGlobal('WebSocket', class { constructor(url) { this.url = url; sockets.push(this); } });
     const bridge = new ComputeBridge();
     await bridge.connect({writeLine: line => lines.push(line),confirmCompute:async()=> 'temporary'});
-    expect(fetch).toHaveBeenCalledWith('/api/compute/ticket', expect.objectContaining({method:'POST',headers:{Authorization:'Bearer synthetic-bearer','Content-Type':'application/json'},body:JSON.stringify({mode:'temporary',confirmed:true})}));
+    expect(fetch).toHaveBeenCalledWith('/api/runtime/v1/terminal/ticket', expect.objectContaining({method:'POST',headers:{Authorization:'Bearer synthetic-bearer','Content-Type':'application/json'},body:JSON.stringify({mode:'temporary',confirmed:true})}));
     expect(sockets).toHaveLength(1);
     expect(new URL(sockets[0].url).searchParams.get('ticket')).toBe(ticket);
     expect(sockets[0].url).not.toContain('synthetic-bearer');
@@ -55,7 +55,7 @@ describe('canonical compute authorization bridge', () => {
   });
   it('refuses a foreign endpoint before requesting a ticket', async () => {
     const fetch = vi.fn();vi.stubGlobal('fetch',fetch);
-    await new ComputeBridge().connect({writeLine:vi.fn()}, 'wss://foreign.invalid/ws/terminal');
+    await new ComputeBridge().connect({writeLine:vi.fn()}, 'wss://foreign.invalid/ws/runtime/terminal');
     expect(fetch).not.toHaveBeenCalled();
   });
   it('does not allocate after a setup confirmation is cancelled or superseded',async()=>{

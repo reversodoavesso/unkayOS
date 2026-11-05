@@ -8,13 +8,17 @@ import { loadingManager } from './LoadingManager.js'; // Sistema de loading
 
 export class AppManager {
 
-    constructor(desktopElement, appsOnToolBarElement, appConfigs) {
+    constructor(desktopElement, appsOnToolBarElement, appConfigs, options = {}) {
         this.focusHistory = [];
         this._showDesktopSavedIds = [];
 
         this.desktopElement = desktopElement;
         this.appsOnToolBarElement = appsOnToolBarElement;
         this.baseAppConfigs = appConfigs;
+        this.appFeatureRegistry = options.appFeatureRegistry || null;
+        this.appFeatureUnsubscribe = null;
+        /** @type {Promise<{ added: string[], removed: string[] }>} */
+        this.appFeatureSyncPromise = Promise.resolve({ added: [], removed: [] });
         this.loadedAppDetails = new Map();
         this.runningApps = new Map();
         this.activeAppInstanceId = null;
@@ -25,7 +29,20 @@ export class AppManager {
 
 
     async loadAppConfigs() {
-        const loadPromises = this.baseAppConfigs.map(async (baseConfig) => {
+        const configs = this.appFeatureRegistry
+            ? this.baseAppConfigs.filter(baseConfig => this.appFeatureRegistry.isEnabled(baseConfig.id))
+            : this.baseAppConfigs;
+
+        await this._loadConfigs(configs);
+        window.loadedAppDetails = this.loadedAppDetails;
+    }
+
+    /**
+     * Loads the given base configs into `loadedAppDetails`.
+     * @private
+     */
+    async _loadConfigs(configs) {
+        const loadPromises = configs.map(async (baseConfig) => {
             try {
                 const configUrl = `${baseConfig.path}config.json`;
                 const response = await fetch(configUrl);
@@ -51,8 +68,51 @@ export class AppManager {
             }
         });
         await Promise.all(loadPromises);
+    }
+
+    /**
+     * Applies the current enable/disable state without a page reload.
+     * Serialized so rapid toggles cannot interleave catalog mutations.
+     *
+     * @returns {Promise<{ added: string[], removed: string[] }>}
+     */
+    syncAppFeatures() {
+        const run = () => this._syncAppFeaturesNow();
+        this.appFeatureSyncPromise = (this.appFeatureSyncPromise || Promise.resolve())
+            .then(run, run);
+        return this.appFeatureSyncPromise;
+    }
+
+    /**
+     * @private
+     * @returns {Promise<{ added: string[], removed: string[] }>}
+     */
+    async _syncAppFeaturesNow() {
+        if (!this.appFeatureRegistry) return { added: [], removed: [] };
+
+        const configs = this.baseAppConfigs.filter(baseConfig => this.appFeatureRegistry.isEnabled(baseConfig.id));
+        const enabledIds = new Set(configs.map(config => config.id));
+        const baseIds = new Set(this.baseAppConfigs.map(config => config.id));
+
+        const removed = [];
+        for (const id of [...this.loadedAppDetails.keys()]) {
+            if (baseIds.has(id) && !enabledIds.has(id)) {
+                this.loadedAppDetails.delete(id);
+                removed.push(id);
+            }
+        }
+
+        const missing = configs.filter(config => !this.loadedAppDetails.has(config.id));
+        await this._loadConfigs(missing);
 
         window.loadedAppDetails = this.loadedAppDetails;
+        const added = missing.map(config => config.id).filter(id => this.loadedAppDetails.has(id));
+        eventBus.emit('apps:catalog:changed', {
+            apps: [...this.loadedAppDetails.keys()],
+            added,
+            removed
+        });
+        return { added, removed };
     }
 
     registerEventBusListeners() {
@@ -263,6 +323,27 @@ export class AppManager {
     }
 
 
+    /**
+     * Declarative availability check used before launching an app.
+     *
+     * @param {string} appId
+     * @returns {{ ok: boolean, reason?: string, missing?: string[], missingOptional: string[] }}
+     */
+    checkAppAvailability(appId) {
+        if (!this.appFeatureRegistry) return { ok: true, missingOptional: [] };
+        if (!this.appFeatureRegistry.isEnabled(appId)) {
+            return { ok: false, reason: 'disabled', missingOptional: [] };
+        }
+        const missing = this.appFeatureRegistry.missingRequirements(appId);
+        if (missing.length > 0) {
+            return { ok: false, reason: 'missing_requirements', missing, missingOptional: [] };
+        }
+        return {
+            ok: true,
+            missingOptional: this.appFeatureRegistry.missingOptionalRequirements(appId)
+        };
+    }
+
     async runApp(appId, appParams = {}, options = {}) {
 
         eventBus.emit('app:starting', { appId, params: appParams });
@@ -273,6 +354,23 @@ export class AppManager {
             console.error(`[AppManager] App '${appId}' não encontrado nas configs carregadas.`);
             eventBus.emit('app:start:error', { appId, reason: 'not_found' });
             return;
+        }
+        const availability = this.checkAppAvailability(appId);
+        if (!availability.ok) {
+            if (availability.reason === 'disabled') {
+                console.warn(`[AppManager] App '${appId}' desabilitado pelo catálogo de features.`);
+            } else {
+                console.error(`[AppManager] App '${appId}' sem capacidades: ${availability.missing.join(', ')}.`);
+            }
+            eventBus.emit('app:start:error', {
+                appId,
+                reason: availability.reason,
+                ...(availability.missing ? { missing: availability.missing } : {})
+            });
+            return null;
+        }
+        if (availability.missingOptional.length > 0) {
+            eventBus.emit('app:start:warning', { appId, missingOptional: availability.missingOptional });
         }
         console.log(`[AppManager] App encontrado: ${appData.app_name} (${appData.mode})`);
 

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:unkayos:plugin:http-ai:1",
+  "title": "unkayOS HTTP AI gateway configuration",
+  "description": "Same-origin AI gateway. The browser alias is resolved by the server; no credential is accepted here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["basePath"],
+  "properties": {
+    "basePath": {
+      "type": "string",
+      "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*$",
+      "maxLength": 512
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 300000
+    },
+    "csrfCookie": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$"
+    },
+    "csrfHeader": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{3,64}$"
+    }
+  }
+}
+

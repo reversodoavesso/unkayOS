@@ -73,3 +73,94 @@ tr:last-child td {
   text-align: center;
   font-size: 1.05em;
 }
+
+.kernel-section {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-dark-tertiary);
+}
+
+.kernel-header h3 {
+  margin: 0 0 12px;
+  font-size: 1.05em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-light-secondary);
+}
+
+.kernel-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.kernel-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-dark-tertiary);
+  border-radius: 8px;
+  font-size: 0.82em;
+  color: var(--color-light-secondary);
+}
+
+.kernel-stat strong {
+  color: var(--color-light-primary);
+  font-size: 1.05em;
+}
+
+.kernel-features {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kernel-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--color-dark-secondary);
+}
+
+.kernel-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #888;
+  flex: none;
+}
+
+.kernel-feature.is-running .kernel-dot {
+  background: var(--color-success, #4ade80);
+}
+
+.kernel-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.kernel-copy strong {
+  font-size: 0.92em;
+  font-weight: 500;
+}
+
+.kernel-copy small {
+  font-size: 0.76em;
+  color: var(--color-light-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kernel-version {
+  font-size: 0.76em;
+  color: var(--color-light-secondary);
+  flex: none;
+}

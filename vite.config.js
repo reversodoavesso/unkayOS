@@ -1,8 +1,36 @@
-import { readdirSync, existsSync, readFileSync, cpSync } from 'node:fs'
+import { existsSync, readFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createDeployment } from './core/host/config/deployment.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// Modes produce actual runtime JSON: copied JS cannot rely on import.meta.env.
+function deploymentConfigPlugin() {
+  let deployment
+  return {
+    name: 'unkayos-runtime-deployment',
+    configResolved(config) {
+      if (['rda', 'standalone', 'sso'].includes(config.mode)) {
+        deployment = createDeployment(config.mode)
+      }
+    },
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.split('?')[0] !== '/config/deployment.json' || !deployment || existsSync(resolve(__dirname, 'public/config/deployment.json'))) return next()
+        res.setHeader('Content-Type', 'application/json')
+        res.setHeader('Cache-Control', 'no-store')
+        res.end(JSON.stringify(deployment))
+      })
+    },
+    closeBundle() {
+      if (!deployment || existsSync(resolve(__dirname, 'public/config/deployment.json'))) return
+      const destination = resolve(__dirname, 'dist/config')
+      mkdirSync(destination, { recursive: true })
+      writeFileSync(join(destination, 'deployment.json'), JSON.stringify(deployment, null, 2) + '\n')
+    }
+  }
+}
 
 /**
  * Plugin that serves app CSS and HTML as raw text instead of
@@ -63,7 +91,7 @@ function copyRuntimeAssetsPlugin() {
 
 export default {
   root: '.',
-  plugins: [serveAppsRawPlugin(), copyRuntimeAssetsPlugin()],
+  plugins: [serveAppsRawPlugin(), copyRuntimeAssetsPlugin(), deploymentConfigPlugin()],
   build: {
     outDir: 'dist',
     sourcemap: true,
@@ -90,6 +118,8 @@ export default {
       '/api/marketplace': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', changeOrigin: true },
       '/api/proxy': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', changeOrigin: true },
       '/api/reader': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', changeOrigin: true },
+      '/api/runtime/v1/terminal': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', changeOrigin: true },
+      '/ws/runtime/terminal': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', ws: true },
       '/api/compute/health': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', rewrite: () => '/health' },
       '/api/compute': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', changeOrigin: true },
       '/ws/terminal': { target: process.env.UNKAY_COMPUTE_URL || 'http://127.0.0.1:3005', ws: true },

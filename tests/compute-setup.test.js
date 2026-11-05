@@ -14,12 +14,15 @@ describe('Compute consent and login setup',()=>{
   document.querySelector('[data-compute="cancel"]').click();expect(await pending).toBeNull();
   pending=confirmComputeSetup({token:'synthetic'});await tick();
   document.querySelector('input[value="retained"]').click();document.querySelector('[data-compute="connect"]').click();
-  expect(await pending).toBe('retained');expect(fetch.mock.calls.every(([url])=>url==='/api/compute/capabilities')).toBe(true);
+  expect(await pending).toBe('retained');expect(fetch.mock.calls.every(([url])=>url==='/api/runtime/v1/terminal/capabilities')).toBe(true);
  });
  it('disables allocation for missing MFA and aborts the dialog on logout',async()=>{
   vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({...capabilities,canConnect:false,requiresMfa:true})));
   const controller=new AbortController(),pending=confirmComputeSetup({token:'synthetic',signal:controller.signal});await tick();
   expect(document.querySelector('[data-compute="connect"]').disabled).toBe(true);expect(document.body.textContent).toContain('MFA');
+  const mfaLink=document.querySelector('a[href="https://id.reversodoavesso.com/ui/console/users/me"]');
+  expect(mfaLink?.getAttribute('rel')).toContain('noopener');
+  expect(document.body.textContent).toContain('pode não ter sido reconhecida');
   controller.abort();expect(await pending).toBeNull();expect(document.querySelector('dialog')).toBeNull();
  });
  it('offers configuration once after an eligible login without creating a container',async()=>{

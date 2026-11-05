@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { PackageManager } from '../core/sdk/PackageManager.js';
+import { AppFeatureRegistry } from '../core/apps/AppFeatureRegistry.js';
 import { AppPackageLoader, compareVersions } from '../core/sdk/AppPackageLoader.js';
 import StoreApp from '../apps/store/main.js';
 
@@ -199,5 +200,25 @@ describe('Manifest versions and Store UI', () => {
         root.querySelector('#categoryFilter').dispatchEvent(new Event('change'));
         expect(root.querySelector('.empty-state').textContent).toContain('Nenhum');
         app.onCleanup(); expect(manager.listeners.size).toBe(0); root.remove();
+    });
+});
+
+describe('Package feature catalog integration', () => {
+    it('registers installed packages and removes them on uninstall', async () => {
+        const fs = memoryFs();
+        const appManager = { loadedAppDetails: new Map(), runningApps: new Map(), runApp: vi.fn(), stopApp: vi.fn(async () => {}) };
+        const auth = { getTier: () => 'guest', getToken: () => null };
+        const registry = new AppFeatureRegistry();
+        const manager = new PackageManager({ fs, appManager, auth, appFeatureRegistry: registry, fetcher: vi.fn() });
+
+        await manager.installLocal(bundle());
+        expect(registry.has('notes-test')).toBe(true);
+        expect(registry.get('notes-test').metadata).toMatchObject({ source: 'package', version: '1.0.0' });
+        expect(registry.get('notes-test').metadata.name).toBe(manifest().name);
+        expect(registry.list().find(app => app.id === 'notes-test')).toMatchObject({ enabled: true, available: true });
+
+        await manager.uninstall('notes-test');
+        expect(registry.has('notes-test')).toBe(false);
+        expect(appManager.loadedAppDetails.has('notes-test')).toBe(false);
     });
 });

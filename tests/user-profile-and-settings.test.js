@@ -47,7 +47,19 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
       auth: {
         getCurrentUser: vi.fn(() => null),
         login: vi.fn(),
-        logout: vi.fn()
+        logout: vi.fn(),
+        getProviderInfo: vi.fn(() => ({
+          id: 'rda-zitadel',
+          label: 'RDA SSO',
+          providerName: 'Reverso do Avesso',
+          mode: 'sso',
+          supportsLogin: true,
+          supportsLogout: true,
+          loginLabel: 'Entrar com RDA',
+          accountLabel: 'conta RDA',
+          connectedDescription: 'Sua conta RDA está conectada.',
+          loginDescription: 'Use neste dispositivo ou entre com sua conta RDA.'
+        }))
       }
     };
 
@@ -120,6 +132,24 @@ describe('unkayOS 2.0 User Profile & System Settings Apps', () => {
       expect(app.userData.displayName).toBe('Convidado');
       expect(profileRoot.querySelector('#headerDisplayName').textContent).toBe('Convidado');
       expect(profileRoot.querySelector('#headerTierBadge').textContent).toBe('GUEST');
+    });
+
+    it('renders a local identity view when the provider has no SSO', async () => {
+      mockStandardAPIs.auth.getProviderInfo.mockReturnValue({
+        id: 'local',
+        label: 'Sessão local',
+        mode: 'local',
+        supportsLogin: false,
+        supportsLogout: false
+      });
+      const app = new UserProfileApp(mockCORE, mockStandardAPIs, profileRoot);
+      await app.onRun();
+
+      expect(app.localMode).toBe(true);
+      expect(app.userData.organization).toBe('Este dispositivo');
+      expect(profileRoot.querySelector('#headerTierBadge').textContent).toBe('LOCAL');
+      expect(profileRoot.querySelector('#sectionSso')).toBeNull();
+      expect(profileRoot.querySelector('#ssoQuickActionBtn')).toBeNull();
     });
 
     it('should save identity changes to VFS and localStorage', async () => {

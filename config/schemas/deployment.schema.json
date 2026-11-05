@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:unkayos:deployment:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "installationId",
+    "revision",
+    "preset",
+    "instances",
+    "bindings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "installationId": {
+      "$ref": "#/$defs/id"
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "preset": {
+      "enum": [
+        "standalone",
+        "sso",
+        "rda"
+      ]
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "orgName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "guestDomain": {
+          "type": "string",
+          "maxLength": 100
+        }
+      }
+    },
+    "instances": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 32,
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "plugin",
+          "config"
+        ],
+        "properties": {
+          "plugin": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+            "maxLength": 128
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "config": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "access"
+      ],
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/binding"
+        },
+        "access": {
+          "$ref": "#/$defs/binding"
+        },
+        "ai": {
+          "$ref": "#/$defs/binding"
+        },
+        "sync": {
+          "$ref": "#/$defs/binding"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "maxLength": 64,
+      "not": {
+        "enum": [
+          "constructor",
+          "prototype"
+        ]
+      }
+    },
+    "binding": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$",
+      "maxLength": 128
+    }
+  }
+}

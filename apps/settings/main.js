@@ -18,7 +18,7 @@ export default class SettingsApp extends BaseApp {
       panel: {
         type: 'string',
         required: false,
-        description: 'Painel de configurações a ser exibido inicialmente (appearance, windowing, storage, services, security, about)'
+        description: 'Painel de configurações a ser exibido inicialmente (appearance, windowing, storage, services, security, apps, about)'
       }
     };
   }
@@ -144,6 +144,13 @@ export default class SettingsApp extends BaseApp {
     this.checkUpdatesBtn = this.$('#checkUpdatesBtn');
     this.resetAllSettingsBtn = this.$('#resetAllSettingsBtn');
 
+    // The clean profile does not talk to RDA services.
+    if (this.standardAPIs?.hostProfile?.id === 'standalone' || this.standardAPIs?.hostProfile?.id === 'sso') {
+      this.$('.nav-item[data-panel="services"]')?.remove();
+      this.$('#panelServices')?.remove();
+      this.$$('[data-rda-only]').forEach(element => element.remove());
+    }
+
     // Registra listeners
     this.registerEventListeners();
     this.renderSystemKeybinds();
@@ -151,9 +158,12 @@ export default class SettingsApp extends BaseApp {
     // Carrega configurações persistidas
     await this.loadSettings();
     this.bindWorkspaceSettings();
+    this.bindAppFeatureSettings();
 
-    // Executa verificação inicial de saúde dos microsserviços
-    this.checkServicesHealth();
+    // Executa verificação inicial de saúde dos microsserviços (apenas perfil RDA)
+    if (this.standardAPIs?.hostProfile?.id === 'rda') {
+      this.checkServicesHealth();
+    }
 
     // Infrastructure policy is enforced by the gateway and the sandbox.
     for (const control of [this.inputMinioUrl, this.inputMinioBucket, this.toggleStrictSandbox, this.toggleSecureHostDrop, this.toggleOfflineMode]) {
@@ -534,6 +544,7 @@ export default class SettingsApp extends BaseApp {
       storage: this.$('#panelStorage'),
       services: this.$('#panelServices'),
       security: this.$('#panelSecurity'),
+      apps: this.$('#panelApps'),
       about: this.$('#panelAbout')
     };
 
@@ -883,6 +894,65 @@ export default class SettingsApp extends BaseApp {
     }).join('');
   }
 
+  bindAppFeatureSettings() {
+    this.appFeatureRegistry = this.standardAPIs?.appFeatureRegistry
+      || (typeof window !== 'undefined' ? /** @type {any} */ (window).systemManager?.getSystem('appFeatureRegistry') : null);
+    const list = this.$('#appFeatureList');
+    if (!this.appFeatureRegistry || !list) return;
+
+    this.appFeatureController = new AbortController();
+    list.addEventListener('change', event => {
+      const field = /** @type {HTMLInputElement | null} */ (event.target instanceof Element ? event.target.closest('[data-app-feature]') : null);
+      if (!field) return;
+      const status = this.$('#appFeatureStatus');
+      try {
+        this.appFeatureRegistry.setEnabled(field.dataset.appFeature, field.checked);
+        if (status) status.textContent = `${field.checked ? 'Habilitado' : 'Desabilitado'}: ${field.dataset.appFeature}.`;
+      } catch (error) {
+        field.checked = !field.checked;
+        if (status) status.textContent = error.message;
+      }
+    }, { signal: this.appFeatureController.signal });
+
+    this.appFeatureUnsubscribe = this.appFeatureRegistry.subscribe(() => this.renderAppFeatures());
+    this.appFeaturePackagesChanged = () => this.renderAppFeatures();
+    eventBus.on('packages:changed', this.appFeaturePackagesChanged);
+    this.renderAppFeatures();
+  }
+
+  renderAppFeatures() {
+    const list = this.$('#appFeatureList');
+    const registry = this.appFeatureRegistry;
+    if (!list) return;
+    if (!registry) {
+      list.innerHTML = '<p class="card-subtext">Catálogo de aplicativos indisponível.</p>';
+      return;
+    }
+
+    const apps = registry.list().sort((a, b) => {
+      const left = a.metadata?.name || a.id;
+      const right = b.metadata?.name || b.id;
+      return left.localeCompare(right, 'pt-BR');
+    });
+
+    list.innerHTML = apps.map(app => {
+      const name = app.metadata?.name || app.id;
+      const description = app.metadata?.description || app.path || 'Aplicativo do sistema';
+      const notes = [];
+      if (app.locked) notes.push(app.enabled ? 'Essencial' : 'Indisponível nesta versão');
+      if (app.missingRequirements.length) notes.push(`Requer: ${app.missingRequirements.join(', ')}`);
+      if (app.missingOptionalRequirements.length) notes.push(`Opcional: ${app.missingOptionalRequirements.join(', ')}`);
+      return `<article class="widget-setting-row">
+        <span class="widget-setting-icon">${iconMarkup('layout-grid', { size: 22 })}</span>
+        <div class="widget-setting-copy"><strong>${escapeHtml(name)}</strong><small>${escapeHtml(description)}${notes.length ? ` · ${escapeHtml(notes.join(' · '))}` : ''}</small></div>
+        <label class="widget-startup-option"><input type="checkbox" class="rda-checkbox-native" data-app-feature="${escapeHtml(app.id)}" ${app.enabled ? 'checked' : ''} ${app.locked ? 'disabled' : ''}> ${app.enabled ? 'Ativo' : 'Oculto'}</label>
+      </article>`;
+    }).join('');
+
+    const status = this.$('#appFeatureStatus');
+    if (status) status.textContent = `${apps.filter(app => app.enabled).length} de ${apps.length} habilitados.`;
+  }
+
   async checkServicesHealth() {
     this.healthController?.abort();
     const controller = new AbortController();
@@ -986,6 +1056,9 @@ export default class SettingsApp extends BaseApp {
   }
 
   async onCleanup() {
+    this.appFeatureUnsubscribe?.();
+    if (this.appFeaturePackagesChanged) eventBus.off('packages:changed', this.appFeaturePackagesChanged);
+    this.appFeatureController?.abort();
     this.workspaceController?.abort();
     eventBus.off('settings:updated', this.workspaceUpdated);
     eventBus.off('widgets:updated', this.widgetsUpdated);
@@ -1002,7 +1075,7 @@ export default class SettingsApp extends BaseApp {
         panel = args[i + 1];
         i++;
       } else if (args[i] === '--help' || args[i] === '-h') {
-        writeLine('Uso: settings [--panel <appearance|windowing|storage|services|security|about>] [--help]');
+        writeLine('Uso: settings [--panel <appearance|windowing|storage|services|security|apps|about>] [--help]');
         return;
       }
     }

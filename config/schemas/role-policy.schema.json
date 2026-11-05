@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:unkayos:role-policy:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tierRoles"],
+  "properties": {
+    "tierRoles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "demiurge": { "$ref": "#/$defs/roles" },
+        "sysadmin": { "$ref": "#/$defs/roles" },
+        "adept": { "$ref": "#/$defs/roles" },
+        "standard": { "$ref": "#/$defs/roles" }
+      }
+    }
+  },
+  "$defs": {
+    "roles": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 128 } }
+  }
+}

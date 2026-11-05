@@ -1,17 +1,17 @@
 {
   "app_configs": [
-    { "id": "terminal", "path": "/apps/terminal/" },
+    { "id": "terminal", "path": "/apps/terminal/", "requires": ["auth", "fs"], "optionalRequires": ["packages", "ai"] },
     { "id": "about", "path": "/apps/about/" },
     { "id": "clock", "path": "/apps/clock/" },
     { "id": "system-info", "path": "/apps/system-info/" },
-    { "id": "taskbar", "path": "/apps/taskbar/" },
-    { "id": "theorb", "path": "/apps/browser/" },
+    { "id": "taskbar", "path": "/apps/taskbar/", "locked": true },
+    { "id": "theorb", "path": "/apps/browser/", "requires": ["auth", "fs"] },
     { "id": "process-manager", "path": "/apps/process-manager/" },
-    { "id": "file-manager", "path": "/apps/file-manager/" },
-    { "id": "text-editor", "path": "/apps/text-editor/" },
-    { "id": "store", "path": "/apps/store/" },
-    { "id": "openui", "path": "/apps/openui/" },
-    { "id": "user-profile", "path": "/apps/user-profile/" },
-    { "id": "settings", "path": "/apps/settings/" }
+    { "id": "file-manager", "path": "/apps/file-manager/", "requires": ["fs"] },
+    { "id": "text-editor", "path": "/apps/text-editor/", "requires": ["fs"] },
+    { "id": "store", "path": "/apps/store/", "requires": ["packages", "auth"] },
+    { "id": "openui", "path": "/apps/openui/", "requires": ["ai"] },
+    { "id": "user-profile", "path": "/apps/user-profile/", "requires": ["auth"] },
+    { "id": "settings", "path": "/apps/settings/", "requires": ["auth"], "locked": true }
   ]
 }

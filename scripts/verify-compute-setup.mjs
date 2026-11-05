@@ -8,7 +8,7 @@ const assert=(value,message)=>{if(!value)throw Error(message);};const errors=[],
 let caps={authorized:true,canConnect:true,capacityAvailable:true,requiresMfa:false,instance:null,resources:{cpu:.5,memoryMiB:256,homeMiB:128,idleMinutes:10,retentionMinutes:60,maxTotal:2,maxPerUser:1,internet:false,durableStorage:true}};
 try{
  await mkdir(output,{recursive:true});
- await page.route('**/api/compute/**',route=>{
+ await page.route('**/api/runtime/v1/terminal/**',route=>{
   requests.push({method:route.request().method(),path:new URL(route.request().url()).pathname});
   return route.fulfill({contentType:'application/json',body:JSON.stringify(caps)});
  });

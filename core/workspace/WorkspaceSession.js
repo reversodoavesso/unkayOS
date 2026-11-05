@@ -9,11 +9,12 @@ let currentSession = null;
 export const getWorkspace = () => currentSession;
 
 export class WorkspaceSession {
-  constructor({ desktop, appManager, fs, auth }) {
+  constructor({ desktop, appManager, fs, auth, profile = 'rda' }) {
     this.desktop = desktop;
     this.appManager = appManager;
     this.fs = fs;
     this.auth = auth;
+    this.profile = profile;
     this.settings = normalizeWorkspace();
     this.queue = Promise.resolve();
     this.widgets = new WidgetManager(this);
@@ -36,7 +37,7 @@ export class WorkspaceSession {
     document.addEventListener('keydown', this.keyboard);
     eventBus.emit('settings:updated', structuredClone(this.settings));
     if (!this.settings.onboarding.completedAt) this.setup.show();
-    this.computeInvitation.initialize();
+    if (this.profile === 'rda') this.computeInvitation.initialize();
     return this;
   }
 

@@ -1,6 +1,10 @@
 import eventBus from '../../core/eventBus.js';
 import { BaseApp } from '../../core/BaseApp.js';
 
+const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[character]));
+
 export default class ProcessManagerApp extends BaseApp {
   constructor(appCore, apis) {
     super(appCore, apis);
@@ -13,9 +17,16 @@ export default class ProcessManagerApp extends BaseApp {
     this.tableBody = this.$('#processTable tbody');
     this.emptyMsg = this.$('#emptyMsg');
     this.refreshBtn = this.$('#refreshBtn');
+    this.kernelSummary = this.$('#kernelSummary');
+    this.kernelFeatures = this.$('#kernelFeatures');
+
+    this.refresh = () => {
+      this.renderTable();
+      this.renderKernel();
+    };
 
     if (this.refreshBtn) {
-      this.refreshBtn.addEventListener('click', () => this.renderTable());
+      this.refreshBtn.addEventListener('click', this.refresh);
       if (!this.refreshBtn.querySelector('rda-icon')) {
         this.refreshBtn.innerHTML = "<rda-icon name=\"refresh-cw\" size=\"20\" aria-label=\"Atualizar\" title=\"Atualizar\"></rda-icon>";
       }
@@ -25,10 +36,13 @@ export default class ProcessManagerApp extends BaseApp {
       this.tableBody.addEventListener('click', (e) => this.handleTableClick(e));
     }
 
-    eventBus.on('app:started', () => this.renderTable());
-    eventBus.on('app:stopped', () => this.renderTable());
+    eventBus.on('app:started', this.refresh);
+    eventBus.on('app:stopped', this.refresh);
+    eventBus.on('apps:catalog:changed', this.refresh);
+    eventBus.on('packages:changed', this.refresh);
+    eventBus.on('kernel:ready', this.refresh);
 
-    this.renderTable();
+    this.refresh();
   }
 
   getRunningApps() {
@@ -78,25 +92,61 @@ export default class ProcessManagerApp extends BaseApp {
     `;
   }
 
+  renderKernel() {
+    if (!this.kernelSummary || !this.kernelFeatures) return;
+    const kernel = /** @type {any} */ (window).systemManager?.kernel;
+    if (!kernel) {
+      this.kernelSummary.textContent = 'Kernel indisponível nesta sessão.';
+      this.kernelFeatures.innerHTML = '';
+      return;
+    }
+
+    const description = kernel.describe();
+    const running = description.features.filter(feature => feature.running).length;
+    const profile = /** @type {any} */ (window).systemManager?.getSystem?.('hostProfile')?.id || 'rda';
+    this.kernelSummary.innerHTML = `
+      <span class="kernel-stat"><strong>${escapeHtml(profile)}</strong> perfil</span>
+      <span class="kernel-stat"><strong>${escapeHtml(description.state)}</strong> estado</span>
+      <span class="kernel-stat"><strong>${running}/${description.features.length}</strong> features</span>
+      <span class="kernel-stat"><strong>${description.capabilities.length}</strong> capacidades</span>
+    `;
+
+    this.kernelFeatures.innerHTML = description.features.map(feature => `
+      <article class="kernel-feature ${feature.running ? 'is-running' : ''}">
+        <span class="kernel-dot" aria-hidden="true"></span>
+        <div class="kernel-copy">
+          <strong>${escapeHtml(feature.id)}</strong>
+          <small>${feature.provides.map(capability => escapeHtml(capability)).join(' · ')}</small>
+        </div>
+        <span class="kernel-version">v${escapeHtml(feature.version)}</span>
+      </article>
+    `).join('');
+  }
+
   handleTableClick(e) {
     const btn = e.target.closest('.action-btn');
     if (btn && !btn.disabled) {
       const instanceId = btn.dataset.instance;
       if (instanceId) {
         eventBus.emit('app:stop', { instanceId });
-        setTimeout(() => this.renderTable(), 200);
+        setTimeout(() => this.refresh(), 200);
       }
     }
   }
 
-  onCleanup() {
-    // Exemplo de limpeza de listeners se necessário
+  async onCleanup() {
+    eventBus.off('app:started', this.refresh);
+    eventBus.off('app:stopped', this.refresh);
+    eventBus.off('apps:catalog:changed', this.refresh);
+    eventBus.off('packages:changed', this.refresh);
+    eventBus.off('kernel:ready', this.refresh);
     if (this.refreshBtn) {
       this.refreshBtn.replaceWith(this.refreshBtn.cloneNode(true));
     }
     if (this.tableBody) {
       this.tableBody.replaceWith(this.tableBody.cloneNode(true));
     }
+    await super.onCleanup();
   }
 
   static runCli(args, writeLine) {
@@ -108,4 +158,3 @@ export default class ProcessManagerApp extends BaseApp {
     writeLine('Gerenciador de processos iniciado.');
   }
 }
-

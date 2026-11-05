@@ -2,20 +2,19 @@ import { describe, it, expect, vi } from 'vitest';
 import { createUnkaySDK } from '../core/sdk/unkay.js';
 
 describe('unkayOS 2.0 Unified SDK', () => {
-    it('reads Zitadel role maps and attaches the actual session token to AI requests', async () => {
-        const sdk = createUnkaySDK(null, { getSystem: () => ({
-            getCurrentUser: () => ({ 'urn:zitadel:iam:org:project:roles': { sysadmin: {} } }),
-            getAuthToken: () => 'session-token'
-        }) });
+    it('uses explicit access and AI adapters instead of interpreting provider claims', async () => {
+        const ai = { prompt: vi.fn(async () => 'Response'), stream: vi.fn() };
+        const systems = {
+            authSystem: { getCurrentUser: () => ({ roles: ['company-admin'] }) },
+            accessPolicy: { getTier: () => 'sysadmin' },
+            aiService: ai
+        };
+        const sdk = createUnkaySDK(null, { getSystem: name => systems[name] });
         expect(sdk.auth.getTier()).toBe('sysadmin');
-        const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ content: 'Response' }) });
-        vi.stubGlobal('fetch', fetchMock);
-        try {
-            await sdk.ai.prompt([{ role: 'user', content: 'Generate UI' }]);
-            expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer session-token');
-        } finally { vi.unstubAllGlobals(); }
+        await expect(sdk.ai.prompt([{ role: 'user', content: 'Generate UI' }])).resolves.toBe('Response');
+        expect(ai.prompt).toHaveBeenCalledWith([{ role: 'user', content: 'Generate UI' }], {});
     });
-    it('should determine access tier correctly from user roles', () => {
+    it('defaults authenticated users to standard without a tier policy', () => {
         const mockAuthSystemGuest = {
             getCurrentUser: () => null
         };
@@ -30,7 +29,7 @@ describe('unkayOS 2.0 Unified SDK', () => {
         const sdkAdmin = createUnkaySDK(null, {
             getSystem: (name) => (name === 'authSystem' ? mockAuthSystemAdmin : null)
         });
-        expect(sdkAdmin.auth.getTier()).toBe('demiurge');
+        expect(sdkAdmin.auth.getTier()).toBe('standard');
 
         const mockAuthSystemStandard = {
             getCurrentUser: () => ({ username: 'user_1', roles: ['standard'] })

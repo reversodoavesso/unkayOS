@@ -32,6 +32,24 @@ export class AppCore {
     }
 
     async run(desktopElement, terminalOutputCallback = null, appParams = {}) {
+        // Preflight: app features are the single source of truth for availability.
+        const featureRegistry = /** @type {any} */ (window).systemManager?.getSystem('appFeatureRegistry');
+        if (featureRegistry && featureRegistry.has(this.id)) {
+            if (!featureRegistry.isEnabled(this.id)) {
+                this.launchFailed = true;
+                this.launchErrorReason = 'disabled';
+                eventBus.emit('app:start:error', { appId: this.id, reason: 'disabled' });
+                return null;
+            }
+            const missing = featureRegistry.missingRequirements(this.id);
+            if (missing.length > 0) {
+                this.launchFailed = true;
+                this.launchErrorReason = 'missing_requirements';
+                eventBus.emit('app:start:error', { appId: this.id, reason: 'missing_requirements', missing });
+                return null;
+            }
+        }
+
         // Garante que appParams seja objeto
         if (Array.isArray(appParams)) {
             appParams = { value: appParams };
@@ -67,7 +85,9 @@ export class AppCore {
             wasmFileSystem: window.systemManager?.getSystem('wasmFileSystem') || window.wasmFileSystem,
             wasmFs: window.systemManager?.getSystem('wasmFs') || window.wasmFs,
             unkaySDK: window.systemManager?.getSystem('unkaySDK') || window.unkay,
-            auth: (window.systemManager?.getSystem('authSystem') || window.authSystem)?.getAPI()
+            auth: (window.systemManager?.getSystem('authSystem') || window.authSystem)?.getAPI(),
+            appFeatureRegistry: /** @type {any} */ (window).systemManager?.getSystem('appFeatureRegistry'),
+            hostProfile: /** @type {any} */ (window).systemManager?.getSystem('hostProfile')
         };
         this.standardAPIs = standardAPIs;
 

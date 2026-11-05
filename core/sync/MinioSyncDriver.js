@@ -2,13 +2,14 @@
 // Bi-directional synchronization between local /home/user/cloud/ and MinIO Object Storage
 
 import { wasmFileSystem } from '../WasmFileSystem.js';
-import { unkay } from '../sdk/unkay.js';
 import eventBus from '../eventBus.js';
 
 const getVfs = () => (typeof window !== 'undefined' && window.wasmFileSystem) || wasmFileSystem;
 
 export class MinioSyncDriver {
-    constructor() {
+    /** @param {{ getAuth?: () => any }} [options] */
+    constructor({ getAuth = () => typeof window !== 'undefined' ? /** @type {any} */ (window).authSystem : null } = {}) {
+        this.getAuth = getAuth;
         this.cloudPath = '/home/user/cloud';
         this.syncing = false;
         this.lastSync = null;
@@ -24,8 +25,8 @@ export class MinioSyncDriver {
             return { success: false, reason: 'Already in progress' };
         }
 
-        const user = unkay.auth.getUser();
-        const token = unkay.auth.getToken();
+        const user = this.getAuth()?.getCurrentUser?.();
+        const token = this.getAuth()?.getAuthToken?.();
 
         if (!user || user.id === 'guest') {
             console.warn('[MinioSync] User must be authenticated to sync cloud storage');

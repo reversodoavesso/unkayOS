@@ -3,6 +3,7 @@
 import { BaseApp } from '../../core/BaseApp.js';
 import eventBus from '../../core/eventBus.js';
 import { readPreferences, writePreferences, clearTemporaryFiles } from '../../core/utils/appPreferences.js';
+import { resolveProviderInfo } from '../../core/identity/provider.js';
 
 export default class UserProfileApp extends BaseApp {
   static get parameters() {
@@ -57,6 +58,23 @@ export default class UserProfileApp extends BaseApp {
 
   async onRun(terminalOutputCallback = null, appParams = {}) {
     console.log(`[UserProfileApp - ${this.instanceId}] Inicializando Painel do Usuário...`);
+
+    this.provider = resolveProviderInfo(this.auth);
+    this.localMode = this.provider.mode !== 'sso' || !this.provider.supportsLogin;
+    if (this.localMode) {
+      this.$('[data-tab="sso"]')?.remove();
+      this.$('#sectionSso')?.remove();
+      this.$('#ssoQuickActionBtn')?.remove();
+      this.$('.dev-auth-box')?.remove();
+      const organizationLabel = this.$('label[for="inputOrganization"]');
+      if (organizationLabel) organizationLabel.textContent = 'Organização / Grupo';
+      const promptOption = this.$('#selectPromptStyle option[value="cybersigil"]');
+      if (promptOption) promptOption.textContent = '[user@local] $';
+      const emailInput = /** @type {HTMLInputElement | null} */ (this.$('#inputEmail'));
+      if (emailInput) emailInput.placeholder = 'voce@local';
+      const organizationInput = /** @type {HTMLInputElement | null} */ (this.$('#inputOrganization'));
+      if (organizationInput) organizationInput.placeholder = 'Seu contexto local';
+    }
 
     // Elementos do Header
     this.userAvatarImg = this.$('#userAvatarImg');
@@ -230,7 +248,15 @@ export default class UserProfileApp extends BaseApp {
     // A cached profile never grants an authenticated session.
     const authUser = this.auth?.getCurrentUser?.() || this.auth?.getUser?.();
     loadedData = { ...loadedData, tier: 'guest', role: 'guest', circle: 'veil' };
-    if (authUser) {
+    if (this.localMode) {
+      loadedData = {
+        ...loadedData,
+        tier: 'guest',
+        role: 'local',
+        circle: 'local',
+        organization: 'Este dispositivo'
+      };
+    } else if (authUser) {
       const claims = authUser.roles || authUser['urn:zitadel:iam:org:project:roles'] || [];
       const roles = Array.isArray(claims) ? claims : Object.keys(claims);
       const admin = roles.some(role => ['demiurge', 'sysadmin', 'architect'].includes(role));
@@ -268,11 +294,12 @@ export default class UserProfileApp extends BaseApp {
 
     if (this.headerTierBadge) {
       this.headerTierBadge.className = `tier-pill tier-${this.userData.tier}`;
-      this.headerTierBadge.textContent = this.userData.tier.toUpperCase();
+      this.headerTierBadge.textContent = this.localMode ? 'LOCAL' : this.userData.tier.toUpperCase();
     }
 
     if (this.headerCircleBadge) {
       const circleMap = {
+        local: this.provider?.label || 'Este dispositivo',
         veil: 'Círculo Veil (Iniciado)',
         practice: 'Círculo Practice (Prática)',
         egregore: 'Círculo Egregore (Egrégora)',
@@ -286,7 +313,9 @@ export default class UserProfileApp extends BaseApp {
     }
 
     if (this.ssoQuickActionText) {
-      this.ssoQuickActionText.textContent = this.userData.tier === 'guest' ? 'Entrar com SSO RDA' : 'Sair da Conta';
+      this.ssoQuickActionText.textContent = this.userData.tier === 'guest'
+        ? (this.provider?.loginLabel || 'Entrar')
+        : 'Sair da Conta';
     }
 
     // Form Inputs: Identity
@@ -308,13 +337,16 @@ export default class UserProfileApp extends BaseApp {
     if (this.ssoStatusTitle && this.ssoStatusDesc) {
       if (this.userData.tier !== 'guest') {
         this.ssoStatusTitle.textContent = `Sessão Autenticada (${this.userData.role.toUpperCase()})`;
-        this.ssoStatusDesc.textContent = `Conectado como ${this.userData.email} no ecossistema Reverso do Avesso (Zitadel OIDC).`;
+        this.ssoStatusDesc.textContent = this.provider?.connectedDescription || 'Sua conta está conectada.';
         if (this.loginZitadelBtn) this.loginZitadelBtn.style.display = 'none';
         if (this.logoutBtn) this.logoutBtn.style.display = 'inline-flex';
       } else {
         this.ssoStatusTitle.textContent = 'Sessão Local (Não Autenticado)';
-        this.ssoStatusDesc.textContent = 'Conecte-se com Zitadel SSO para sincronizar seus dados e liberar recursos de computação.';
-        if (this.loginZitadelBtn) this.loginZitadelBtn.style.display = 'inline-flex';
+        this.ssoStatusDesc.textContent = this.provider?.loginDescription || 'Entre com sua conta para sincronizar seus dados.';
+        if (this.loginZitadelBtn) {
+          this.loginZitadelBtn.style.display = this.provider?.supportsLogin ? 'inline-flex' : 'none';
+          this.loginZitadelBtn.textContent = this.provider?.loginLabel || 'Entrar';
+        }
         if (this.logoutBtn) this.logoutBtn.style.display = 'none';
       }
     }
