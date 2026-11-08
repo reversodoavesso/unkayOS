@@ -39,7 +39,7 @@ describe('Persistent application preferences', () => {
 
   it('drops unsupported accent preferences while retaining the selected appearance', () => {
     expect(normalizeAppearance({ theme: 'light', accentColor: '#a855f7', wallpaper: '#0a0a0a', glassmorphism: false, fontScale: 'large' })).toEqual({
-      theme: 'light', wallpaper: '#0a0a0a', glassmorphism: false, fontScale: 'large', accent: 'primary'
+      theme: 'light', wallpaper: '#0a0a0a', glassmorphism: false, fontScale: 'large', accent: 'cyan'
     });
     expect(normalizeAppearance(null)).not.toHaveProperty('accentColor');
   });

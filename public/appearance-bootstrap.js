@@ -33,9 +33,7 @@
     const desktop = document.getElementById('desktop');
     if (!desktop) return false;
     desktop.dataset.rdaProduct = 'unkayos';
-    const legacyAccents = { cyan: 'primary', violet: 'nebula', blue: 'cobalt', rose: 'magma', fuchsia: 'lotus', teal: 'aurora', indigo: 'cobalt' };
-    const savedAccent = typeof appearance.accent === 'string' ? appearance.accent : '';
-    const accent = Object.hasOwn(legacyAccents, savedAccent) ? legacyAccents[savedAccent] : (/^(primary|nebula|magma|lotus|aurora|cobalt)$/.test(savedAccent) ? savedAccent : 'primary');
+    const accent = typeof appearance.accent === 'string' && /^[a-z][a-z0-9-]*$/.test(appearance.accent) ? appearance.accent : 'cyan';
     desktop.dataset.unkayAccent = accent;
     const wallpaper = appearance.wallpaper === '/assets/images/wallpaper_01.jpg' ? '/assets/images/wallpapers/01-horizonte-limpo-v2.jpg' : appearance.wallpaper;
     if (typeof wallpaper === 'string' && wallpaper) {

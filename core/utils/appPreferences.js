@@ -46,7 +46,7 @@ export const DEFAULT_APPEARANCE = Object.freeze({
   wallpaper: DEFAULT_IMAGE_WALLPAPER,
   glassmorphism: true,
   fontScale: 'standard',
-  accent: 'primary'
+  accent: 'cyan'
 });
 
 /** Preset identifiers are independent from canonical RDA brand primitives. */
@@ -154,7 +154,7 @@ export function applyWallpaperStyle(element, wallpaper, options = {}) {
     if (isImageWallpaper(wallpaper)) {
       const shouldAdapt = Boolean(options && options.adaptToAccent === true && (options.intensity ?? 1.0) > 0.001);
       if (shouldAdapt && canUseCanvas2D()) {
-        const accent = normalizeAccent(options.accent || element.dataset?.unkayAccent || 'primary');
+        const accent = normalizeAccent(options.accent || element.dataset?.unkayAccent || 'cyan');
         const systemTheme = options.systemTheme || (typeof document !== 'undefined' && document.documentElement?.dataset?.theme === 'light' ? 'light' : 'dark');
         const autoPreset = getOptimalWallpaperRemapPreset(wallpaper, accent, systemTheme);
         const remapOpts = {

@@ -51,8 +51,8 @@ describe('V2 Wallpapers Catalog & Oklab Manifold Palette Remap', () => {
   });
 
   it('computes optimized Oklab presets per (wallpaper x accent x systemTheme)', () => {
-    const darkPreset = getOptimalWallpaperRemapPreset('/assets/images/wallpapers/07-ultima-luz-noturno.jpg', 'cobalt', 'dark');
-    const lightPreset = getOptimalWallpaperRemapPreset('/assets/images/wallpapers/07-ultima-luz-noturno.jpg', 'cobalt', 'light');
+    const darkPreset = getOptimalWallpaperRemapPreset('/assets/images/wallpapers/07-ultima-luz-noturno.jpg', 'indigo', 'dark');
+    const lightPreset = getOptimalWallpaperRemapPreset('/assets/images/wallpapers/07-ultima-luz-noturno.jpg', 'indigo', 'light');
 
     expect(darkPreset.imageLabel).toBe('Última Luz');
     expect(darkPreset.theme).toBe('preserve');
@@ -87,15 +87,14 @@ describe('V2 Wallpapers Catalog & Oklab Manifold Palette Remap', () => {
   });
 
   it('maps each unkayOS accent preset to its canonical RDA token group', () => {
-    expect(getTargetGroupsForAccent('primary')).toEqual(['primary', 'secondary', 'neutral']);
-    expect(getTargetGroupsForAccent('nebula')).toEqual(['nebula', 'secondary', 'neutral']);
-    expect(getTargetGroupsForAccent('magma')).toEqual(['magma', 'secondary', 'neutral']);
-    expect(getTargetGroupsForAccent('lotus')).toEqual(['lotus', 'secondary', 'neutral']);
-    expect(getTargetGroupsForAccent('aurora')).toEqual(['aurora', 'secondary', 'neutral']);
-    expect(getTargetGroupsForAccent('cobalt')).toEqual(['cobalt', 'secondary', 'neutral']);
+    expect(getTargetGroupsForAccent('cyan')).toEqual(['primary', 'secondary', 'neutral']);
     expect(getTargetGroupsForAccent('violet')).toEqual(['nebula', 'secondary', 'neutral']);
-    expect(getTargetGroupsForAccent('blue')).toEqual(['cobalt', 'secondary', 'neutral']);
-    expect(Object.keys(ACCENT_TO_RDA_GROUP)).toHaveLength(6);
+    expect(getTargetGroupsForAccent('rose')).toEqual(['magma', 'secondary', 'neutral']);
+    expect(getTargetGroupsForAccent('fuchsia')).toEqual(['lotus', 'secondary', 'neutral']);
+    expect(getTargetGroupsForAccent('teal')).toEqual(['aurora', 'secondary', 'neutral']);
+    expect(getTargetGroupsForAccent('indigo')).toEqual(['cobalt', 'secondary', 'neutral']);
+    expect(getTargetGroupsForAccent('blue')).toEqual(['info', 'secondary', 'neutral']);
+    expect(Object.keys(ACCENT_TO_RDA_GROUP)).toHaveLength(7);
   });
 
   it('adapts selective cyan highlights to the active DS accent while keeping neutral grays neutral in affinity mode', () => {
@@ -109,9 +108,9 @@ describe('V2 Wallpapers Catalog & Oklab Manifold Palette Remap', () => {
       ])
     };
 
-    // Remap to 'magma'
+    // Remap to 'rose' (magma)
     const roseOut = remapImageDataOklabManifold(input, {
-      accent: 'magma',
+      accent: 'rose',
       strategy: 'affinity'
     });
 
@@ -125,9 +124,9 @@ describe('V2 Wallpapers Catalog & Oklab Manifold Palette Remap', () => {
     expect(cR).toBeGreaterThan(cG + 35);
     expect(cR).toBeGreaterThan(cB);
 
-    // Remap to 'nebula'
+    // Remap to 'violet' (nebula)
     const violetOut = remapImageDataOklabManifold(input, {
-      accent: 'nebula',
+      accent: 'violet',
       strategy: 'affinity'
     });
     const [vR, vG, vB] = [violetOut.data[4], violetOut.data[5], violetOut.data[6]];
@@ -148,7 +147,7 @@ describe('V2 Wallpapers Catalog & Oklab Manifold Palette Remap', () => {
     };
 
     const relOut = remapImageDataOklabManifold(input, {
-      accent: 'aurora',
+      accent: 'teal',
       strategy: 'relative',
       theme: 'dark'
     });
@@ -156,7 +155,7 @@ describe('V2 Wallpapers Catalog & Oklab Manifold Palette Remap', () => {
     expect(relOut.data[3]).toBe(255);
 
     const splitOut = remapImageDataOklabManifold(input, {
-      accent: 'cobalt',
+      accent: 'indigo',
       strategy: 'split-tone',
       theme: 'light'
     });
@@ -287,16 +286,16 @@ describe('V2 Wallpapers Catalog & Oklab Manifold Palette Remap', () => {
     });
 
     it('persists and retrieves remapped wallpaper cache for zero-flash reload and blends intensity', () => {
-      const opts = { accent: 'nebula', strategy: 'affinity', theme: 'preserve', chromaBoost: 1.2, temperature: 0.025, intensity: 0.8 };
+      const opts = { accent: 'violet', strategy: 'affinity', theme: 'preserve', chromaBoost: 1.2, temperature: 0.025, intensity: 0.8 };
       const wp = '/assets/images/wallpapers/01-horizonte-limpo-v2.jpg';
-      const fakeDataUrl = 'data:image/jpeg;base64,remapped_nebula_test';
+      const fakeDataUrl = 'data:image/jpeg;base64,remapped_violet_test';
 
       persistDesktopRemappedWallpaper(wp, opts, fakeDataUrl);
       expect(getCachedRemappedWallpaper(wp, opts)).toBe(fakeDataUrl);
 
       // Verify intensity=0 preserves original pixel colors
       const srcPixel = { width: 1, height: 1, data: new Uint8ClampedArray([10, 180, 210, 255]) };
-      const zeroIntensityOut = remapImageDataOklabManifold(srcPixel, { accent: 'magma', intensity: 0 });
+      const zeroIntensityOut = remapImageDataOklabManifold(srcPixel, { accent: 'rose', intensity: 0 });
       expect(Math.abs(zeroIntensityOut.data[0] - 10)).toBeLessThanOrEqual(2);
       expect(Math.abs(zeroIntensityOut.data[1] - 180)).toBeLessThanOrEqual(2);
       expect(Math.abs(zeroIntensityOut.data[2] - 210)).toBeLessThanOrEqual(2);

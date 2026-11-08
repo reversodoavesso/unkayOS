@@ -10,13 +10,11 @@ const catalog = JSON.parse(readFileSync('design-system/rda/icons/manifest.json',
 describe('Official DS integration and app authoring', () => {
   it('updates only the product preset and rejects arbitrary colors as presets', () => {
     const desktop = document.createElement('div');
-    applyAppearance({ theme: 'light', accent: 'nebula' }, desktop);
-    expect(desktop.dataset.unkayAccent).toBe('nebula');
+    applyAppearance({ theme: 'light', accent: 'violet' }, desktop);
+    expect(desktop.dataset.unkayAccent).toBe('violet');
     expect(document.documentElement.style.getPropertyValue('--rda-color-primary-400')).toBe('');
-    expect(normalizeAppearance({ accent: '#a855f7' }).accent).toBe('primary');
-    expect(normalizeAppearance({ accent: 'toString' }).accent).toBe('primary');
-    expect(normalizeAppearance({ accent: 'violet' }).accent).toBe('nebula');
-    expect(normalizeAppearance({ accent: 'cyan' }).accent).toBe('primary');
+    expect(normalizeAppearance({ accent: '#a855f7' }).accent).toBe('cyan');
+    expect(normalizeAppearance({ accent: 'toString' }).accent).toBe('cyan');
   });
 
   it('uses official catalog icons in every bundled app manifest and static interface', () => {

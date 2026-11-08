@@ -258,7 +258,7 @@
     background: var(--color-surface-secondary);
     border-right: 1px solid var(--color-border-primary);
     padding: 8px 4px;
-    font-family: var(--rda-font-family-mono);
+    font-family: 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.4;
     color: var(--color-text-secondary);
@@ -281,7 +281,7 @@
     background: var(--color-background-primary);
     border: none;
     color: var(--color-text-primary);
-    font-family: var(--rda-font-family-mono);
+    font-family: 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.4;
     resize: none;
@@ -549,15 +549,15 @@
         flex-wrap: wrap;
         gap: 4px;
     }
-
+    
     .toolbar-btn span:not(rda-icon) {
         display: none;
     }
-
+    
     .status-bar {
         font-size: 10px;
     }
-
+    
     .modal-content {
         width: 95%;
         margin: 10px;

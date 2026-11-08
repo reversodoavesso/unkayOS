@@ -95,15 +95,16 @@ export const WALLPAPER_IMAGE_PROFILES = Object.freeze({
 
 /**
  * Per-accent perceptual Oklab modifiers to balance warm/cool saturation and
- * highlight isolation across all six canonical RDA accent presets.
+ * highlight isolation across all 7 unkayOS accent presets.
  */
 export const ACCENT_CALIBRATION = Object.freeze({
-  primary: Object.freeze({ chromaMul: 1.00, tempOffset: 0.000 }),
-  nebula: Object.freeze({ chromaMul: 1.08, tempOffset: 0.002 }),
-  magma: Object.freeze({ chromaMul: 0.96, tempOffset: -0.002 }),
-  lotus: Object.freeze({ chromaMul: 0.98, tempOffset: -0.001 }),
-  aurora: Object.freeze({ chromaMul: 1.06, tempOffset: 0.000 }),
-  cobalt: Object.freeze({ chromaMul: 1.12, tempOffset: 0.002 })
+  cyan: Object.freeze({ chromaMul: 1.00, tempOffset: 0.000 }),
+  violet: Object.freeze({ chromaMul: 1.08, tempOffset: 0.002 }),
+  blue: Object.freeze({ chromaMul: 1.10, tempOffset: 0.001 }),
+  rose: Object.freeze({ chromaMul: 0.96, tempOffset: -0.002 }),
+  fuchsia: Object.freeze({ chromaMul: 0.98, tempOffset: -0.001 }),
+  teal: Object.freeze({ chromaMul: 1.06, tempOffset: 0.000 }),
+  indigo: Object.freeze({ chromaMul: 1.12, tempOffset: 0.002 })
 });
 
 /**
@@ -111,11 +112,11 @@ export const ACCENT_CALIBRATION = Object.freeze({
  * combination.
  *
  * @param {string} wallpaper Wallpaper URL or path
- * @param {string} [accent='primary'] Active unkayOS accent preset
+ * @param {string} [accent='cyan'] Active unkayOS accent preset
  * @param {'dark'|'light'} [systemTheme='dark'] Active system theme
  * @returns {{ strategy: 'affinity'|'relative'|'split-tone', theme: 'preserve'|'dark'|'light', chromaBoost: number, temperature: number, intensity: number, imageLabel: string }}
  */
-export function getOptimalWallpaperRemapPreset(wallpaper = '', accent = 'primary', systemTheme = 'dark') {
+export function getOptimalWallpaperRemapPreset(wallpaper = '', accent = 'cyan', systemTheme = 'dark') {
   const normAccent = normalizeAccent(accent);
   const isLight = systemTheme === 'light';
   const basename = String(wallpaper || '').split('/').pop()?.split('?')[0] || '';
@@ -129,7 +130,7 @@ export function getOptimalWallpaperRemapPreset(wallpaper = '', accent = 'primary
     darkIntensity: 0.95,
     lightIntensity: 0.90
   };
-  const accentCal = ACCENT_CALIBRATION[normAccent] || ACCENT_CALIBRATION.primary;
+  const accentCal = ACCENT_CALIBRATION[normAccent] || ACCENT_CALIBRATION.cyan;
   const themeChromaFactor = isLight ? 0.92 : 1.0;
 
   const chromaBoost = Number(
@@ -190,10 +191,10 @@ export async function ensureWasmOklabReady() {
 
 /**
  * Resolves the ordered list of RDA token groups for a given unkayOS accent preset.
- * @param {string} [accent='primary']
+ * @param {string} [accent='cyan']
  * @returns {[string, string, string]}
  */
-export function getTargetGroupsForAccent(accent = 'primary') {
+export function getTargetGroupsForAccent(accent = 'cyan') {
   const normalized = normalizeAccent(accent);
   const primaryGroup = ACCENT_TO_RDA_GROUP[normalized] || 'primary';
   return [primaryGroup, 'secondary', 'neutral'];
@@ -473,7 +474,7 @@ export function applyThemeCurveScalar(L, theme = 'preserve') {
  *
  * @param {{ data: Uint8ClampedArray|Uint8Array, width: number, height: number }} imageData
  * @param {object} [options={}]
- * @param {string} [options.accent='primary'] Active unkayOS accent preset ID
+ * @param {string} [options.accent='cyan'] Active unkayOS accent preset ID
  * @param {string[]} [options.targetGroups] Explicit RDA token groups (overrides `accent`)
  * @param {'affinity'|'relative'|'split-tone'} [options.strategy='affinity']
  * @param {'preserve'|'dark'|'light'} [options.theme='preserve']

@@ -13,9 +13,9 @@ describe('Workspace preferences and widget lifecycle', () => {
     const saved = [];
     const session = new WorkspaceSession({ desktop: document.body, appManager: {}, auth: {}, fs: { mkdir: async () => {}, writeFile: async (path, text) => { await Promise.resolve(); saved.push(JSON.parse(text)); }, flush: async () => {} } });
     session.apply = vi.fn(); session.widgets.applyPreferences = vi.fn(async () => {});
-    await Promise.all([session.update({ shell: { bar: 'edge' } }), session.update({ appearance: { accent: 'magma' } })]);
+    await Promise.all([session.update({ shell: { bar: 'edge' } }), session.update({ appearance: { accent: 'rose' } })]);
     expect(saved.at(-1).shell.bar).toBe('edge');
-    expect(saved.at(-1).appearance.accent).toBe('magma');
+    expect(saved.at(-1).appearance.accent).toBe('rose');
     expect(saved.at(-1).shell.pinned).toContain('theorb');
     await Promise.all([session.pin('terminal'), session.pin('settings')]);
     expect(session.settings.shell.pinned).toEqual(expect.arrayContaining(['terminal', 'settings']));

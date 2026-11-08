@@ -12,7 +12,7 @@ describe('Distributed wallpaper Wasm kernel', () => {
   it('agrees with the JS fallback across every accent and grading strategy', () => {
     const pixels = new Uint8ClampedArray([0,0,0,255, 255,255,255,200, 82,82,82,255, 6,182,212,255, 139,92,246,128, 244,63,94,255, 180,195,210,255, 10,20,30,0]);
     const input = { width: 8, height: 1, data: pixels };
-    for (const accent of ['primary','nebula','magma','lotus','aurora','cobalt']) for (const strategy of ['affinity','relative','split-tone']) for (const theme of ['preserve','light','dark']) {
+    for (const accent of ['cyan','violet','blue','rose','fuchsia','teal','indigo']) for (const strategy of ['affinity','relative','split-tone']) for (const theme of ['preserve','light','dark']) {
       const options = { accent, strategy, theme, intensity: 0.8 };
       const wasm = remapImageDataOklabManifold(input, options).data;
       const js = remapImageDataOklabManifold(input, { ...options, forceJs: true }).data;
