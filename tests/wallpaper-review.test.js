@@ -35,7 +35,7 @@ describe('Wallpaper integration regressions', () => {
     expect(getCachedRemappedWallpaper(b)).toBeNull();
   });
   it('restores cached pixels only for the selected appearance parameters before app startup', () => {
-    const appearance = normalizeAppearance({ wallpaper: DEFAULT_IMAGE_WALLPAPER, accent: 'violet', wallpaperRemapPresetMode: 'custom', wallpaperRemapIntensity: 0.5 });
+    const appearance = normalizeAppearance({ wallpaper: DEFAULT_IMAGE_WALLPAPER, accent: 'nebula', wallpaperRemapPresetMode: 'custom', wallpaperRemapIntensity: 0.5 });
     const params = { ...resolveEffectiveRemapParams(appearance), appearanceKey: wallpaperAppearanceSignature(appearance) };
     persistDesktopRemappedWallpaper(appearance.wallpaper, params, 'data:image/jpeg;base64,QQ==');
     localStorage.setItem('unkayos_system_settings', JSON.stringify({ appearance }));

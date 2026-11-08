@@ -1,6 +1,6 @@
 export const accentPresets = {
-  "cyan": {
-    "label": "Ciano RDA",
+  "primary": {
+    "label": "Ciano",
     "dark": {
       "solid": "#06b6d4",
       "onSolid": "#0a0a0a",
@@ -24,8 +24,8 @@ export const accentPresets = {
       "focus": "#0e7490"
     }
   },
-  "violet": {
-    "label": "Violeta",
+  "nebula": {
+    "label": "Nebula",
     "dark": {
       "solid": "#a78bfa",
       "onSolid": "#0a0a0a",
@@ -49,33 +49,8 @@ export const accentPresets = {
       "focus": "#6d28d9"
     }
   },
-  "blue": {
-    "label": "Azul",
-    "dark": {
-      "solid": "#60a5fa",
-      "onSolid": "#0a0a0a",
-      "hover": "#93c5fd",
-      "active": "#3b82f6",
-      "subtle": "#172554",
-      "onSubtle": "#bfdbfe",
-      "text": "#93c5fd",
-      "border": "#60a5fa",
-      "focus": "#60a5fa"
-    },
-    "light": {
-      "solid": "#1d4ed8",
-      "onSolid": "#ffffff",
-      "hover": "#1e40af",
-      "active": "#1e3a8a",
-      "subtle": "#eff6ff",
-      "onSubtle": "#1e40af",
-      "text": "#1d4ed8",
-      "border": "#1d4ed8",
-      "focus": "#1d4ed8"
-    }
-  },
-  "rose": {
-    "label": "Rosa",
+  "magma": {
+    "label": "Magma",
     "dark": {
       "solid": "#fb7185",
       "onSolid": "#0a0a0a",
@@ -99,8 +74,8 @@ export const accentPresets = {
       "focus": "#be123c"
     }
   },
-  "fuchsia": {
-    "label": "Fúcsia",
+  "lotus": {
+    "label": "Lotus",
     "dark": {
       "solid": "#e879f9",
       "onSolid": "#0a0a0a",
@@ -124,8 +99,8 @@ export const accentPresets = {
       "focus": "#a21caf"
     }
   },
-  "teal": {
-    "label": "Turquesa",
+  "aurora": {
+    "label": "Aurora",
     "dark": {
       "solid": "#2dd4bf",
       "onSolid": "#0a0a0a",
@@ -149,8 +124,8 @@ export const accentPresets = {
       "focus": "#0f766e"
     }
   },
-  "indigo": {
-    "label": "Índigo",
+  "cobalt": {
+    "label": "Cobalt",
     "dark": {
       "solid": "#818cf8",
       "onSolid": "#000000",

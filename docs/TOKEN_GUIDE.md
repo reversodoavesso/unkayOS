@@ -2,7 +2,7 @@
 
 ## Aparência e identidade RDA
 
-Os tokens oficiais e o CSS de componentes são distribuídos em `/design-system/rda/`. O accent do produto usa o eixo `data-rda-product="unkayos"` e presets validados `cyan`, `violet` e `blue`, sem alterar primitivos de marca. Consulte o [guia prático canônico](./APP_DEVELOPMENT.md) para exemplos executáveis, distribuição, ícones e ciclo de vida. As seções abaixo documentam aliases de compatibilidade de apps antigos.
+Os tokens oficiais e o CSS de componentes são distribuídos em `/design-system/rda/`. O accent do produto usa o eixo `data-rda-product="unkayos"` e os presets canônicos `primary`, `nebula`, `magma`, `lotus`, `aurora` e `cobalt`, sem alterar primitivos de marca. Consulte o [guia prático canônico](./APP_DEVELOPMENT.md) para exemplos executáveis, distribuição, ícones e ciclo de vida. As seções abaixo documentam aliases de compatibilidade de apps antigos.
 
 ## 📋 Tokens Padronizados
 
