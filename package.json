@@ -16,7 +16,7 @@
     "build:dist": "vite build",
     "preview": "vite preview",
     "test": "vitest run && npm run test:server",
-    "test:server": "node --test server/tests",
+    "test:server": "node scripts/run-server-tests.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
