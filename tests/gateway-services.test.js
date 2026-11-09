@@ -97,6 +97,123 @@ describe('gateway identity adapter', () => {
         expect(changes.at(-1)).toBe(null);
         expect(identity.isAuthenticated()).toBe(false);
     });
+
+    it('retires legacy auth tokens upon concluding session migration without touching VFS or preferences', async () => {
+        const storage = new Map();
+        const mockStorage = {
+            getItem: vi.fn(k => storage.get(k) ?? null),
+            setItem: vi.fn((k, v) => storage.set(k, String(v))),
+            removeItem: vi.fn(k => storage.delete(k)),
+            clear: vi.fn(() => storage.clear())
+        };
+        vi.stubGlobal('localStorage', mockStorage);
+
+        localStorage.setItem('unkayos_auth_token', 'legacy-access-token');
+        localStorage.setItem('unkayos_refresh_token', 'legacy-refresh-token');
+        localStorage.setItem('unkayos_user_data', JSON.stringify({ name: 'Old User' }));
+        localStorage.setItem('unkayos_code_verifier', 'verifier-123');
+        localStorage.setItem('unkayos_oauth_state', 'state-123');
+        localStorage.setItem('unkayos_theme', 'dark');
+        localStorage.setItem('unkayos_desktop_accent', 'cyan');
+        localStorage.setItem('wasm_vfs_root', '{"files":{"test.txt":"content"}}');
+
+        const transport = vi.fn(async () => json(200, sessionBody({
+            authenticated: true,
+            principal: { id: 'p-migrated', name: 'Migrated User', issuer: 'https://id.example.com', groups: ['members'], mfa: true }
+        })));
+
+        const identity = createGatewayIdentity({ transport });
+        await identity.ready;
+
+        expect(identity.isAuthenticated()).toBe(true);
+        expect(localStorage.getItem('unkayos_auth_token')).toBe(null);
+        expect(localStorage.getItem('unkayos_refresh_token')).toBe(null);
+        expect(localStorage.getItem('unkayos_user_data')).toBe(null);
+        expect(localStorage.getItem('unkayos_code_verifier')).toBe(null);
+        expect(localStorage.getItem('unkayos_oauth_state')).toBe(null);
+
+        expect(localStorage.getItem('unkayos_theme')).toBe('dark');
+        expect(localStorage.getItem('unkayos_desktop_accent')).toBe('cyan');
+        expect(localStorage.getItem('wasm_vfs_root')).toBe('{"files":{"test.txt":"content"}}');
+
+        vi.unstubAllGlobals();
+    });
+
+    it('does not retire legacy tokens before session migration concludes', async () => {
+        const storage = new Map();
+        const mockStorage = {
+            getItem: vi.fn(k => storage.get(k) ?? null),
+            setItem: vi.fn((k, v) => storage.set(k, String(v))),
+            removeItem: vi.fn(k => storage.delete(k)),
+            clear: vi.fn(() => storage.clear())
+        };
+        vi.stubGlobal('localStorage', mockStorage);
+
+        localStorage.setItem('unkayos_auth_token', 'legacy-access-token');
+        localStorage.setItem('unkayos_refresh_token', 'legacy-refresh-token');
+
+        const transport = vi.fn(async () => json(200, sessionBody({
+            authenticated: false,
+            principal: null
+        })));
+
+        const identity = createGatewayIdentity({ transport });
+        await identity.ready;
+
+        expect(identity.isAuthenticated()).toBe(false);
+        expect(localStorage.getItem('unkayos_auth_token')).toBe('legacy-access-token');
+        expect(localStorage.getItem('unkayos_refresh_token')).toBe('legacy-refresh-token');
+
+        vi.unstubAllGlobals();
+    });
+
+    it('handles server session revocation by clearing authenticated state and permissions', async () => {
+        let authenticated = true;
+        const transport = vi.fn(async () => {
+            if (!authenticated) {
+                return json(401, { error: { code: 'UNAUTHENTICATED', message: 'Sessão revogada.' } });
+            }
+            return json(200, sessionBody());
+        });
+
+        const identity = createGatewayIdentity({ transport });
+        await identity.ready;
+        expect(identity.isAuthenticated()).toBe(true);
+
+        authenticated = false;
+        await expect(identity.refresh()).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
+
+        expect(identity.isAuthenticated()).toBe(false);
+        expect(identity.getCurrentUser()).toBe(null);
+        expect(identity.hasRole('members')).toBe(false);
+        expect(identity.hasPermission('files.read')).toBe(false);
+    });
+
+    it('handles account switching cleanly without retaining previous user state', async () => {
+        let currentPrincipal = { id: 'user-alice', name: 'Alice', issuer: 'https://id.example.com', groups: ['admin'] };
+        const transport = vi.fn(async () => json(200, sessionBody({
+            authenticated: true,
+            principal: currentPrincipal
+        })));
+
+        const identity = createGatewayIdentity({ transport });
+        const events = [];
+        identity.on('change', u => events.push(u?.id ?? null));
+        await identity.ready;
+
+        expect(identity.getCurrentUser().name).toBe('Alice');
+        expect(identity.getAPI().getUserPrompt()).toBe('Alice');
+        expect(identity.hasRole('admin')).toBe(true);
+
+        currentPrincipal = { id: 'user-bob', name: 'Bob', issuer: 'https://id.example.com', groups: ['guest'] };
+        await identity.refresh();
+
+        expect(identity.getCurrentUser().name).toBe('Bob');
+        expect(identity.getAPI().getUserPrompt()).toBe('Bob');
+        expect(identity.hasRole('admin')).toBe(false);
+        expect(identity.hasRole('guest')).toBe(true);
+        expect(events).toEqual(['user-alice', 'user-bob']);
+    });
 });
 
 describe('gateway access adapter', () => {

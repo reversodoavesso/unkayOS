@@ -163,3 +163,52 @@ test('política própria nega IA para grupo sem regra', async t => {
     assert.equal(decision.json.allowed, false);
     assert.equal(decision.json.reason, 'DEFAULT_DENY');
 });
+
+test('troca de conta no gateway invalida sessão anterior', async t => {
+    const gateway = await startGateway();
+    t.after(() => gateway.close());
+
+    // Primeiro login
+    const login1 = await loginLocal(gateway);
+    const oldSessionToken = gateway.jar.get('unkay_session');
+    assert.ok(oldSessionToken);
+
+    // Segundo login (simulando troca de conta na mesma conexão)
+    const login2 = await gateway.request('/session/login', {
+        method: 'POST', body: {}, headers: { 'x-unkay-csrf': login1.csrf }
+    });
+    assert.equal(login2.status, 200);
+    const newSessionToken = gateway.jar.get('unkay_session');
+    assert.ok(newSessionToken);
+    assert.notEqual(oldSessionToken, newSessionToken);
+
+    // A sessão antiga foi destruída e não pode mais avaliar ações
+    const oldRequest = await fetch(`${gateway.origin}/access/evaluate`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+            cookie: `unkay_session=${oldSessionToken}; unkay_session_csrf=${login1.csrf}`,
+            'x-unkay-csrf': login1.csrf
+        },
+        body: JSON.stringify({ action: 'files.local.read' })
+    });
+    assert.equal(oldRequest.status, 401);
+});
+
+test('revogação de sessões do principal via store', async t => {
+    const gateway = await startGateway();
+    t.after(() => gateway.close());
+
+    const { csrf } = await loginLocal(gateway);
+    const sessionToken = gateway.jar.get('unkay_session');
+    const sessionData = gateway.gateway.sessions.get(sessionToken);
+    assert.ok(sessionData);
+
+    // Revoga sessões do principal
+    const count = gateway.gateway.sessions.destroyPrincipal(sessionData.principal.id);
+    assert.ok(count >= 1);
+
+    // Sessão não é mais válida
+    const revoked = await gateway.request('/session');
+    assert.equal(revoked.json.authenticated, false);
+});

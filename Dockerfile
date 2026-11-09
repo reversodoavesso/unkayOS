@@ -19,3 +19,18 @@ COPY --chmod=755 docker/40-unkayos-config.sh /docker-entrypoint.d/40-unkayos-con
 EXPOSE 80
 HEALTHCHECK --interval=15s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1/health >/dev/null || exit 1
 CMD ["nginx", "-g", "daemon off;"]
+
+# Stage 3: Dedicated Node BFF Gateway runtime (explicit backend process)
+FROM node:22-alpine AS gateway
+WORKDIR /app
+ENV NODE_ENV=production
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY server ./server
+COPY core/host/config/validators.generated.js ./core/host/config/validators.generated.js
+COPY core/host/services ./core/host/services
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 8080
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1:8080/health >/dev/null || exit 1
+CMD ["node", "server/index.mjs", "--static=dist"]

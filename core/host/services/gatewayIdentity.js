@@ -10,6 +10,22 @@ const DEFAULTS = Object.freeze({
     csrfHeader: 'x-unkay-csrf'
 });
 
+export const LEGACY_AUTH_STORAGE_KEYS = Object.freeze([
+    'unkayos_auth_token',
+    'unkayos_refresh_token',
+    'unkayos_user_data',
+    'unkayos_code_verifier',
+    'unkayos_oauth_state',
+    'unkayos_oauth_callback'
+]);
+
+export function clearLegacyAuthTokens() {
+    if (typeof localStorage === 'undefined') return;
+    try {
+        for (const key of LEGACY_AUTH_STORAGE_KEYS) localStorage.removeItem(key);
+    } catch {}
+}
+
 /**
  * @param {object} options
  * @param {typeof fetch} [options.transport]
@@ -114,6 +130,9 @@ export function createGatewayIdentity(options = {}) {
 
     function adopt(next) {
         session = next;
+        if (session?.authenticated === true) {
+            clearLegacyAuthTokens();
+        }
         const current = user();
         const identity = current?.id || null;
         if (identity !== lastIdentity) {
@@ -124,8 +143,15 @@ export function createGatewayIdentity(options = {}) {
     }
 
     async function refresh(options = {}) {
-        const body = await requestJson(`${config.basePath}/session`, { signal: options.signal });
-        return adopt(body);
+        try {
+            const body = await requestJson(`${config.basePath}/session`, { signal: options.signal });
+            return adopt(body);
+        } catch (error) {
+            if (error?.status === 401 || error?.code === 'UNAUTHENTICATED') {
+                adopt({ authenticated: false, principal: null });
+            }
+            throw error;
+        }
     }
 
     const providerInfo = () => {
@@ -189,14 +215,17 @@ export function createGatewayIdentity(options = {}) {
         });
     }
 
+    const hasRole = role => Boolean(user()?.roles?.includes(role) || user()?.groups?.includes(role));
+    const hasPermission = permission => Boolean(user()?.permissions?.includes(permission) || user()?.roles?.includes(permission));
+
     const api = {
         isAuthenticated: () => session?.authenticated === true,
         getCurrentUser: user,
         getUserPrompt: () => user()?.name || 'guest@local',
         login,
         logout,
-        hasPermission: () => false,
-        hasRole: () => false,
+        hasPermission,
+        hasRole,
         on,
         off,
         getAuthToken: () => null,
@@ -211,11 +240,12 @@ export function createGatewayIdentity(options = {}) {
         }),
         isAuthenticated: api.isAuthenticated,
         getCurrentUser: user,
+        getUserPrompt: api.getUserPrompt,
         getAuthToken: () => null,
         login,
         logout,
-        hasPermission: api.hasPermission,
-        hasRole: api.hasRole,
+        hasPermission,
+        hasRole,
         on,
         off,
         emit,

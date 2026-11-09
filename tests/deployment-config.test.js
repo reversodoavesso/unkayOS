@@ -67,4 +67,42 @@ describe('public runtime deployment', () => {
             .rejects.toMatchObject({ code: 'CONFIG_CONTENT_TYPE' });
         await expect(loadDeployment({ transport: async () => response(200, '{') })).rejects.toMatchObject({ code: 'CONFIG_JSON_INVALID' });
     });
+
+    it('qualifies effective identity and gateway backend adapters per preset', () => {
+        // Standalone preset: local identity and local access
+        const standalone = createDeployment('standalone');
+        expect(standalone.preset).toBe('standalone');
+        expect(standalone.instances.account.plugin).toBe('unkayos.local-identity');
+        expect(standalone.instances.policy.plugin).toBe('unkayos.local-access');
+        expect(standalone.bindings.identity).toBe('account.identity');
+        expect(standalone.bindings.access).toBe('policy.access');
+        expect(standalone.bindings.ai).toBeUndefined();
+
+        // SSO preset: injected identity and local access
+        const sso = createDeployment('sso');
+        expect(sso.preset).toBe('sso');
+        expect(sso.instances.account.plugin).toBe('unkayos.injected-identity');
+        expect(sso.instances.policy.plugin).toBe('unkayos.local-access');
+
+        // RDA preset: MUST use gateway backend contract with HttpOnly session
+        const rda = createDeployment('rda');
+        expect(rda.preset).toBe('rda');
+        expect(rda.instances.account.plugin).toBe('unkayos.gateway-identity');
+        expect(rda.instances.account.config).toMatchObject({
+            loginPath: '/session/login',
+            logoutPath: '/session/logout'
+        });
+        expect(rda.instances.policy.plugin).toBe('rda.access');
+        expect(rda.instances.assistant.plugin).toBe('rda.ai');
+        expect(rda.instances.cloud.plugin).toBe('rda.sync');
+        expect(rda.bindings.identity).toBe('account.identity');
+        expect(rda.bindings.access).toBe('policy.access');
+        expect(rda.bindings.ai).toBe('assistant.ai');
+        expect(rda.bindings.sync).toBe('cloud.sync');
+
+        // All presets must resolve and validate against strict schema
+        expect(resolveDeployment(standalone)).toBeDefined();
+        expect(resolveDeployment(sso)).toBeDefined();
+        expect(resolveDeployment(rda)).toBeDefined();
+    });
 });

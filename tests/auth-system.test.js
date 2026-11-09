@@ -80,4 +80,33 @@ describe('OIDC callback and session integration', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'other', sub: 'foreign-subject', issuer: 'https://id.reversodoavesso.com', role: 'demiurge' })));
     await expect(auth.getUserInfo()).rejects.toThrow('não corresponde');
   });
+
+  it('clearStoredTokens and retireLegacyTokens remove auth tokens without touching preferences or VFS data', () => {
+    localStorage.setItem('unkayos_auth_token', 'legacy-tok');
+    localStorage.setItem('unkayos_refresh_token', 'legacy-ref');
+    localStorage.setItem('unkayos_user_data', '{"name":"Tester"}');
+    localStorage.setItem('unkayos_code_verifier', 'verifier-1');
+    localStorage.setItem('unkayos_oauth_state', 'state-1');
+    localStorage.setItem('unkayos_theme', 'dracula');
+    localStorage.setItem('unkayos_desktop_accent', 'emerald');
+    localStorage.setItem('wasm_vfs_notes', '{"title":"minhas notas"}');
+
+    auth.clearStoredTokens();
+
+    expect(localStorage.getItem('unkayos_auth_token')).toBeNull();
+    expect(localStorage.getItem('unkayos_refresh_token')).toBeNull();
+    expect(localStorage.getItem('unkayos_user_data')).toBeNull();
+
+    // Preferences and VFS must NOT be wiped
+    expect(localStorage.getItem('unkayos_theme')).toBe('dracula');
+    expect(localStorage.getItem('unkayos_desktop_accent')).toBe('emerald');
+    expect(localStorage.getItem('wasm_vfs_notes')).toBe('{"title":"minhas notas"}');
+
+    // Now test AuthSystem.retireLegacyTokens static / method helper
+    AuthSystem.retireLegacyTokens();
+    expect(localStorage.getItem('unkayos_code_verifier')).toBeNull();
+    expect(localStorage.getItem('unkayos_oauth_state')).toBeNull();
+    expect(localStorage.getItem('unkayos_theme')).toBe('dracula');
+    expect(localStorage.getItem('wasm_vfs_notes')).toBe('{"title":"minhas notas"}');
+  });
 });

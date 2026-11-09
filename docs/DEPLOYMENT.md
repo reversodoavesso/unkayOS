@@ -27,9 +27,13 @@ Exemplo suportado:
 }
 ```
 
-Os presets `standalone`, `sso` e `rda` geram documentos completos, sem mesclar serviços de um preset anterior. `neutral` é alias de geração para `standalone`. Os modos `dev:standalone`/`dev:sso`/`dev:rda` servem esse JSON; os builds equivalentes gravam o documento em `dist/config/`. Um arquivo explícito em `public/config/` tem precedência.
+Os presets `standalone`, `sso` e `rda` geram documentos completos, sem mesclar serviços de um preset anterior. `neutral` é alias de geração para `standalone`. O preset `rda` adota o fluxo backend qualificado: utiliza `unkayos.gateway-identity` e `unkayos.gateway-access` com sessão HttpOnly gerenciada pelo BFF gateway, mantendo `unkayos.http-ai` sem vazamento de tokens de autenticação para o navegador. Os modos `standalone` (sessão local offline) e `sso` (provedor injetado no host) permanecem plenamente suportados e compatíveis.
 
-Sem JSON, apenas um HTTP 404 autoriza fallback portátil. A ponte temporária aceita `deployment.js` com `branding: 'rda'` explícito para manter os deploys existentes, inclusive seus IDs OIDC. Caso contrário, o default é local. Erro de rede, HTTP 5xx, JSON inválido ou HTML de fallback de SPA interrompem o boot. A função `loadDeployment({ required: true })` também rejeita 404 para consumidores que exigem configuração gerenciada.
+Tokens e credenciais antigas no `localStorage` (`unkayos_auth_token`, `unkayos_refresh_token`, etc.) são retirados de forma segura **somente ao concluir a migração da sessão**, preservando integralmente os arquivos no VFS (`wasm_vfs_*`), preferências visuais (`unkayos_theme`, acentos) e configurações do usuário.
+
+Os modos `dev:standalone`/`dev:sso`/`dev:rda` servem esse JSON; os builds equivalentes gravam o documento em `dist/config/`. Um arquivo explícito em `public/config/` tem precedência.
+
+Sem JSON, apenas um HTTP 404 autoriza fallback portátil. A ponte temporária aceita `deployment.js` com `branding: 'rda'` explícito para manter os deploys legados existentes (`rda.identity` e `rda.access`). Caso contrário, o default é local. Erro de rede, HTTP 5xx, JSON inválido ou HTML de fallback de SPA interrompem o boot. A função `loadDeployment({ required: true })` também rejeita 404 para consumidores que exigem configuração gerenciada.
 
 ## Plugins e bindings
 

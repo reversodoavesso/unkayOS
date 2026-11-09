@@ -69,6 +69,19 @@ export function createSessionStore(options) {
         return sessions.delete(digest(token));
     }
 
+    /** @param {string} principalId */
+    function destroyPrincipal(principalId) {
+        if (!principalId) return 0;
+        let count = 0;
+        for (const [key, entry] of sessions) {
+            if (entry.principal?.id === principalId) {
+                sessions.delete(key);
+                count += 1;
+            }
+        }
+        return count;
+    }
+
     /** @param {boolean} [force] */
     function sweep(force = false) {
         const timestamp = now();
@@ -95,6 +108,7 @@ export function createSessionStore(options) {
         get,
         create,
         destroy,
+        destroyPrincipal,
         sweep,
         csrfMatches,
         stop: () => clearInterval(timer),

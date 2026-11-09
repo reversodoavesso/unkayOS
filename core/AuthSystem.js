@@ -77,12 +77,32 @@ export class AuthSystem {
     }
 
     /**
-     * Limpa tokens salvos
+     * Limpa tokens salvos de autenticação sem tocar em VFS ou preferências do usuário
      */
     clearStoredTokens() {
-        localStorage.removeItem('unkayos_auth_token');
-        localStorage.removeItem('unkayos_refresh_token');
-        localStorage.removeItem('unkayos_user_data');
+        AuthSystem.retireLegacyTokens();
+    }
+
+    /**
+     * Remove com segurança todos os artefatos de credenciais OIDC/PKCE legados do localStorage
+     */
+    static retireLegacyTokens() {
+        if (typeof localStorage === 'undefined') return;
+        try {
+            const legacyKeys = [
+                'unkayos_auth_token',
+                'unkayos_refresh_token',
+                'unkayos_user_data',
+                'unkayos_code_verifier',
+                'unkayos_oauth_state',
+                'unkayos_oauth_callback'
+            ];
+            for (const key of legacyKeys) {
+                localStorage.removeItem(key);
+            }
+        } catch (error) {
+            console.error('[AuthSystem] Erro ao retirar tokens legados:', error);
+        }
     }
 
     /**

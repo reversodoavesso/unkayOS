@@ -217,6 +217,8 @@ export function createGateway({ config, policy, secrets, fetchImpl = globalThis.
             return res.end();
         }
         if (!csrfValid(req, null)) return sendError(res, 403, 'CSRF_INVALID', 'Requisição bloqueada pela proteção CSRF.');
+        const { session: oldSession } = currentSession(req);
+        if (oldSession) sessions.destroy(oldSession.id);
         const principal = {
             issuer: 'local',
             subject: `device:${config.installationId}`,
@@ -251,6 +253,8 @@ export function createGateway({ config, policy, secrets, fetchImpl = globalThis.
             return sendError(res, 400, 'OIDC_STATE_INVALID', 'Transação de login expirada.');
         }
         const principal = await oidc.complete({ code, transaction });
+        const { session: oldSession } = currentSession(req);
+        if (oldSession) sessions.destroy(oldSession.id);
         const session = sessions.create(principal);
         res.setHeader('Set-Cookie', [
             sessionCookie(session.id, sessionConfig.absoluteTimeoutSeconds),

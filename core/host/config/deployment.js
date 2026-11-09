@@ -30,8 +30,14 @@ export function createDeployment(preset = 'standalone') {
         preset,
         product: { name: 'unkayOS', orgName: '', guestDomain: 'local' },
         instances: {
-            account: { plugin: preset === 'rda' ? 'rda.identity' : preset === 'sso' ? 'unkayos.injected-identity' : 'unkayos.local-identity', config: {} },
-            policy: { plugin: preset === 'rda' ? 'rda.access' : 'unkayos.local-access', config: {} }
+            account: {
+                plugin: preset === 'rda' ? 'unkayos.gateway-identity' : preset === 'sso' ? 'unkayos.injected-identity' : 'unkayos.local-identity',
+                config: preset === 'rda' ? { basePath: '', loginPath: '/session/login', logoutPath: '/session/logout', timeoutMs: 10000, csrfHeader: 'x-unkay-csrf' } : {}
+            },
+            policy: {
+                plugin: preset === 'rda' ? 'rda.access' : 'unkayos.local-access',
+                config: {}
+            }
         },
         bindings: { identity: 'account.identity', access: 'policy.access' }
     };
@@ -61,7 +67,24 @@ export function fromLegacyDeployment(legacy) {
     if (legacy.branding !== 'rda' && legacy.branding !== 'neutral') {
         throw new DeploymentError('LEGACY_CONFIG_INVALID', 'Configuração legada sem branding reconhecido.');
     }
-    return createDeployment(legacy.branding === 'rda' ? 'rda' : 'standalone');
+    if (legacy.branding === 'rda') {
+        const legacyConfig = {
+            schemaVersion: 1,
+            installationId: 'unkayos',
+            revision: 'legacy-rda-1',
+            preset: 'rda',
+            product: { name: 'unkayOS', orgName: '', guestDomain: 'local' },
+            instances: {
+                account: { plugin: 'rda.identity', config: {} },
+                policy: { plugin: 'rda.access', config: {} },
+                assistant: { plugin: 'rda.ai', config: {} },
+                cloud: { plugin: 'rda.sync', config: {} }
+            },
+            bindings: { identity: 'account.identity', access: 'policy.access', ai: 'assistant.ai', sync: 'cloud.sync' }
+        };
+        return resolveDeployment(legacyConfig);
+    }
+    return createDeployment('standalone');
 }
 
 /**
