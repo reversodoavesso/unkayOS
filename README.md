@@ -23,7 +23,7 @@ What began as a playground for learning DOM manipulation, event handling, and CS
 
 So unkayOS evolved into a modular desktop environment that runs in the browser — a personal hub for experimenting with ideas. Each app is self-contained, follows the same simple pattern, and plugs into the system without touching the core. It's become the place where I prototype, explore, and learn by building things I'm curious about.
 
-The whole project is still vanilla JS by design. No React, no Vue, no Angular — just ES modules, a clean architecture, and the satisfaction of understanding every line of code that runs.
+The desktop shell and core use vanilla JavaScript and ES modules. The package also includes React/React DOM and DOMPurify for supported app/runtime capabilities; see `package.json` and the vendor synchronization script for the actual dependency boundary.
 
 ## Key Features
 
@@ -123,7 +123,7 @@ The [package manager guide](docs/PACKAGE_MANAGER.md) describes the Store, instal
 The [feature guide](docs/FEATURES.md) documents the host-agnostic feature kernel and how to add modular capabilities without touching the system core.
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 22 (the version used by the Docker builder)
 - npm
 
 ### Development
@@ -144,28 +144,27 @@ http://localhost:5173
 
 ### Host profiles
 
-The same codebase builds two products:
+The same codebase supports three deployment presets:
 
 ```bash
-npm run dev:rda         # RDA ecosystem: SSO, marketplace, AI gateway
-npm run dev:standalone  # clean/local: no SSO, marketplace or RDA services
+npm run dev:rda         # RDA identity and optional ecosystem services
+npm run dev:standalone  # local identity and access policy
 npm run dev:sso         # bring-your-own SSO via window.__UNKAY_IDENTITY_PROVIDER__
 ```
 
-`npm run build:rda`, `npm run build:standalone` and `npm run build:sso` produce the
-corresponding bundles. The standalone profile never imports `AuthSystem`/`auth-config.js`; it
-uses a local guest identity. The UI reads labels from `auth.getProviderInfo()`, so any SSO can
-plug in without code changes.
+`npm run build:rda`, `npm run build:standalone` and `npm run build:sso` generate the corresponding runtime JSON when no explicit `public/config/deployment.json` exists. The boot validates that document and composes trusted local plugins and bindings. The standalone preset uses local identity; AI can be configured independently through a supported binding. An injected SSO provider must implement the identity contract. See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for precedence, compatibility behavior and remaining limits.
+
+The RDA Compose service currently selects RDA branding and OIDC IDs on the Nginx image. The optional `server/` gateway is a separate Node process; its presence in the repository does not mean it is deployed with that image. Local contract/browser scenarios do not prove a real IdP login or production authorization.
 
 ### Available Scripts
 
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Start Vite dev server with HMR (RDA profile) |
-| `npm run dev:rda` | Dev server with SSO, marketplace and AI |
+| `npm run dev` | Start Vite dev server; runtime configuration selects the preset |
+| `npm run dev:rda` | Dev server with the RDA deployment preset |
 | `npm run dev:standalone` | Dev server without SSO or RDA services |
 | `npm run dev:sso` | Dev server with an injected SSO provider |
-| `npm run build` | Production build with tree-shaking and sourcemaps |
+| `npm run build` | Vite entry build plus copied runtime modules and assets |
 | `npm run build:rda` | Production build with the RDA profile |
 | `npm run build:standalone` | Production build with the clean profile |
 | `npm run build:sso` | Production build with the injected SSO profile |
@@ -291,7 +290,7 @@ eventBus.on('app:started', ({ appId, instanceId }) => {
 
 ## Dev Tooling
 
-The project uses a modern dev tooling stack with zero runtime dependencies:
+The project uses the following tooling; runtime dependencies are declared separately in `package.json`:
 
 - **Vite** — Build system and dev server with HMR. Auto-detects apps in `apps/*/`.
 - **Vitest** — Test runner with happy-dom for DOM testing and fast-check for property-based tests.

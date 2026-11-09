@@ -1,6 +1,6 @@
 # Aparência do Unkayos e contrato com o RDA DS
 
-Status: eixo de produto implementado no RDA DS e integrado ao Unkayos com presets ciano, violeta, azul, rosa, fúcsia, turquesa e índigo.
+Status: registro histórico do contrato de aparência integrado à distribuição local do DS. Os nomes ciano, violeta, azul, rosa, fúcsia, turquesa e índigo abaixo descrevem essa etapa; não são um inventário da versão mais recente do DS nem comprovam publicação do wallpaper/accent em produção. Para a versão consumida, conferir `design-system/rda/design-system.manifest.json` e `distribution.json`; para a configuração executável, consultar [DEPLOYMENT.md](../DEPLOYMENT.md).
 
 ## Diagnóstico
 
@@ -8,7 +8,7 @@ O RDA DS oferece intenções semânticas (`primary`, `danger`, `success`, etc.),
 
 As ações do DS possuem um conjunto de tokens: fundo, texto, borda, hover e active. Texto de marca e foco também mudam conforme o tema. No Unkayos, o seletor alterava apenas `--rda-color-primary-400` e o alias `--color-primary-base` no elemento raiz. Componentes que usam outros tons, tokens semânticos ou cores próprias não acompanhavam a mudança. A cor escolhida também podia coincidir com alertas ou níveis de acesso.
 
-## Comportamento implementado agora
+## Comportamento registrado nesta etapa
 
 - O DS exporta `UnkayosScope` em `@reversodoavesso/design-system/unkayos`, além de CSS para HTML nativo.
 - O eixo de produto usa `data-rda-product="unkayos"` e `data-unkay-accent="cyan|violet|blue|rose|fuchsia|teal|indigo"`. Presets completos por tema são verificados por testes de contraste.
