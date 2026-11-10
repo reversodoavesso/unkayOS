@@ -2,8 +2,8 @@
 
 :root {
     /* Font Families */
-    --font-family-base: 'Roboto', sans-serif;
-    --font-family-mono: 'Fira Code', 'Consolas', 'Monaco', 'Lucida Console', monospace;
+    --font-family-base: var(--rda-font-family-body);
+    --font-family-mono: var(--rda-font-family-mono);
   
     /* Font Sizes */
     --font-size-xs: 0.75rem;   /* 12px */

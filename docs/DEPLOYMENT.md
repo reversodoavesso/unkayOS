@@ -169,6 +169,11 @@ unkayos/v1/<installation>/<principal|anonymous>/principal/vfs-snapshot.json
 - O snapshot pré-namespace é importado **uma única vez** por instalação. Em perfis com login (RDA/SSO/BFF), a importação é adiada até o primeiro principal autenticado existir, para não deixar arquivos antigos presos no namespace anônimo; perfis somente-dispositivo migram no boot. O arquivo legado permanece intacto como backup e nunca é carregado em uma segunda identidade.
 - KV de apps passa a usar `<principal>::<app>`; a chave antiga sem escopo é lida uma vez e migrada na primeira leitura. Preferências de aparência/área de trabalho continuam por dispositivo.
 
+## Contrato qualificado de aparência e apps
+
+- **Aparência (`DS 3.10.0`)**: presets canônicos `primary`, `nebula`, `magma`, `lotus`, `aurora` e `cobalt` (com migração transparente de `cyan`, `violet`, `blue`, `rose`, `fuchsia`, `teal`, `indigo`). Como o CSS gerado pelo `rda-ds` `3.10.0` (`design-system/rda/unkayos.css`) emitia seletores `[data-theme="light"]` sem qualificador que sobrescreviam o tema escuro, `design-system/styles/preferences.css` reaplica a cascata `@layer rda.overrides` separando escuro e claro sem alterar `design-system/rda/` nem `rda-ds` v3.11.0. Alterar tema/accent/wallpaper ou forjar `localStorage` não eleva tier/ACL nem cruza o `storageScope` entre principais.
+- **Apps nativos vs. OpenUI**: os apps incluídos no bundle rodam no mesmo contexto JS confiável da página. Pacotes instaláveis `.unkayapp` aceitam somente `type: "openui"` com `runtime_profile: "client-only"`, sanitizados com DOMPurify em `AppSandbox` (`ShadowRoot`, `data-rda-product="base"`) e com SDK restrito a `/home/user/apps/<id>/data`. O marketplace de pacotes JS nativos de terceiros (`type: "native"`) permanece bloqueado até haver runtime isolado por origem/iframe separado.
+
 
 
 

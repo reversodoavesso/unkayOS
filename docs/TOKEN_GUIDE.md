@@ -2,11 +2,11 @@
 
 ## Aparência e identidade RDA
 
-Os tokens oficiais e o CSS de componentes são distribuídos em `/design-system/rda/`. O accent do produto usa o eixo `data-rda-product="unkayos"` e presets validados `cyan`, `violet` e `blue`, sem alterar primitivos de marca. Consulte o [guia prático canônico](./APP_DEVELOPMENT.md) para exemplos executáveis, distribuição, ícones e ciclo de vida. As seções abaixo documentam aliases de compatibilidade de apps antigos.
+Os tokens oficiais e o CSS de componentes são distribuídos em `/design-system/rda/`. O accent do produto usa o eixo `data-rda-product="unkayos"` e os presets canônicos `primary`, `nebula`, `magma`, `lotus`, `aurora` e `cobalt`, sem alterar primitivos de marca. Consulte o [guia prático canônico](./APP_DEVELOPMENT.md) para exemplos executáveis, distribuição, ícones e ciclo de vida. As seções abaixo documentam aliases de compatibilidade de apps antigos.
 
-## 📋 Tokens Padronizados
+## Tokens Padronizados
 
-### 🎨 Cores
+### Cores
 
 #### Texto
 - `--color-text-primary`: Texto principal (#ffffff)
@@ -40,16 +40,16 @@ Os tokens oficiais e o CSS de componentes são distribuídos em `/design-system/
 - `--color-folder`: Cor para pastas (#dcb67a)
 - `--color-file`: Cor para arquivos (#519aba)
 
-### 📏 Espaçamento
+### Espaçamento
 - `--spacing-xs`: 4px
 - `--spacing-sm`: 8px
 - `--spacing-md`: 16px
 - `--spacing-lg`: 24px
 - `--spacing-xl`: 32px
 
-### 🔤 Tipografia
-- `--font-family-base`: 'Roboto', sans-serif
-- `--font-family-mono`: 'Fira Code', 'Consolas', monospace
+### Tipografia
+- `--font-family-base`: `var(--rda-font-family-body)` (alias canônico do DS)
+- `--font-family-mono`: `var(--rda-font-family-mono)` (alias canônico do DS)
 - `--font-size-xs`: 0.75rem (12px)
 - `--font-size-sm`: 0.875rem (14px)
 - `--font-size-base`: 1rem (16px)
@@ -57,39 +57,39 @@ Os tokens oficiais e o CSS de componentes são distribuídos em `/design-system/
 - `--font-size-xl`: 1.25rem (20px)
 - `--font-size-2xl`: 1.5rem (24px)
 
-### 📐 Border Radius
+### Border Radius
 - `--border-radius-sm`: 4px
 - `--border-radius-md`: 8px
 - `--border-radius-lg`: 12px
 - `--border-radius-circle`: 50%
 
-## ❌ Padrões Removidos
+## Padrões Removidos
 
 ### NÃO USE mais fallbacks inline:
 ```css
-/* ❌ EVITAR */
+/* EVITAR */
 color: var(--color-text, #ffffff);
 background: var(--color-surface, #2d2d2d);
 
-/* ✅ USAR */
+/* USAR */
 color: var(--color-text-primary);
 background: var(--color-surface-secondary);
 ```
 
 ### NÃO USE tokens indefinidos:
 ```css
-/* ❌ EVITAR */
+/* EVITAR */
 --text-primary
 --surface-secondary
 --background-primary
 
-/* ✅ USAR */
+/* USAR */
 --color-text-primary
 --color-surface-secondary
 --color-background-primary
 ```
 
-## 🔧 Implementação
+## Implementação
 
 ### 1. Para Novos Aplicativos
 Sempre importe o design system no CSS:
@@ -115,15 +115,15 @@ Se precisar de um novo token:
 2. Documente neste arquivo
 3. Use naming consistente: `--color-*`, `--spacing-*`, etc.
 
-## 🎯 Benefícios
+## Benefícios
 
-- ✅ Aparência visual consistente
-- ✅ Fácil manutenção temática
-- ✅ Mudanças globais com um toque
-- ✅ Melhor organização do código
-- ✅ Redução de duplicação de estilos
+- Aparência visual consistente
+- Fácil manutenção temática
+- Mudanças globais com um toque
+- Melhor organização do código
+- Redução de duplicação de estilos
 
-## 🔍 Verificação
+## Verificação
 
 Para verificar se um app está seguindo os padrões:
 ```bash

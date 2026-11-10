@@ -2,6 +2,14 @@
 
 O contador de releases começa em 1 com a versão 2.0.0-alpha.2. Builds da mesma versão preservam o número; cada release preparada incrementa o contador.
 
+## 2.0.0-alpha.10 · Release 9 · 2026-11-10
+
+Recuperação do DS 3.10.0, wallpaper Oklab e qualificação de apps
+
+- Recuperados presets canônicos do DS 3.10.0 (primary, nebula, magma, lotus, aurora, cobalt) e correção da cascata claro/escuro sem sobrescrever o tema escuro.
+- Tipografia alinhada aos tokens locais do DS sem Google Fonts externo, mantendo isolamento de storage e ACLs por principal.
+- Contrato de apps qualificado para OpenUI declarativo em AppSandbox (client-only) com bloqueio explícito de pacotes JS nativos de terceiros.
+
 ## 2.0.0-alpha.9 · Release 8 · 2026-10-27
 
 Compute vinculado à identidade da sessão

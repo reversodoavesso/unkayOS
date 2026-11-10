@@ -63,7 +63,7 @@ O Select HTML usa `.rda-select` no wrapper e `.rda-select__field` no campo nativ
 </div>
 ```
 
-O shell opta pelo produto com `data-rda-product="unkayos"` e escolhe um preset em `data-unkay-accent="cyan|violet|blue|rose|fuchsia|teal|indigo"`. Os mesmos controles adotam a paleta inteira por herança. Atributos de produto não são novos valores de `data-color` ou de `data-style`. Erro, sucesso, aviso e membership preservam seus contratos.
+O shell opta pelo produto com `data-rda-product="unkayos"` e escolhe um preset em `data-unkay-accent="primary|nebula|magma|lotus|aurora|cobalt"`. Os mesmos controles adotam a paleta inteira por herança. Nomes legados (`cyan`, `violet`, `blue`, `rose`, `fuchsia`, `teal`, `indigo`) são aceitos e normalizados. Atributos de produto não são novos valores de `data-color` ou de `data-style`. Erro, sucesso, aviso e membership preservam seus contratos.
 
 Em React, a composição equivalente é:
 
@@ -72,7 +72,7 @@ import '@reversodoavesso/design-system/styles';
 import '@reversodoavesso/design-system/unkayos/styles';
 import { Button } from '@reversodoavesso/design-system';
 import { UnkayosScope } from '@reversodoavesso/design-system/unkayos';
-<UnkayosScope accent="violet" theme="light">
+<UnkayosScope accent="nebula" theme="light">
   <Button variant="primary" styleVariant="matte">Salvar</Button>
   <Button variant="danger">Excluir</Button>
 </UnkayosScope>
@@ -157,7 +157,7 @@ Prefira `this.wasmFileSystem` para persistência. Suas operações são assíncr
 
 OpenUI sanitiza HTML e permite o elemento oficial `rda-icon`. Shadow DOM isola estilos; JavaScript nativo roda como código confiável da página. O SDK de apps valida acesso a caminhos dentro da pasta de dados do app. Recursos restritos exigem permissão e autorização do serviço; uma cor ou tier em localStorage não concede acesso.
 
-Verifique claro e escuro, os sete presets, foco visível, teclado, rótulos, disabled/loading e feedback de erro. Não dependa só de cor para comunicar um estado. Teste janelas pequenas e múltiplas instâncias.
+Verifique claro e escuro, os seis presets, foco visível, teclado, rótulos, disabled/loading e feedback de erro. Não dependa só de cor para comunicar um estado. Teste janelas pequenas e múltiplas instâncias.
 
 ## 8. Verificação antes de entregar
 

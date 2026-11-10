@@ -44,7 +44,7 @@ export class AppSandbox {
                 height: 100%;
                 overflow: auto;
                 box-sizing: border-box;
-                font-family: var(--rda-font-family-base, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+                font-family: var(--rda-font-family-body, var(--rda-font-family-base, 'Inter', system-ui, sans-serif));
                 color: var(--rda-content-primary, #fafafa);
                 background: var(--rda-surface-primary, #0a0a0a);
             }

@@ -4,7 +4,7 @@
 .terminal-container {
     background-color: transparent;
     color: var(--color-success); /* verde suave para texto principal */
-    font-family: 'Courier New', Courier, monospace;
+    font-family: var(--rda-font-family-mono, monospace);
     font-size: 1em;
     height: 100%;
     display: flex;
@@ -35,7 +35,7 @@
 }
 
 .terminal-output, .terminal-output *, .terminal-input-line, .terminal-input-line * {
-    font-family: ui-monospace, 'Courier New', monospace;
+    font-family: var(--rda-font-family-mono, monospace);
 }
 .terminal-input-line > .terminal-prompt {
     flex: 0 1 auto;

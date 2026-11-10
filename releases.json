@@ -2,6 +2,17 @@
   "schemaVersion": 1,
   "releases": [
     {
+      "version": "2.0.0-alpha.10",
+      "number": 9,
+      "date": "2026-11-10",
+      "title": "Recuperação do DS 3.10.0, wallpaper Oklab e qualificação de apps",
+      "changes": [
+        "Recuperados presets canônicos do DS 3.10.0 (primary, nebula, magma, lotus, aurora, cobalt) e correção da cascata claro/escuro sem sobrescrever o tema escuro.",
+        "Tipografia alinhada aos tokens locais do DS sem Google Fonts externo, mantendo isolamento de storage e ACLs por principal.",
+        "Contrato de apps qualificado para OpenUI declarativo em AppSandbox (client-only) com bloqueio explícito de pacotes JS nativos de terceiros."
+      ]
+    },
+    {
       "version": "2.0.0-alpha.9",
       "number": 8,
       "date": "2026-10-27",

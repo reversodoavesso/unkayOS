@@ -55,7 +55,32 @@ try {
     await capture('app-error-dark.png');
     await failedWindow.getByText('Detalhes técnicos', { exact: true }).click();
     assert((await failedWindow.locator('details').textContent()).includes('APP_RESOURCE_LOAD_FAILED'), 'Resource diagnostic missing');
+    // Verify dark accent CSS tokens do not leak light-mode overrides before switching theme
+    await page.evaluate(() => window.workspaceSession.update({ appearance: { theme: 'dark', accent: 'nebula' } }));
+    const darkTokens = await page.evaluate(() => {
+      const s = getComputedStyle(document.getElementById('desktop'));
+      return {
+        theme: document.documentElement.dataset.theme,
+        accent: document.getElementById('desktop').dataset.unkayAccent,
+        solid: s.getPropertyValue('--unkay-accent-solid').trim(),
+        onSolid: s.getPropertyValue('--unkay-accent-on-solid').trim(),
+        actionBg: s.getPropertyValue('--rda-action-primary-bg').trim()
+      };
+    });
+    assert(darkTokens.theme === 'dark' && darkTokens.accent === 'nebula' && darkTokens.solid === '#a78bfa' && darkTokens.onSolid === '#0a0a0a' && darkTokens.actionBg === '#a78bfa', 'Dark mode accent CSS tokens broken: ' + JSON.stringify(darkTokens));
+
     await page.evaluate(() => window.workspaceSession.update({ appearance: { theme: 'light', accent: 'violet' } }));
+    const lightTokens = await page.evaluate(() => {
+      const s = getComputedStyle(document.getElementById('desktop'));
+      return {
+        theme: document.documentElement.dataset.theme,
+        accent: document.getElementById('desktop').dataset.unkayAccent,
+        solid: s.getPropertyValue('--unkay-accent-solid').trim(),
+        onSolid: s.getPropertyValue('--unkay-accent-on-solid').trim(),
+        actionBg: s.getPropertyValue('--rda-action-primary-bg').trim()
+      };
+    });
+    assert(lightTokens.theme === 'light' && lightTokens.accent === 'nebula' && lightTokens.solid === '#6d28d9' && lightTokens.onSolid === '#ffffff' && lightTokens.actionBg === '#6d28d9', 'Light mode accent CSS tokens broken: ' + JSON.stringify(lightTokens));
     await capture('app-error-light.png');
     await page.setViewportSize({ width: 390, height: 844 });
     // Reopen after changing viewport so the window uses the mobile work area.

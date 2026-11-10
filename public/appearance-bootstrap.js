@@ -33,7 +33,9 @@
     const desktop = document.getElementById('desktop');
     if (!desktop) return false;
     desktop.dataset.rdaProduct = 'unkayos';
-    const accent = typeof appearance.accent === 'string' && /^[a-z][a-z0-9-]*$/.test(appearance.accent) ? appearance.accent : 'cyan';
+    const legacyAccents = { cyan: 'primary', violet: 'nebula', blue: 'cobalt', rose: 'magma', fuchsia: 'lotus', teal: 'aurora', indigo: 'cobalt' };
+    const normalize = value => Object.hasOwn(legacyAccents, value) ? legacyAccents[value] : (/^(primary|nebula|magma|lotus|aurora|cobalt)$/.test(value) ? value : 'primary');
+    const accent = normalize(typeof appearance.accent === 'string' ? appearance.accent : '');
     desktop.dataset.unkayAccent = accent;
     const wallpaper = appearance.wallpaper === '/assets/images/wallpaper_01.jpg' ? '/assets/images/wallpapers/01-horizonte-limpo-v2.jpg' : appearance.wallpaper;
     if (typeof wallpaper === 'string' && wallpaper) {
@@ -46,7 +48,8 @@
         const signature = JSON.stringify(['v2', custom ? 'custom' : 'auto', ...['wallpaperRemapStrategy', 'wallpaperRemapTheme', 'wallpaperChromaBoost', 'wallpaperRemapTemperature', 'wallpaperRemapIntensity'].map(key => custom ? appearance[key] ?? null : null)]);
         const adaptWallpaper = (appearance.adaptWallpaper === true || (appearance.adaptWallpaper !== false && wallpaper.startsWith('/assets/images/wallpapers/'))) && !(custom && appearance.wallpaperRemapIntensity === 0);
         const themeMatch = !remappedCache?.systemTheme || remappedCache.systemTheme === root.dataset.theme;
-        if (adaptWallpaper && remappedCache && remappedCache.appearanceKey === signature && remappedCache.wallpaper === wallpaper && remappedCache.accent === accent && themeMatch && typeof remappedCache.dataUrl === 'string') {
+        const cachedAccent = typeof remappedCache?.accent === 'string' ? normalize(remappedCache.accent) : '';
+        if (adaptWallpaper && remappedCache && remappedCache.appearanceKey === signature && remappedCache.wallpaper === wallpaper && cachedAccent === accent && themeMatch && typeof remappedCache.dataUrl === 'string') {
           desktop.style.backgroundImage = `url(${JSON.stringify(remappedCache.dataUrl)})`;
         } else if (!adaptWallpaper) {
           desktop.style.backgroundImage = `url(${JSON.stringify(wallpaper)})`;

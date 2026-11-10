@@ -27,13 +27,16 @@ try {
   const timings = [];
   for (const wallpaper of images) {
     const start = Date.now();
-    await page.evaluate(wallpaper => window.workspaceSession.update({ appearance: { wallpaper, theme: 'dark', accent: 'violet', adaptWallpaper: true, wallpaperRemapPresetMode: 'auto' } }), wallpaper);
+    await page.evaluate(wallpaper => window.workspaceSession.update({ appearance: { wallpaper, theme: 'dark', accent: 'nebula', adaptWallpaper: true, wallpaperRemapPresetMode: 'auto' } }), wallpaper);
     await page.waitForFunction(wallpaper => {
       const cached = JSON.parse(localStorage.getItem('unkayos_remapped_wallpaper_cache') || 'null');
-      return cached?.wallpaper === wallpaper && cached.accent === 'violet' && document.getElementById('desktop').style.backgroundImage.includes(cached.dataUrl);
+      return cached?.wallpaper === wallpaper && cached.accent === 'nebula' && document.getElementById('desktop').style.backgroundImage.includes(cached.dataUrl);
     }, wallpaper);
     timings.push(Date.now() - start);
   }
+  // Legacy accent alias ('violet') normalizes transparently to canonical 'nebula' and preserves boot cache match
+  await page.evaluate(wallpaper => window.workspaceSession.update({ appearance: { wallpaper, theme: 'dark', accent: 'violet', adaptWallpaper: true, wallpaperRemapPresetMode: 'auto' } }), images.at(-1));
+  await page.waitForFunction(() => window.workspaceSession.settings.appearance.accent === 'nebula' && document.getElementById('desktop').dataset.unkayAccent === 'nebula');
   await capture('wallpaper-desktop.png');
   let releaseMain;
   const gate = new Promise(resolve => { releaseMain = resolve; });
@@ -42,7 +45,7 @@ try {
   await page.reload({ waitUntil: 'commit' });
   await page.waitForFunction(() => window.__wallpaperFrames.length >= 3);
   const early = await page.evaluate(() => window.__wallpaperFrames);
-  check(early.every(frame => frame.cached && frame.accent === 'violet'), 'Selected remapped wallpaper not restored before initialization');
+  check(early.every(frame => frame.cached && frame.accent === 'nebula'), 'Selected remapped wallpaper not restored before initialization');
   releaseMain(); await page.waitForFunction(() => window.workspaceSession); await page.unroute(main);
   const settingsId = await page.evaluate(() => window.appManager.runApp('settings', { panel: 'appearance' }));
   await page.locator('#panelAppearance').waitFor({ state: 'visible' });
