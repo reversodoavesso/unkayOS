@@ -87,6 +87,8 @@ describe('unkayOS 2.0 Production Readiness (Phase 7)', () => {
         expect(dockerfile).toContain('FROM node:22-alpine AS builder');
         expect(dockerfile).toContain('FROM nginx:alpine');
         expect(dockerfile).toContain('COPY --from=builder /app/dist .');
+        const fromLines = dockerfile.match(/^FROM\s+.+$/gm) || [];
+        expect(fromLines.at(-1)).toMatch(/^FROM\s+nginx:alpine/);
 
         const composePath = resolve(projectRoot, '..', 'docker-compose.yml');
         expect(existsSync(composePath)).toBe(true);

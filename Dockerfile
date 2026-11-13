@@ -9,18 +9,7 @@ ARG UNKAYOS_REVISION=unknown
 ENV UNKAYOS_REVISION=$UNKAYOS_REVISION
 RUN npm run build:dist
 
-# Stage 2: Hardened Nginx runtime with Wasm & COOP/COEP headers
-FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
-COPY --from=builder /app/dist .
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --chmod=755 docker/40-unkayos-config.sh /docker-entrypoint.d/40-unkayos-config.sh
-
-EXPOSE 80
-HEALTHCHECK --interval=15s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1/health >/dev/null || exit 1
-CMD ["nginx", "-g", "daemon off;"]
-
-# Stage 3: Dedicated Node BFF Gateway runtime (explicit backend process)
+# Stage 2: Dedicated Node BFF Gateway runtime (explicit backend process; opt-in via --target gateway)
 FROM node:22-alpine AS gateway
 WORKDIR /app
 ENV NODE_ENV=production
@@ -34,3 +23,14 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1:8080/health >/dev/null || exit 1
 CMD ["node", "server/index.mjs", "--static=dist"]
+
+# Stage 3: Hardened Nginx runtime (default final target) with Wasm & COOP/COEP headers
+FROM nginx:alpine AS runtime
+WORKDIR /usr/share/nginx/html
+COPY --from=builder /app/dist .
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --chmod=755 docker/40-unkayos-config.sh /docker-entrypoint.d/40-unkayos-config.sh
+
+EXPOSE 80
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1/health >/dev/null || exit 1
+CMD ["nginx", "-g", "daemon off;"]
